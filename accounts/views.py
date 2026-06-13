@@ -6,7 +6,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.http import HttpRequest
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from accounts.models import (
@@ -16,6 +16,8 @@ from accounts.models import (
     RecoveryStatus,
     User,
     UserRole,
+    Agent,
+    FinancialTransaction,
 )
 
 
@@ -190,3 +192,64 @@ def superadmin_resolve_recovery(request: HttpRequest, recovery_id: str):
         "accounts/superadmin_resolve_recovery.html",
         {"recovery": recovery},
     )
+
+
+@login_required
+def superadmin_dashboard(request: HttpRequest):
+    if not request.user.is_superuser:
+        messages.error(request, "Accès réservé au superadmin")
+        return redirect("/admin/")
+
+    total_borlettes = Borlette.objects.count()
+    total_active_admins = User.objects.filter(role=UserRole.ADMIN, is_active=True).count()
+    total_suspended_admins = User.objects.filter(role=UserRole.ADMIN, is_active=False).count()
+    total_agents = Agent.objects.count()
+    total_tx = FinancialTransaction.objects.count()
+    
+    from django.db.models import Sum, Count, Q
+    total_revenue = FinancialTransaction.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+
+    borlettes = Borlette.objects.select_related('user').annotate(
+        num_agents=Count('agents')
+    ).order_by('nom_borlette')
+
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        borlettes = borlettes.filter(
+            Q(nom_borlette__icontains=search_query) |
+            Q(user__username__icontains=search_query)
+        )
+
+    return render(
+        request,
+        "accounts/superadmin_dashboard.html",
+        {
+            "total_borlettes": total_borlettes,
+            "total_active_admins": total_active_admins,
+            "total_suspended_admins": total_suspended_admins,
+            "total_agents": total_agents,
+            "total_tx": total_tx,
+            "total_revenue": total_revenue,
+            "borlettes": borlettes,
+            "search_query": search_query,
+        },
+    )
+
+
+@login_required
+def superadmin_toggle_borlette_status(request: HttpRequest, borlette_id: int):
+    if not request.user.is_superuser:
+        messages.error(request, "Accès réservé au superadmin")
+        return redirect("/admin/")
+
+    borlette = get_object_or_404(Borlette, id=borlette_id)
+    user = borlette.user
+    
+    user.is_active = not user.is_active
+    user.save(update_fields=["is_active"])
+    
+    status_str = "réactivé" if user.is_active else "suspendu"
+    messages.success(request, f"L'administrateur de la borlette '{borlette.nom_borlette}' a été {status_str} avec succès.")
+    
+    return redirect("superadmin_dashboard")
+

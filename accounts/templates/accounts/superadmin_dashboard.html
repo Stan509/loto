@@ -1,0 +1,172 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}SuperAdmin Panel • Central Borlette{% endblock %}
+
+{% block page_title %}
+  SuperAdmin Dashboard
+{% endblock %}
+
+{% block page_meta %}
+  <div class="text-xs text-slate-700 dark:text-slate-200">
+    Gestion et supervision globale du système
+  </div>
+{% endblock %}
+
+{% block page_body %}
+  <div class="space-y-6">
+    <!-- Messages system -->
+    {% if messages %}
+      <div class="space-y-2">
+        {% for message in messages %}
+          <div class="rounded-2xl border px-4 py-3 text-sm {% if message.tags == 'success' %}border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300{% else %}border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <!-- Total Borlettes -->
+      <div class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-5 hover:translate-y-[-2px] transition-transform">
+        <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">Borlettes</div>
+        <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ total_borlettes }}</div>
+        <div class="text-[10px] text-slate-600 dark:text-slate-300 mt-1">Total enregistrées</div>
+      </div>
+
+      <!-- Active Admins -->
+      <div class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-5 hover:translate-y-[-2px] transition-transform">
+        <div class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider mb-1">Admins Actifs</div>
+        <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{{ total_active_admins }}</div>
+        <div class="text-[10px] text-slate-600 dark:text-slate-300 mt-1">Accès autorisé</div>
+      </div>
+
+      <!-- Suspended Admins -->
+      <div class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-5 hover:translate-y-[-2px] transition-transform">
+        <div class="text-xs text-rose-600 dark:text-rose-400 font-semibold uppercase tracking-wider mb-1">Suspendus</div>
+        <div class="text-3xl font-bold text-rose-600 dark:text-rose-400">{{ total_suspended_admins }}</div>
+        <div class="text-[10px] text-slate-600 dark:text-slate-300 mt-1">Accès bloqué</div>
+      </div>
+
+      <!-- Total Agents -->
+      <div class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-5 hover:translate-y-[-2px] transition-transform">
+        <div class="text-xs text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wider mb-1">Agents</div>
+        <div class="text-3xl font-bold text-amber-600 dark:text-amber-400">{{ total_agents }}</div>
+        <div class="text-[10px] text-slate-600 dark:text-slate-300 mt-1">Toutes borlettes</div>
+      </div>
+
+      <!-- Financial transactions count -->
+      <div class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-5 hover:translate-y-[-2px] transition-transform">
+        <div class="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wider mb-1">Abonnements</div>
+        <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ total_tx }}</div>
+        <div class="text-[10px] text-slate-600 dark:text-slate-300 mt-1">Transactions</div>
+      </div>
+
+      <!-- Total Revenue -->
+      <div class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-5 hover:translate-y-[-2px] transition-transform">
+        <div class="text-xs text-yellow-600 dark:text-yellow-500 font-semibold uppercase tracking-wider mb-1">Revenu Total</div>
+        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-500 truncate mt-1">{{ total_revenue }} G</div>
+        <div class="text-[10px] text-slate-600 dark:text-slate-300 mt-1">Gourdes encaissées</div>
+      </div>
+    </div>
+
+    <!-- Actions & Filter Bar -->
+    <div class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-5">
+      <form method="get" class="flex flex-col sm:flex-row items-center gap-3">
+        <div class="relative w-full">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i data-lucide="search" class="h-4 w-4"></i>
+          </span>
+          <input name="q" type="text" value="{{ search_query }}" class="w-full rounded-2xl border border-white/10 bg-white/40 pl-10 pr-4 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="Rechercher une borlette ou un admin..." />
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <button type="submit" class="gaboom-btn-primary w-full sm:w-auto px-6 py-2">
+            Rechercher
+          </button>
+          {% if search_query %}
+            <a href="{% url 'superadmin_dashboard' %}" class="gaboom-btn-ghost w-full sm:w-auto px-4 py-2 border-slate-300 text-slate-950 dark:text-white">
+              Effacer
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+
+    <!-- Borlettes list table -->
+    <div class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-6 overflow-hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Liste des Borlettes & Administrateurs</h3>
+        <span class="text-xs text-slate-500 dark:text-slate-400">Total affiché: {{ borlettes|length }}</span>
+      </div>
+
+      {% if borlettes %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/10 text-slate-500 dark:text-slate-400 text-left">
+                <th class="pb-3 font-semibold">Borlette</th>
+                <th class="pb-3 font-semibold">Administrateur</th>
+                <th class="pb-3 font-semibold">Téléphone</th>
+                <th class="pb-3 font-semibold text-center">Nombre d'agents</th>
+                <th class="pb-3 font-semibold text-center">Statut Admin</th>
+                <th class="pb-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in borlettes %}
+                <tr class="border-b border-white/5 text-slate-900 dark:text-slate-200">
+                  <td class="py-4 font-semibold text-base">{{ b.nom_borlette }}</td>
+                  <td class="py-4">
+                    <div class="font-medium text-slate-950 dark:text-white">{{ b.user.username }}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">{{ b.user.email|default:"Aucun email" }}</div>
+                  </td>
+                  <td class="py-4">{{ b.telephone|default:"—" }}</td>
+                  <td class="py-4 text-center font-bold text-slate-800 dark:text-slate-200">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/5">
+                      <i data-lucide="users" class="h-3.5 w-3.5 text-amber-500"></i>
+                      <span>{{ b.num_agents }}</span>
+                    </div>
+                  </td>
+                  <td class="py-4 text-center">
+                    {% if b.user.is_active %}
+                      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                        Actif
+                      </span>
+                    {% else %}
+                      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                        <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                        Suspendu
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="py-4 text-right">
+                    {% if b.user.is_active %}
+                      <form method="post" action="{% url 'superadmin_toggle_borlette_status' b.id %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="gaboom-btn-ghost px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-500/10 border-rose-500/30">
+                          🔴 Suspendre
+                        </button>
+                      </form>
+                    {% else %}
+                      <form method="post" action="{% url 'superadmin_toggle_borlette_status' b.id %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="gaboom-btn-ghost px-3 py-1.5 text-xs text-emerald-600 hover:bg-emerald-500/10 border-emerald-500/30">
+                          🟢 Réactiver
+                        </button>
+                      </form>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-8 text-slate-500">
+          Aucune borlette trouvée correspondant aux critères de recherche.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

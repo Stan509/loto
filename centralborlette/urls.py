@@ -33,6 +33,8 @@ urlpatterns = [
     path('agent/', include('agent_portal.urls')),
     path('affiliate/', include('accounts.affiliate_urls')),
     path('partner/', include('accounts.partner_urls')),
+    path('superadmin/dashboard/', accounts_views.superadmin_dashboard, name='superadmin_dashboard'),
+    path('superadmin/borlette/<int:borlette_id>/toggle-status/', accounts_views.superadmin_toggle_borlette_status, name='superadmin_toggle_borlette_status'),
     path('superadmin/api-config/', accounts_views.superadmin_api_config, name='superadmin_api_config'),
     path('superadmin/recovery/', accounts_views.superadmin_recovery_requests, name='superadmin_recovery_requests'),
     path('superadmin/recovery/<str:recovery_id>/resolve/', accounts_views.superadmin_resolve_recovery, name='superadmin_resolve_recovery'),

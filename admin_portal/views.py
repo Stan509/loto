@@ -46,7 +46,7 @@ User = get_user_model()
 
 def _portal_guard(request):
     if request.user.is_superuser or request.user.role == UserRole.SUPER_ADMIN:
-        return redirect("/admin/")
+        return redirect("superadmin_dashboard")
     return None
 
 
@@ -398,7 +398,7 @@ def portal_login(request):
         login(request, user)
 
         if user.is_superuser or user.role == UserRole.SUPER_ADMIN:
-            return redirect("/admin/")
+            return redirect("superadmin_dashboard")
 
         # Redirect based on role
         if user.role == UserRole.PARTNER:

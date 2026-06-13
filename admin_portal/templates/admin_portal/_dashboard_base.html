@@ -101,6 +101,21 @@
             </a>
             {% if request.user.is_superuser %}
             <div class="border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
+              <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2 px-2">SuperAdmin</div>
+              <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'superadmin_dashboard' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_dashboard' %}">
+                <i data-lucide="layout-dashboard" class="h-5 w-5 shrink-0"></i>
+                <span class="whitespace-nowrap">SuperAdmin Panel</span>
+              </a>
+              <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'superadmin_api_config' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_api_config' %}">
+                <i data-lucide="settings-2" class="h-5 w-5 shrink-0"></i>
+                <span class="whitespace-nowrap">API Configuration</span>
+              </a>
+              <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'superadmin_recovery_requests' or request.resolver_match.url_name == 'superadmin_resolve_recovery' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_recovery_requests' %}">
+                <i data-lucide="key-round" class="h-5 w-5 shrink-0"></i>
+                <span class="whitespace-nowrap">Récupérations</span>
+              </a>
+            </div>
+            <div class="border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
               <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2 px-2">Affiliation</div>
               <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'affiliate_list' or request.resolver_match.url_name == 'affiliate_withdrawals' or request.resolver_match.url_name == 'approve_withdrawal' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:affiliate_list' %}">
                 <i data-lucide="users" class="h-5 w-5 shrink-0"></i>
