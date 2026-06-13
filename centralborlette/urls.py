@@ -28,6 +28,7 @@ from accounts import views as accounts_views
 urlpatterns = [
     path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('favicon.ico'), permanent=True)),
     path('', include('landing.urls')),
+    path('admin/', accounts_views.admin_index_redirect),
     path('admin/', admin.site.urls),
     path('portal/', include('admin_portal.urls')),
     path('agent/', include('agent_portal.urls')),

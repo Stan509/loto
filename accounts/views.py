@@ -253,3 +253,11 @@ def superadmin_toggle_borlette_status(request: HttpRequest, borlette_id: int):
     
     return redirect("superadmin_dashboard")
 
+
+def admin_index_redirect(request: HttpRequest):
+    if request.user.is_authenticated and (request.user.is_superuser or request.user.role == UserRole.SUPER_ADMIN):
+        return redirect('superadmin_dashboard')
+    from django.contrib import admin
+    return admin.site.index(request)
+
+
