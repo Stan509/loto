@@ -1,7 +1,5 @@
 #!/bin/bash
 set -e
-echo "Resetting database..."
-python reset_db_prod.py
 echo "Running database migrations..."
 python manage.py migrate --noinput
 echo "Running superuser creation script..."
