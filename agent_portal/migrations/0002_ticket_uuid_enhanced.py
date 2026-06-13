@@ -43,11 +43,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name='ticket',
-            name='id',
-            field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False),
-        ),
-        migrations.AlterField(
-            model_name='ticket',
             name='statut',
             field=models.CharField(choices=[('PREVIEW', 'Preview'), ('VALIDE', 'Validé'), ('PAYE', 'Payé'), ('ANNULE', 'Annulé')], default='PREVIEW', max_length=16),
         ),
