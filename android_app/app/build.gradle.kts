@@ -24,8 +24,8 @@ android {
             useSupportLibrary = true
         }
 
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.0.39:8000/api/agent/\"")
-        buildConfigField("String", "WS_BASE_URL", "\"ws://10.0.0.39:8000/ws/agent/\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://gaboom-loto-os-93ipq.ondigitalocean.app/api/agent/\"")
+        buildConfigField("String", "WS_BASE_URL", "\"wss://gaboom-loto-os-93ipq.ondigitalocean.app/ws/agent/\"")
     }
 
     signingConfigs {
