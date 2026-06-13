@@ -22,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2te&ijaw^d8(5+^w)p&vakt$t8y6%ih7@kl%5y78)0ngy+zf0k'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-2te&ijaw^d8(5+^w)p&vakt$t8y6%ih7@kl%5y78)0ngy+zf0k')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = ['*']
 
@@ -41,6 +41,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://10.0.0.56:8000',
     'http://10.0.0.55:8000',
     'http://10.0.0.124:8000',
+    'https://*.ondigitalocean.app',
 ]
 
 
@@ -70,6 +71,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -218,6 +220,7 @@ LOGGING = {
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',

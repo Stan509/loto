@@ -12,3 +12,6 @@ requests==2.32.3
 reportlab==4.2.0
 psycopg==3.2.1
 redis==5.0.8
+gunicorn==22.0.0
+whitenoise==6.7.0
+
