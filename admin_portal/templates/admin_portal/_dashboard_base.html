@@ -58,6 +58,7 @@
       <div class="portal-layout">
         <aside class="hidden lg:block portal-sidebar" role="navigation">
           <nav class="p-4 flex flex-col gap-8 min-h-full justify-center">
+            {% if not request.user.is_superuser %}
             <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'dashboard' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:dashboard' %}">
               <i data-lucide="layout-dashboard" class="h-5 w-5 shrink-0"></i>
               <span class="whitespace-nowrap">Dashboard</span>
@@ -99,6 +100,7 @@
               <i data-lucide="settings" class="h-5 w-5 shrink-0"></i>
               <span class="whitespace-nowrap">Paramètres</span>
             </a>
+            {% endif %}
             {% if request.user.is_superuser %}
             <div class="border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
               <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2 px-2">SuperAdmin</div>
@@ -169,42 +171,57 @@
       </footer>
 
       <nav class="lg:hidden fixed bottom-0 left-0 w-full bg-black/60 backdrop-blur-xl border-t border-white/10 flex justify-around py-2 z-50 overflow-x-auto gap-2 px-2" role="navigation" aria-label="Menu mobile">
-        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'dashboard' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:dashboard' %}" aria-label="Dashboard">
-          <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
-        </a>
-        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'information' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:information' %}" aria-label="Information">
-          <i data-lucide="info" class="h-5 w-5"></i>
-        </a>
-        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'audit_logs_list' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:audit_logs_list' %}" aria-label="Audit">
-          <i data-lucide="shield-check" class="h-5 w-5"></i>
-        </a>
-        {% if request.user.staffuser %}
-          {% if request.user.staffuser.is_active and request.user.staffuser.role == 'manager' %}
+        {% if request.user.is_superuser %}
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'superadmin_dashboard' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_dashboard' %}" aria-label="SuperAdmin Panel">
+            <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
+          </a>
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'superadmin_api_config' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_api_config' %}" aria-label="API Configuration">
+            <i data-lucide="settings-2" class="h-5 w-5"></i>
+          </a>
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'superadmin_recovery_requests' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_recovery_requests' %}" aria-label="Récupérations">
+            <i data-lucide="key-round" class="h-5 w-5"></i>
+          </a>
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'partner_list' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:partner_list' %}" aria-label="Partenaires">
+            <i data-lucide="user-cog" class="h-5 w-5"></i>
+          </a>
+        {% else %}
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'dashboard' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:dashboard' %}" aria-label="Dashboard">
+            <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
+          </a>
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'information' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:information' %}" aria-label="Information">
+            <i data-lucide="info" class="h-5 w-5"></i>
+          </a>
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'audit_logs_list' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:audit_logs_list' %}" aria-label="Audit">
+            <i data-lucide="shield-check" class="h-5 w-5"></i>
+          </a>
+          {% if request.user.staffuser %}
+            {% if request.user.staffuser.is_active and request.user.staffuser.role == 'manager' %}
+              <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'team' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:team' %}" aria-label="Team">
+                <i data-lucide="users" class="h-5 w-5"></i>
+              </a>
+            {% else %}
+              <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent opacity-40 bg-white/10 text-white min-w-[48px]" href="javascript:void(0)" aria-label="Team" tabindex="-1" aria-disabled="true">
+                <i data-lucide="users" class="h-5 w-5"></i>
+              </a>
+            {% endif %}
+          {% else %}
             <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'team' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:team' %}" aria-label="Team">
               <i data-lucide="users" class="h-5 w-5"></i>
             </a>
-          {% else %}
-            <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent opacity-40 bg-white/10 text-white min-w-[48px]" href="javascript:void(0)" aria-label="Team" tabindex="-1" aria-disabled="true">
-              <i data-lucide="users" class="h-5 w-5"></i>
-            </a>
           {% endif %}
-        {% else %}
-          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'team' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:team' %}" aria-label="Team">
-            <i data-lucide="users" class="h-5 w-5"></i>
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'agents' or request.resolver_match.url_name|slice:":6" == 'agent_' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:agents' %}" aria-label="Agents">
+            <i data-lucide="user-plus" class="h-5 w-5"></i>
+          </a>
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'tirages' or request.resolver_match.url_name|slice:":7" == 'tirage_' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:tirages' %}" aria-label="Tirages">
+            <i data-lucide="target" class="h-5 w-5"></i>
+          </a>
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'rapports' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:rapports' %}" aria-label="Rapports">
+            <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
+          </a>
+          <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'parametres' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:parametres' %}" aria-label="Paramètres">
+            <i data-lucide="settings" class="h-5 w-5"></i>
           </a>
         {% endif %}
-        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'agents' or request.resolver_match.url_name|slice:":6" == 'agent_' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:agents' %}" aria-label="Agents">
-          <i data-lucide="user-plus" class="h-5 w-5"></i>
-        </a>
-        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'tirages' or request.resolver_match.url_name|slice:":7" == 'tirage_' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:tirages' %}" aria-label="Tirages">
-          <i data-lucide="target" class="h-5 w-5"></i>
-        </a>
-        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'rapports' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:rapports' %}" aria-label="Rapports">
-          <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
-        </a>
-        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'parametres' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'admin_portal:parametres' %}" aria-label="Paramètres">
-          <i data-lucide="settings" class="h-5 w-5"></i>
-        </a>
       </nav>
     </div>
     </div>
