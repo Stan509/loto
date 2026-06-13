@@ -1,0 +1,105 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page_title %}{{ page_title }} · {% endif %}Agent</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon.png' %}?v=2">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'icon-16.png' %}?v=2">
+  <link rel="apple-touch-icon" sizes="192x192" href="{% static 'icon-192.png' %}?v=2">
+  <link rel="stylesheet" href="{% static 'css/agent.css' %}?v=20260203164400">
+  <script>
+    // Effacer l'ancien cache et appliquer le thème
+    (function() {
+      // Supprimer l'ancienne clé si elle existe
+      if (localStorage.getItem('gaboom-theme')) {
+        localStorage.removeItem('gaboom-theme');
+      }
+      var theme = localStorage.getItem('pwa-theme');
+      // Si le thème est "light" ou invalide, forcer "default"
+      if (!theme || theme === 'light') {
+        theme = 'default';
+        localStorage.setItem('pwa-theme', 'default');
+      }
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-title">Agent Portal</div>
+        <div class="brand-sub">{{ request.user.username }}</div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav-link{% if request.resolver_match.url_name == 'fiche' %} active{% endif %}" href="{% url 'agent:fiche' %}">Fiche</a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'historique' %} active{% endif %}" href="{% url 'agent:historique' %}">Historique</a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'resultat' %} active{% endif %}" href="{% url 'agent:resultat' %}">Résultat</a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'score' %} active{% endif %}" href="{% url 'agent:score' %}">Score</a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'statistiques' %} active{% endif %}" href="{% url 'agent:statistiques' %}">Statistiques</a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'tchala' %} active{% endif %}" href="{% url 'agent:tchala' %}">Tchala</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="theme-selector">
+          <button class="theme-btn" data-theme="default" title="Mode Défaut">
+            <span class="theme-icon">🌊</span>
+            <span class="theme-label">Défaut</span>
+          </button>
+          <button class="theme-btn" data-theme="light" title="Mode Jour">
+            <span class="theme-icon">☀️</span>
+            <span class="theme-label">Jour</span>
+          </button>
+          <button class="theme-btn" data-theme="dark" title="Mode Nuit">
+            <span class="theme-icon">🌙</span>
+            <span class="theme-label">Nuit</span>
+          </button>
+        </div>
+        <a class="nav-link" href="/logout/">Se déconnecter</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="page-header">
+        <h1 class="page-title">{% if page_title %}{{ page_title }}{% else %}Agent{% endif %}</h1>
+      </header>
+
+      {% if errors %}
+        <div class="alert alert-error">
+          {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+        </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script>
+    (function() {
+      var themeBtns = document.querySelectorAll('.theme-btn');
+      var currentTheme = localStorage.getItem('pwa-theme') || 'default';
+      
+      function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('pwa-theme', theme);
+        themeBtns.forEach(function(btn) {
+          btn.classList.toggle('active', btn.dataset.theme === theme);
+        });
+      }
+      
+      // Initialiser l'état actif
+      setTheme(currentTheme);
+      
+      // Ajouter les gestionnaires de clic
+      themeBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          setTheme(btn.dataset.theme);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

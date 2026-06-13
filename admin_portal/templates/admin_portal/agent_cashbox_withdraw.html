@@ -1,0 +1,258 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Retrait Caisse | Central Borlette{% endblock %}
+{% block page_title %}Retrait Caisse{% endblock %}
+{% block page_meta %}Agent: {{ agent.nom }}{% endblock %}
+
+{% block page_header %}{% endblock %}
+
+{% block page_body %}
+<style>
+  .withdraw-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px 28px 48px;
+  }
+
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0 0 8px;
+  }
+
+  .page-header p {
+    color: var(--muted-color);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .card {
+    background: linear-gradient(135deg, rgba(20, 27, 45, 0.85), rgba(15, 20, 35, 0.92));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(12px);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .balance-display {
+    text-align: center;
+    padding: 24px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 14px;
+    margin-bottom: 24px;
+  }
+
+  .balance-display .label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 8px;
+  }
+
+  .balance-display .amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: #10b981;
+  }
+
+  .withdraw-options {
+    display: grid;
+    gap: 16px;
+  }
+
+  .option-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .option-card:hover {
+    background: rgba(58, 160, 255, 0.1);
+    border-color: rgba(58, 160, 255, 0.3);
+  }
+
+  .option-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 8px;
+  }
+
+  .option-card p {
+    font-size: 13px;
+    color: var(--muted-color);
+    margin: 0;
+  }
+
+  .input-group {
+    margin-top: 16px;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 8px;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: var(--text-color);
+    font-size: 14px;
+  }
+
+  .input-group input:focus {
+    outline: none;
+    border-color: rgba(58, 160, 255, 0.5);
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, rgba(58, 160, 255, 0.9), rgba(99, 102, 241, 0.9));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    display: inline-block;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .error-box {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .error-box ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+  }
+
+  .error-box li {
+    color: #ef4444;
+    font-size: 13px;
+  }
+</style>
+
+<div class="withdraw-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <h1>Retrait Caisse</h1>
+    <p>Agent: {{ agent.nom }} | Téléphone: {{ agent.telephone }}</p>
+  </header>
+
+  {% if errors %}
+  <div class="error-box">
+    <strong>Erreurs:</strong>
+    <ul>
+      {% for error in errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Balance Display -->
+  <div class="card">
+    <div class="balance-display">
+      <div class="label">Solde actuel en caisse</div>
+      <div class="amount">{{ current_balance|floatformat:2 }} G</div>
+    </div>
+  </div>
+
+  <!-- Withdrawal Options -->
+  <div class="card">
+    <h2 style="font-size: 18px; font-weight: 600; color: var(--text-color); margin: 0 0 20px;">Options de retrait</h2>
+    
+    <form method="post">
+      {% csrf_token %}
+      
+      <div class="withdraw-options">
+        <!-- Option 1: Réduire de moitié -->
+        <div class="option-card">
+          <h3>📉 Réduire de moitié</h3>
+          <p>Retirer 50% du solde actuel ({{ current_balance|floatformat:2 }} / 2 = {{ half_balance|floatformat:2 }} G)</p>
+          <button type="submit" name="action" value="half" class="btn-primary" style="margin-top: 16px; width: 100%;">
+            Retirer la moitié
+          </button>
+        </div>
+
+        <!-- Option 2: Montant personnalisé -->
+        <div class="option-card">
+          <h3>💰 Montant personnalisé</h3>
+          <p>Spécifier un montant à retirer</p>
+          <div class="input-group">
+            <label for="custom_amount">Montant à retirer (G)</label>
+            <input type="number" id="custom_amount" name="custom_amount" step="0.01" min="0" max="{{ current_balance }}" placeholder="Ex: 5000">
+          </div>
+          <div class="input-group">
+            <label for="note_custom">Note (optionnel)</label>
+            <input type="text" id="note_custom" name="note" placeholder="Ex: Collecte fin de journée">
+          </div>
+          <button type="submit" name="action" value="custom" class="btn-primary" style="margin-top: 16px; width: 100%;">
+            Retirer ce montant
+          </button>
+        </div>
+
+        <!-- Option 3: Garder une partie -->
+        <div class="option-card">
+          <h3>🔒 Garder une partie</h3>
+          <p>Spécifier le montant à garder dans la caisse</p>
+          <div class="input-group">
+            <label for="keep_amount">Montant à garder (G)</label>
+            <input type="number" id="keep_amount" name="keep_amount" step="0.01" min="0" max="{{ current_balance }}" placeholder="Ex: 2000">
+          </div>
+          <button type="submit" name="action" value="keep" class="btn-primary" style="margin-top: 16px; width: 100%;">
+            Garder ce montant
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <a href="{% url 'admin_portal:agents' %}" class="btn-secondary">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

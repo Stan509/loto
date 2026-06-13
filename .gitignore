@@ -1,0 +1,51 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database
+db.sqlite3
+*.db
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Logs and databases
+*.log
+api_errors.log
+server.log
+
+# Media / Uploads
+media/
+
+# Node modules
+node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary debugging/query files
+query_do.py
+query_spec.py
+do_resources.json
+debug_validation.py
+
+# Android ignore
+android_app/build/
+android_app/app/build/
+android_app/.gradle/
+android_app/local.properties
+android_app/*.hprof
+.gradle/
+build/
+*.hprof
+

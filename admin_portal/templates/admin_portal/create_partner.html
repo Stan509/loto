@@ -1,0 +1,122 @@
+{% extends "admin_portal/_dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Créer un Partenaire | Central Borlette{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Créer un Partenaire</div>
+      <div class="portal-page__meta">Nouveau compte avec accès limités</div>
+    </div>
+    <a href="{% url 'admin_portal:partner_list' %}" class="gaboom-btn-ghost">← Retour</a>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <form method="post" class="space-y-4 max-w-2xl">
+      {% csrf_token %}
+
+      <!-- User Info -->
+      <section class="gaboom-card p-4">
+        <div class="text-sm font-semibold mb-4">Informations du compte</div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Nom d'utilisateur *</label>
+            <input type="text" name="username" required class="gaboom-input w-full" placeholder="ex: partenaire_marck">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Email</label>
+            <input type="email" name="email" class="gaboom-input w-full" placeholder="partenaire@example.com">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Mot de passe *</label>
+            <input type="password" name="password" required class="gaboom-input w-full" placeholder="••••••••">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Prénom</label>
+            <input type="text" name="first_name" class="gaboom-input w-full" placeholder="Prénom">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Nom</label>
+            <input type="text" name="last_name" class="gaboom-input w-full" placeholder="Nom">
+          </div>
+        </div>
+      </section>
+
+      <!-- Permissions -->
+      <section class="gaboom-card p-4 border-l-4 border-indigo-500">
+        <div class="text-sm font-semibold mb-4">Permissions du partenaire</div>
+        
+        <div class="space-y-3">
+          <label class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+            <input type="checkbox" name="can_submit_results" checked class="mt-1 w-5 h-5 text-indigo-500 rounded">
+            <div>
+              <div class="font-medium text-sm">Donner les résultats des tirages</div>
+              <div class="text-xs text-slate-500">Le partenaire peut soumettre les résultats des tirages pour les borlettes autorisées</div>
+            </div>
+          </label>
+          
+          <label class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+            <input type="checkbox" name="can_confirm_affiliate_payments" checked class="mt-1 w-5 h-5 text-indigo-500 rounded">
+            <div>
+              <div class="font-medium text-sm">Confirmer les paiements des affiliés</div>
+              <div class="text-xs text-slate-500">Le partenaire peut marquer les demandes de retrait des affiliés comme payées</div>
+            </div>
+          </label>
+          
+          <label class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+            <input type="checkbox" name="can_renew_subscriptions" checked class="mt-1 w-5 h-5 text-indigo-500 rounded">
+            <div>
+              <div class="font-medium text-sm">Renouveler les abonnements des directeurs</div>
+              <div class="text-xs text-slate-500">Le partenaire peut renouveler les abonnements des directeurs pour les borlettes autorisées</div>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Borlettes Access -->
+      <section class="gaboom-card p-4">
+        <div class="text-sm font-semibold mb-4">Accès aux borlettes</div>
+        <div class="text-xs text-slate-500 mb-3">Laissez vide pour donner accès à toutes les borlettes</div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {% for borlette in borlettes %}
+          <label class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer">
+            <input type="checkbox" name="allowed_borlettes" value="{{ borlette.id }}" class="w-4 h-4 text-indigo-500 rounded">
+            <span class="text-sm">{{ borlette.nom_borlette }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- Notice -->
+      <div class="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+        <div class="flex items-start gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div class="text-sm text-amber-700 dark:text-amber-300">
+            <p class="font-medium">Limitations des partenaires</p>
+            <p class="text-xs mt-1">Les partenaires ne peuvent pas voir les montants d'argent accumulés ni le nombre d'agents par borlette, même pour les borlettes auxquelles ils ont accès.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="flex gap-3">
+        <button type="submit" class="gaboom-btn-primary">
+          Créer le partenaire
+        </button>
+        <a href="{% url 'admin_portal:partner_list' %}" class="gaboom-btn-ghost">
+          Annuler
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+{% endblock %}

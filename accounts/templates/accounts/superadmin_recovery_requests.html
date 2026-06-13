@@ -1,0 +1,107 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Central Borlette - Demandes de récupération</title>
+  <script src="{% static 'js/gaboom-theme.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'css/gaboom.css' %}">
+</head>
+<body>
+  <div class="gaboom-app-bg p-6">
+    <div class="mx-auto max-w-5xl">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold tracking-tight">Demandes de récupération de compte</h1>
+        <a href="/admin/" class="gaboom-btn-ghost text-sm">Retour au panel</a>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="mb-4 rounded-xl border px-4 py-3 text-sm {% if message.tags == 'success' %}border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300{% else %}border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="gaboom-card p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span class="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
+          En attente ({{ pending|length }})
+        </h2>
+        {% if pending %}
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500">
+                  <th class="py-2 text-left font-medium">Date</th>
+                  <th class="py-2 text-left font-medium">Utilisateur</th>
+                  <th class="py-2 text-left font-medium">Borlette</th>
+                  <th class="py-2 text-left font-medium">Téléphone</th>
+                  <th class="py-2 text-left font-medium">Message</th>
+                  <th class="py-2 text-right font-medium">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in pending %}
+                <tr class="border-b border-slate-100 dark:border-slate-800">
+                  <td class="py-3 whitespace-nowrap">{{ r.created_at|date:"d/m/Y H:i" }}</td>
+                  <td class="py-3 font-medium">{{ r.user.username }}</td>
+                  <td class="py-3">{{ r.borlette.nom_borlette|default:"—" }}</td>
+                  <td class="py-3">{{ r.phone_number|default:"—" }}</td>
+                  <td class="py-3 max-w-xs truncate" title="{{ r.message }}">{{ r.message|default:"—" }}</td>
+                  <td class="py-3 text-right">
+                    <a href="{% url 'superadmin_resolve_recovery' r.id %}" class="gaboom-btn-primary text-xs px-3 py-1.5 inline-block">
+                      Résoudre
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-slate-500 text-sm">Aucune demande en attente.</p>
+        {% endif %}
+      </div>
+
+      <div class="gaboom-card p-6">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+          Dernières résolutions
+        </h2>
+        {% if resolved %}
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500">
+                  <th class="py-2 text-left font-medium">Date</th>
+                  <th class="py-2 text-left font-medium">Utilisateur</th>
+                  <th class="py-2 text-left font-medium">Borlette</th>
+                  <th class="py-2 text-left font-medium">Résolu par</th>
+                  <th class="py-2 text-left font-medium">Temp password</th>
+                  <th class="py-2 text-left font-medium">Expire</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in resolved %}
+                <tr class="border-b border-slate-100 dark:border-slate-800">
+                  <td class="py-3 whitespace-nowrap">{{ r.resolved_at|date:"d/m/Y H:i" }}</td>
+                  <td class="py-3 font-medium">{{ r.user.username }}</td>
+                  <td class="py-3">{{ r.borlette.nom_borlette|default:"—" }}</td>
+                  <td class="py-3">{{ r.resolved_by.username|default:"—" }}</td>
+                  <td class="py-3 font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded inline-block">{{ r.temp_password|default:"—" }}</td>
+                  <td class="py-3">{{ r.temp_password_expires_at|date:"d/m/Y H:i"|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-slate-500 text-sm">Aucune demande résolue.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

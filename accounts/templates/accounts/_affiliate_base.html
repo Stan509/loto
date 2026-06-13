@@ -1,0 +1,120 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{% block title %}Affiliate Dashboard | Central Borlette{% endblock %}</title>
+    <script src="{% static 'js/gaboom-theme.js' %}"></script>
+    <script src="{% static 'js/gaboom-hero.js' %}" defer></script>
+    <link rel="stylesheet" href="{% static 'css/gaboom.css' %}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+  <body>
+    <input class="portal-nav-toggle" type="checkbox" id="portal_nav_toggle" />
+
+    <div class="gaboom-app-bg">
+    <div class="gaboom-hero-layer" aria-hidden="true">
+      <canvas id="gaboomParticles" class="gaboom-hero-particles"></canvas>
+      <div class="gaboom-hero-radial"></div>
+      <div class="gaboom-float-ball gaboom-float-ball--o1"></div>
+      <div class="gaboom-float-ball gaboom-float-ball--b1"></div>
+      <div class="gaboom-float-ball gaboom-float-ball--o2"></div>
+      <div class="gaboom-float-ball gaboom-float-ball--b2"></div>
+    </div>
+    <div class="gaboom-hero-blob gaboom-hero-blob--a" aria-hidden="true"></div>
+    <div class="gaboom-hero-blob gaboom-hero-blob--b" aria-hidden="true"></div>
+    <div class="gaboom-hero-blob gaboom-hero-blob--c" aria-hidden="true"></div>
+    <div class="gaboom-bg-grain" aria-hidden="true"></div>
+    <div class="portal-shell relative">
+      <header class="portal-banner" role="banner">
+        <div class="portal-banner__inner">
+          <div class="portal-banner__identity">
+            <img src="{% static 'logo.png' %}" alt="Gaboom Logo" class="portal-banner__logo h-10 w-10 object-contain rounded-full">
+            <div class="portal-banner__text">
+              <div class="portal-banner__name">Affilié Central Borlette</div>
+            </div>
+          </div>
+
+          <div class="portal-banner__actions flex items-center gap-2">
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="gaboom-btn-ghost gap-2 border-rose-500/25 bg-rose-500/10 text-rose-700 hover:bg-rose-500/15 dark:text-rose-300" type="submit" aria-label="Déconnexion">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+                  <path d="M10 3a1 1 0 0 1 1 1v3a1 1 0 1 1-2 0V5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h4v-2a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h4Zm9.707 9.293-3-3a1 1 0 1 0-1.414 1.414L16.586 11H10a1 1 0 1 0 0 2h6.586l-1.293 1.293a1 1 0 0 0 1.414 1.414l3-3a1 1 0 0 0 0-1.414Z"/>
+                </svg>
+                <span class="hidden sm:inline">Déconnexion</span>
+              </button>
+            </form>
+            <button type="button" class="gaboom-btn-ghost gap-2" onclick="window.__gaboomToggleTheme && window.__gaboomToggleTheme()" aria-label="Thème">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+                <path d="M12 2a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm0 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.222 5.636a1 1 0 0 1 1.414 0l1.06 1.06a1 1 0 1 1-1.414 1.415l-1.06-1.06a1 1 0 0 1 0-1.415ZM2 12a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1Zm3.282 6.889a1 1 0 0 1 1.414 0l1.06 1.06a1 1 0 1 1-1.414 1.415l-1.06-1.06a1 1 0 0 1 0-1.415ZM12 19.5a1 1 0 0 1 1 1V22a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1Zm6.889-3.282a1 1 0 0 1 0 1.414l-1.06 1.06a1 1 0 1 1-1.415-1.414l1.06-1.06a1 1 0 0 1 1.415 0ZM19.5 11a1 1 0 1 1 0 2H21a1 1 0 1 1 0-2h-1.5Zm-2.086-4.304a1 1 0 0 1 0-1.414l1.06-1.06a1 1 0 1 1 1.415 1.414l-1.06 1.06a1 1 0 0 1-1.415 0Z"/>
+              </svg>
+              <span class="hidden sm:inline">Thème</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="portal-layout">
+        <aside class="hidden lg:block portal-sidebar" role="navigation">
+          <nav class="p-4 flex flex-col gap-8 min-h-full justify-center">
+            <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'dashboard' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'affiliate:dashboard' %}">
+              <i data-lucide="layout-dashboard" class="h-5 w-5 shrink-0"></i>
+              <span class="whitespace-nowrap">Dashboard</span>
+            </a>
+            <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'withdrawals' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'affiliate:withdrawals' %}">
+              <i data-lucide="wallet" class="h-5 w-5 shrink-0"></i>
+              <span class="whitespace-nowrap">Retraits</span>
+            </a>
+            <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'referrals' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'affiliate:referrals' %}">
+              <i data-lucide="users" class="h-5 w-5 shrink-0"></i>
+              <span class="whitespace-nowrap">Filleuls</span>
+            </a>
+            <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'settings' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'affiliate:settings' %}">
+              <i data-lucide="settings" class="h-5 w-5 shrink-0"></i>
+              <span class="whitespace-nowrap">Paramètres</span>
+            </a>
+          </nav>
+        </aside>
+
+        <main class="portal-main pb-24 lg:pb-16" role="main">
+          {% block content %}{% endblock %}
+        </main>
+      </div>
+
+      <footer class="hidden lg:block portal-footer border-t border-white/10 bg-white/20 backdrop-blur-xl">
+        <div class="mx-auto w-full max-w-6xl px-5 h-full text-[11px] text-slate-700 dark:text-slate-200 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>&copy; Gaboom • Tous droits réservés</div>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <a class="inline-flex items-center gap-1 hover:underline" href="mailto:gaboom@programmer.net">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+                <path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 4.236-7.4 4.625a1.5 1.5 0 0 1-1.6 0L4 8.236V6.5l7.9 4.938a.5.5 0 0 0 .2.062.5.5 0 0 0 .2-.062L20 6.5v1.736Z"/>
+              </svg>
+              gaboom@programmer.net
+            </a>
+          </div>
+        </div>
+      </footer>
+
+      <nav class="lg:hidden fixed bottom-0 left-0 w-full bg-black/60 backdrop-blur-xl border-t border-white/10 flex justify-around py-2 z-50 overflow-x-auto gap-2 px-2" role="navigation" aria-label="Menu mobile">
+        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'dashboard' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'affiliate:dashboard' %}" aria-label="Dashboard">
+          <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
+        </a>
+        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'withdrawals' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'affiliate:withdrawals' %}" aria-label="Retraits">
+          <i data-lucide="wallet" class="h-5 w-5"></i>
+        </a>
+        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'referrals' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'affiliate:referrals' %}" aria-label="Filleuls">
+          <i data-lucide="users" class="h-5 w-5"></i>
+        </a>
+        <a class="flex flex-col items-center justify-center rounded-2xl py-2 text-xs font-semibold transition border border-transparent bg-white/10 text-white min-w-[48px] {% if request.resolver_match.url_name == 'settings' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'affiliate:settings' %}" aria-label="Paramètres">
+          <i data-lucide="settings" class="h-5 w-5"></i>
+        </a>
+      </nav>
+    </div>
+    </div>
+    <script>
+        lucide.createIcons();
+    </script>
+  </body>
+</html>

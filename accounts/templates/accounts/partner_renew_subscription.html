@@ -1,0 +1,111 @@
+{% extends "accounts/_partner_base.html" %}
+{% load static %}
+
+{% block title %}Renouveler Abonnement | Partenaire{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Renouveler un abonnement</div>
+      <div class="portal-page__meta">{{ subscription.borlette.nom_borlette }}</div>
+    </div>
+    <a href="{% url 'partner:dashboard' %}" class="gaboom-btn-ghost">← Retour</a>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Subscription Details -->
+    <section class="gaboom-card p-4 border-l-4 border-blue-500">
+      <div class="text-sm font-semibold mb-4">Détails de l'abonnement</div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Borlette</div>
+          <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ subscription.borlette.nom_borlette }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Type d'abonnement</div>
+          <div class="font-medium">{{ subscription.get_subscription_type_display|default:"Standard" }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Date de début</div>
+          <div class="font-medium">{{ subscription.start_date|date:"d/m/Y" }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Date d'expiration</div>
+          <div class="font-medium {% if subscription.end_date < now %}text-rose-500{% else %}text-amber-500{% endif %}">
+            {{ subscription.end_date|date:"d/m/Y" }}
+            {% if subscription.end_date < now %}(Expiré){% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Renewal Form -->
+    <section class="gaboom-card p-4">
+      <div class="text-sm font-semibold mb-4">Renouvellement</div>
+      
+      <form method="post" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        
+        <div>
+          <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+            Nombre de mois à ajouter <span class="text-rose-500">*</span>
+          </label>
+          <select name="months" class="gaboom-input w-full">
+            <option value="1" selected>1 mois</option>
+            <option value="3">3 mois</option>
+            <option value="6">6 mois</option>
+            <option value="12">12 mois</option>
+          </select>
+        </div>
+
+        <!-- Preuve de paiement -->
+        <div>
+          <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+            Preuve de paiement <span class="text-rose-500">*</span>
+          </label>
+          <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+            <div class="space-y-1 text-center">
+              <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <div class="flex text-sm text-slate-600 dark:text-slate-400 justify-center">
+                <label for="payment_proof" class="relative cursor-pointer bg-white dark:bg-slate-800 rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                  <span>Choisir un fichier</span>
+                  <input id="payment_proof" name="payment_proof" type="file" class="sr-only" accept="image/*,.pdf,.png,.jpg,.jpeg" required>
+                </label>
+              </div>
+              <p class="text-xs text-slate-500">PNG, JPG, PDF jusqu'à 5MB</p>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">Capture d'écran du paiement, reçu MonCash, etc.</p>
+        </div>
+
+        <div class="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <p class="text-sm text-amber-800 dark:text-amber-200">
+            <span class="font-semibold">Important :</span> Le renouvellement nécessite une preuve de paiement. Veuillez joindre une capture d'écran ou un reçu.
+          </p>
+        </div>
+
+        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p class="text-sm text-blue-700 dark:text-blue-300">
+            Le nouvel abonnement sera prolongé à partir de la date actuelle d'expiration ({{ subscription.end_date|date:"d/m/Y" }}).
+          </p>
+        </div>
+
+        <div class="flex gap-3">
+          <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+            Renouveler l'abonnement
+          </button>
+          <a href="{% url 'partner:dashboard' %}" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-lg shadow-sm transition-colors">
+            Annuler
+          </a>
+        </div>
+      </form>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

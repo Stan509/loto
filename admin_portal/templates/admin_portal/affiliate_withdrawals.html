@@ -1,0 +1,165 @@
+{% extends "admin_portal/_dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Gestion des Retraits Affiliés | Central Borlette{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Gestion des Retraits Affiliés</div>
+      <div class="portal-page__meta">Approbation • Suivi • Preuves de paiement</div>
+    </div>
+    <a href="{% url 'admin_portal:affiliate_list' %}" class="gaboom-btn-ghost">
+      Voir les affiliés
+    </a>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Alert for overdue withdrawals -->
+    {% if overdue_count > 0 %}
+    <div class="p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="font-medium text-rose-700 dark:text-rose-300">
+          {{ overdue_count }} retrait{{ overdue_count|pluralize }} en retard de traitement (plus de 48h)
+        </span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Stats Cards -->
+    <section>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="gaboom-card p-4 border-l-4 border-amber-500">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">En attente</div>
+          <div class="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-300">{{ pending_count }}</div>
+          <div class="text-sm text-amber-500">{{ pending_amount|floatformat:2 }} GDS</div>
+        </div>
+        <div class="gaboom-card p-4 border-l-4 border-emerald-500">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Total payé</div>
+          <div class="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-300">{{ total_paid|floatformat:2 }}</div>
+          <div class="text-sm text-slate-500">GDS</div>
+        </div>
+        <div class="gaboom-card p-4 border-l-4 border-blue-500">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">En retard</div>
+          <div class="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-300">{{ overdue_count }}</div>
+          <div class="text-sm text-slate-500">Retraits > 48h</div>
+        </div>
+        <div class="gaboom-card p-4 border-l-4 border-indigo-500">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Délai traitement</div>
+          <div class="mt-2 text-2xl font-bold text-indigo-600 dark:text-indigo-300">48h</div>
+          <div class="text-sm text-slate-500">Maximum</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filter -->
+    <div class="flex flex-wrap gap-2">
+      <a href="?" class="gaboom-btn-ghost text-sm {% if not status_filter %}border-gaboom-orange bg-gaboom-orange/10{% endif %}">Tous</a>
+      <a href="?status=pending" class="gaboom-btn-ghost text-sm {% if status_filter == 'pending' %}border-amber-500 bg-amber-500/10{% endif %}">En attente</a>
+      <a href="?status=paid" class="gaboom-btn-ghost text-sm {% if status_filter == 'paid' %}border-emerald-500 bg-emerald-500/10{% endif %}">Payés</a>
+      <a href="?status=rejected" class="gaboom-btn-ghost text-sm {% if status_filter == 'rejected' %}border-rose-500 bg-rose-500/10{% endif %}">Refusés</a>
+    </div>
+
+    <!-- Withdrawals Table -->
+    <section class="gaboom-card p-4 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-200 dark:border-slate-700">
+            <th class="text-left py-2 px-2">Date</th>
+            <th class="text-left py-2 px-2">Affilié</th>
+            <th class="text-left py-2 px-2">Montant</th>
+            <th class="text-left py-2 px-2">Méthode</th>
+            <th class="text-left py-2 px-2">Infos paiement</th>
+            <th class="text-left py-2 px-2">Statut</th>
+            <th class="text-left py-2 px-2">Échéance</th>
+            <th class="text-left py-2 px-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for withdrawal in withdrawals %}
+          <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="py-3 px-2">{{ withdrawal.created_at|date:"d/m/Y H:i" }}</td>
+            <td class="py-3 px-2">
+              <div class="font-medium">{{ withdrawal.user.username }}</div>
+              <div class="text-xs text-slate-500">{{ withdrawal.user.email }}</div>
+            </td>
+            <td class="py-3 px-2 font-semibold">{{ withdrawal.amount|floatformat:2 }} GDS</td>
+            <td class="py-3 px-2">
+              {% if withdrawal.payment_method == 'moncash' %}MonCash
+              {% elif withdrawal.payment_method == 'natcash' %}NatCash
+              {% elif withdrawal.payment_method == 'western_union' %}Western Union
+              {% else %}-{% endif %}
+            </td>
+            <td class="py-3 px-2 text-xs">
+              {% if withdrawal.payment_method == 'moncash' or withdrawal.payment_method == 'natcash' %}
+                {{ withdrawal.payment_phone|default:"Non défini" }}
+              {% elif withdrawal.payment_method == 'western_union' %}
+                {{ withdrawal.payment_full_name|default:"Non défini" }}<br>
+                {{ withdrawal.payment_location|default:"" }}
+              {% endif %}
+            </td>
+            <td class="py-3 px-2">
+              <span class="px-2 py-1 rounded-full text-xs
+                {% if withdrawal.status == 'paid' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300
+                {% elif withdrawal.status == 'pending' %}bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300
+                {% elif withdrawal.status == 'approved' %}bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300
+                {% else %}bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300{% endif %}">
+                {% if withdrawal.status == 'paid' %}Payé
+                {% elif withdrawal.status == 'pending' %}En attente
+                {% elif withdrawal.status == 'approved' %}Approuvé
+                {% else %}Refusé{% endif %}
+              </span>
+              {% if withdrawal.proof_screenshot %}
+              <div class="mt-1">
+                <a href="{{ withdrawal.proof_screenshot.url }}" target="_blank" class="text-xs text-blue-500 hover:underline">
+                  Voir la preuve
+                </a>
+              </div>
+              {% endif %}
+            </td>
+            <td class="py-3 px-2 text-xs">
+              {% if withdrawal.status == 'pending' and withdrawal.expected_by %}
+                {% if withdrawal.expected_by < now %}
+                  <span class="text-rose-500 font-medium">En retard!</span>
+                {% else %}
+                  {{ withdrawal.expected_by|date:"d/m/Y H:i" }}
+                {% endif %}
+              {% elif withdrawal.processed_at %}
+                {{ withdrawal.processed_at|date:"d/m/Y H:i" }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td class="py-3 px-2">
+              {% if withdrawal.status == 'pending' %}
+                <a href="{% url 'admin_portal:approve_withdrawal' withdrawal.id %}" class="gaboom-btn-primary text-xs">
+                  Traiter
+                </a>
+              {% elif withdrawal.status == 'paid' %}
+                <span class="text-xs text-emerald-600 dark:text-emerald-400">
+                  Payé par {{ withdrawal.processed_by.username|default:"Admin" }}
+                </span>
+              {% else %}
+                <span class="text-xs text-slate-400">Terminé</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="py-8 text-center text-slate-500">
+              Aucun retrait trouvé
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.sqlite3
+db.sqlite3
+.env
+.venv/
+venv/
+node_modules/
+*.log
+media/
+staticfiles/
+.pytest_cache/
+.mypy_cache/
+
+# Services build artifacts
+services/validator_rust/target/
+services/gateway_go/gateway

@@ -1,0 +1,105 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prévisualisation ticket</title>
+  <link rel="stylesheet" href="{% static 'css/ticket_thermal.css' %}">
+</head>
+<body>
+  <div class="screen-only actions">
+    <a class="btn" href="/portal/dashboard/">Annuler</a>
+    {% if preview.is_valid %}
+      <a class="btn" href="#" onclick="window.print(); return false;">Imprimer</a>
+      <form method="post" action="{% url 'admin_portal:tickets:confirm' %}" style="display: inline;">
+        {% csrf_token %}
+        <button class="btn" type="submit">Confirmer</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if errors %}
+    <div class="screen-only error-box">
+      {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  {% if preview.errors %}
+    <div class="screen-only error-box">
+      {% for e in preview.errors %}<div>{{ e }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="ticket">
+    <div class="header-row">
+      <div class="center">
+        {% if preview.borlette_logo_url %}
+          <div class="borlette-logo">
+            <img src="{{ preview.borlette_logo_url }}" alt="{{ preview.borlette_name }}" />
+          </div>
+        {% else %}
+          <div class="title">GABOOM CENTRAL</div>
+        {% endif %}
+        <div class="subtitle">{{ preview.borlette_name }}</div>
+        <div class="quote">"{{ preview.borlette_slogan }}"</div>
+      </div>
+      <div class="qr-code">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ preview.qr_code_url }}" alt="QR Code" />
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div>Tel: {{ preview.borlette_tel }}</div>
+    <div>{{ preview.borlette_city }}</div>
+
+    <div class="sep">--------------------------------</div>
+
+    <div>Ticket: {{ preview.ticket_number }}</div>
+    <div>Date: {{ preview.date_str }}</div>
+    <div>Heure: {{ preview.time_str }}</div>
+
+    <div class="spacer"></div>
+
+    <div>Agent: {{ preview.agent_name }}</div>
+    <div>Tirage: {% if preview.draw_names %}{{ preview.draw_names|join:", " }}{% else %}—{% endif %}</div>
+
+    <div class="sep">--------------------------------</div>
+
+    <pre class="lines">{% for line in preview.ticket_lines_print %}{{ line }}
+{% endfor %}</pre>
+
+    {% if preview.free_marriages %}
+      <div class="sep">--- BONUS ---</div>
+      <pre class="lines">{% for line in preview.free_marriages_print %}{{ line }}
+{% endfor %}MISE: 0
+</pre>
+    {% endif %}
+
+    <div class="sep">--------------------------------</div>
+    
+    {% if preview.mariage_gratuit_actif %}
+      <div class="mariage-gratuit">Mariage Gratuit {{ preview.mariage_gratuit_montant }} Gdes</div>
+    {% endif %}
+    
+    <div class="footer-text">{{ preview.ticket_footer_text }}</div>
+    <div class="footer-brand">Gaboom Borlette OS  www.gaboombos.com</div>
+    
+    <div class="sep">--------------------------------</div>
+    <div class="center">Bonne chance</div>
+    <div class="center">Merci pour votre confiance</div>
+  </div>
+
+  <div class="screen-only formbox">
+    <form method="post" action="{% url 'admin_portal:tickets:preview' %}">
+      {% csrf_token %}
+      <div class="label">draw_ids (séparés par virgule)</div>
+      <input name="draw_ids" class="input" value="">
+      <div class="label">ticket_lines_json (JSON list[dict])</div>
+      <textarea name="ticket_lines_json" class="textarea">[]</textarea>
+      <button class="btn" type="submit">Valider + Prévisualiser</button>
+    </form>
+  </div>
+</body>
+</html>

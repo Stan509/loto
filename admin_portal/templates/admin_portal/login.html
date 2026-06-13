@@ -1,0 +1,60 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Central Borlette</title>
+    <script src="{% static 'js/gaboom-theme.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/gaboom.css' %}">
+  </head>
+  <body>
+    <div class="gaboom-app-bg flex items-center justify-center p-6">
+      <div class="w-full max-w-md">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <img src="{% static 'logo.png' %}" alt="Gaboom Logo" class="h-9 w-9 object-contain rounded-full">
+            <div class="leading-tight">
+              <div class="text-sm font-semibold tracking-tight">Gaboom</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Central Borlette</div>
+            </div>
+          </div>
+
+          <button type="button" class="gaboom-btn-ghost" onclick="window.__gaboomToggleTheme && window.__gaboomToggleTheme()">Thème</button>
+        </div>
+
+        <div class="gaboom-card mt-6 p-8">
+          <h1 class="text-2xl font-semibold tracking-tight">Connexion</h1>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Accède à ton espace admin borlette.</p>
+
+          {% if form.errors %}
+            <div class="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300">Identifiants invalides.</div>
+          {% endif %}
+
+          <form method="post" class="gaboom-auth-form mt-6 space-y-4" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <div>
+              <div class="text-sm font-medium">{{ form.username.label }}</div>
+              <div class="mt-2">{{ form.username }}</div>
+            </div>
+
+            <div>
+              <div class="text-sm font-medium">{{ form.password.label }}</div>
+              <div class="mt-2">{{ form.password }}</div>
+            </div>
+
+            <button class="gaboom-btn-primary w-full" type="submit">Se connecter</button>
+          </form>
+
+          <div class="mt-4 text-center">
+            <a href="{% url 'account_recovery' %}" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline">
+              Récupération du compte
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

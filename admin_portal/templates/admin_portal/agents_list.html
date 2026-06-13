@@ -1,0 +1,483 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Agents | Central Borlette{% endblock %}
+{% block page_title %}Agents{% endblock %}
+{% block page_meta %}Gestion interne (V1){% endblock %}
+
+{% block page_header %}{% endblock %}
+
+{% block page_body %}
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     AGENTS PAGE - PREMIUM DARK GLASS
+     ═══════════════════════════════════════════════════════════ */
+  .agents-page {
+    max-width: 1440px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 28px 48px;
+  }
+
+  /* ─── Page Header ─────────────────────────────────────────── */
+  .agents-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .agents-page .page-header__left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .agents-page .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+  }
+  .agents-page .page-header p {
+    color: var(--muted-color);
+    font-size: 14px;
+    margin: 4px 0 0;
+  }
+  .agents-page .badge-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    background: rgba(58, 160, 255, 0.12);
+    border: 1px solid rgba(58, 160, 255, 0.25);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-blue);
+  }
+  .agents-page .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 11px 22px;
+    background: linear-gradient(135deg, rgba(58, 160, 255, 0.9), rgba(99, 102, 241, 0.9));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 4px 15px rgba(58, 160, 255, 0.25);
+  }
+  .agents-page .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(58, 160, 255, 0.35);
+  }
+
+  /* ─── Toolbar ─────────────────────────────────────────────── */
+  .agents-page .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: rgba(15, 20, 35, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    backdrop-filter: blur(8px);
+  }
+  .agents-page .search-box {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+  }
+  .agents-page .search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-color);
+    font-size: 14px;
+  }
+  .agents-page .search-box input::placeholder {
+    color: var(--muted-color);
+  }
+  .agents-page .filter-select {
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: var(--text-color);
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+    min-width: 130px;
+  }
+  .agents-page .filter-select option {
+    background: #1a1f2e;
+    color: var(--text-color);
+  }
+
+  /* ─── Table Wrap ──────────────────────────────────────────── */
+  .agents-page .table-wrap {
+    background: linear-gradient(135deg, rgba(20, 27, 45, 0.85), rgba(15, 20, 35, 0.92));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+  .agents-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .agents-page .data-table thead {
+    background: rgba(0, 0, 0, 0.3);
+  }
+  .agents-page .data-table th {
+    padding: 16px 18px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(255, 255, 255, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .agents-page .data-table td {
+    padding: 16px 18px;
+    font-size: 14px;
+    color: var(--text-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    vertical-align: middle;
+  }
+  .agents-page .data-table tbody tr {
+    transition: background 0.15s;
+  }
+  .agents-page .data-table tbody tr:hover {
+    background: rgba(58, 160, 255, 0.06);
+  }
+  .agents-page .data-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* ─── Agent Name with Avatar ──────────────────────────────── */
+  .agents-page .agent-name {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .agents-page .agent-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(58, 160, 255, 0.3), rgba(124, 77, 255, 0.3));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+    text-transform: uppercase;
+  }
+  .agents-page .agent-info strong {
+    display: block;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+  .agents-page .agent-info small {
+    font-size: 12px;
+    color: var(--muted-color);
+  }
+
+  /* ─── Badges ──────────────────────────────────────────────── */
+  .agents-page .badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .agents-page .badge--success {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: var(--accent-success);
+  }
+  .agents-page .badge--warning {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: var(--accent-warning);
+  }
+  .agents-page .badge--online {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: var(--accent-success);
+  }
+  .agents-page .badge--offline {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--muted-color);
+  }
+
+  /* ─── Action Buttons ──────────────────────────────────────── */
+  .agents-page .col-actions {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .agents-page .action-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .agents-page .action-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    text-decoration: none;
+    border: none;
+  }
+  .agents-page .action-btn--ghost {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+  }
+  .agents-page .action-btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .agents-page .action-btn--blue {
+    background: rgba(58, 160, 255, 0.12);
+    border: 1px solid rgba(58, 160, 255, 0.25);
+    color: var(--accent-blue);
+  }
+  .agents-page .action-btn--blue:hover {
+    background: rgba(58, 160, 255, 0.2);
+  }
+  .agents-page .action-btn--warning {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: var(--accent-warning);
+  }
+  .agents-page .action-btn--warning:hover {
+    background: rgba(245, 158, 11, 0.2);
+  }
+  .agents-page .action-btn--danger {
+    background: rgba(255, 77, 109, 0.12);
+    border: 1px solid rgba(255, 77, 109, 0.25);
+    color: var(--accent-danger);
+  }
+  .agents-page .action-btn--danger:hover {
+    background: rgba(255, 77, 109, 0.2);
+  }
+
+  /* ─── Empty State ─────────────────────────────────────────── */
+  .agents-page .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted-color);
+    font-size: 14px;
+  }
+
+  /* ─── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .agents-page {
+      padding: 24px 20px 40px;
+    }
+    .agents-page .hide-mobile {
+      display: none;
+    }
+    .agents-page .data-table th,
+    .agents-page .data-table td {
+      padding: 12px 14px;
+    }
+  }
+  @media (max-width: 600px) {
+    .agents-page .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .agents-page .toolbar {
+      flex-direction: column;
+    }
+    .agents-page .search-box {
+      width: 100%;
+    }
+    .agents-page .filter-select {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="agents-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div>
+      <div class="page-header__left">
+        <h1>Agents</h1>
+        <span class="badge-count">{{ agents|length }} agent{{ agents|length|pluralize:"s" }}</span>
+      </div>
+      <p>Gestion interne (V1)</p>
+    </div>
+    <a class="btn-primary" href="{% url 'admin_portal:agent_create' %}">+ Nouvel agent</a>
+  </header>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="Rechercher nom, téléphone...">
+    </div>
+    <select id="filterZone" class="filter-select">
+      <option value="">Zone: Toutes</option>
+    </select>
+    <select id="filterStatut" class="filter-select">
+      <option value="">Statut: Tous</option>
+      <option value="actif">Actif</option>
+      <option value="suspendu">Suspendu</option>
+    </select>
+    <select id="filterConnexion" class="filter-select">
+      <option value="">Connexion: Tous</option>
+      <option value="online">En ligne</option>
+      <option value="offline">Hors ligne</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  {% if agents %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Agent</th>
+          <th class="hide-mobile">Zone</th>
+          <th>Solde caisse</th>
+          <th>Statut</th>
+          <th>Connexion</th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="agentsTableBody">
+        {% for a in agents %}
+        <tr data-nom="{{ a.nom|lower }}" data-tel="{{ a.telephone|lower }}" data-zone="{{ a.zone|lower }}" data-statut="{% if a.statut == 'ACTIF' %}actif{% else %}suspendu{% endif %}" data-connexion="{% if a.etat_connexion == 'CONNECTE' %}online{% else %}offline{% endif %}">
+          <td>
+            <div class="agent-name">
+              <div class="agent-avatar">{{ a.nom|slice:":2" }}</div>
+              <div class="agent-info">
+                <strong>{{ a.nom }}</strong>
+                <small>{{ a.user.username }}</small>
+              </div>
+            </div>
+          </td>
+          <td class="hide-mobile">{{ a.zone }}</td>
+          <td>
+            <strong style="color: #10b981;">{{ a.solde_caisse_calculé|floatformat:2 }} G</strong>
+          </td>
+          <td>
+            {% if a.statut == 'ACTIF' %}
+              <span class="badge badge--success">Actif</span>
+            {% else %}
+              <span class="badge badge--warning">Suspendu</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if a.etat_connexion == 'CONNECTE' %}
+              <span class="badge badge--online">En ligne</span>
+            {% else %}
+              <span class="badge badge--offline">Hors ligne</span>
+            {% endif %}
+          </td>
+          <td class="col-actions">
+            <div class="action-group">
+              <a class="action-btn action-btn--ghost" href="{% url 'admin_portal:agent_detail' a.id %}">Voir</a>
+              <a class="action-btn action-btn--blue" href="{% url 'admin_portal:agent_edit' a.id %}">Modifier</a>
+              <a class="action-btn action-btn--success" href="{% url 'admin_portal:agent_cashbox_replenish' a.id %}">Réapprovisionner</a>
+              <a class="action-btn action-btn--warning" href="{% url 'admin_portal:agent_cashbox_withdraw' a.id %}">Retrait</a>
+              <form method="post" action="{% url 'admin_portal:agent_suspend' a.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button class="action-btn action-btn--warning" type="submit">{% if a.statut == 'ACTIF' %}Suspendre{% else %}Réactiver{% endif %}</button>
+              </form>
+              <a class="action-btn action-btn--danger" href="{% url 'admin_portal:agent_delete' a.id %}">Suppr.</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="table-wrap">
+    <div class="empty-state">Aucun agent pour l'instant. Cliquez sur "Nouvel agent" pour en créer un.</div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function() {
+  const searchInput = document.getElementById('searchInput');
+  const filterZone = document.getElementById('filterZone');
+  const filterStatut = document.getElementById('filterStatut');
+  const filterConnexion = document.getElementById('filterConnexion');
+  const tbody = document.getElementById('agentsTableBody');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+
+  // Populate zones dropdown
+  const zones = new Set();
+  rows.forEach(row => {
+    const zone = row.dataset.zone;
+    if (zone) zones.add(zone);
+  });
+  zones.forEach(zone => {
+    const opt = document.createElement('option');
+    opt.value = zone;
+    opt.textContent = zone.charAt(0).toUpperCase() + zone.slice(1);
+    filterZone.appendChild(opt);
+  });
+
+  function filterRows() {
+    const search = searchInput ? searchInput.value.toLowerCase() : '';
+    const zone = filterZone ? filterZone.value : '';
+    const statut = filterStatut ? filterStatut.value : '';
+    const connexion = filterConnexion ? filterConnexion.value : '';
+
+    rows.forEach(row => {
+      let show = true;
+
+      if (search && !row.dataset.nom.includes(search) && !row.dataset.tel.includes(search)) {
+        show = false;
+      }
+      if (show && zone && row.dataset.zone !== zone) {
+        show = false;
+      }
+      if (show && statut && row.dataset.statut !== statut) {
+        show = false;
+      }
+      if (show && connexion && row.dataset.connexion !== connexion) {
+        show = false;
+      }
+
+      row.style.display = show ? '' : 'none';
+    });
+  }
+
+  if (searchInput) searchInput.addEventListener('input', filterRows);
+  if (filterZone) filterZone.addEventListener('change', filterRows);
+  if (filterStatut) filterStatut.addEventListener('change', filterRows);
+  if (filterConnexion) filterConnexion.addEventListener('change', filterRows);
+})();
+</script>
+{% endblock %}

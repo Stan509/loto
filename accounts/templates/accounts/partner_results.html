@@ -1,0 +1,128 @@
+{% extends "accounts/_partner_base.html" %}
+{% load static %}
+
+{% block title %}Résultats | Partner Portal{% endblock %}
+{% block page_title %}Historique des Résultats{% endblock %}
+{% block page_subtitle %}Tous les résultats des tirages passés{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Filter -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4">
+    <form method="get" class="flex flex-wrap gap-4 items-end">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
+        <input type="date" name="date" value="{{ date_filter }}" 
+               class="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tirage</label>
+        <select name="tirage_code" class="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+          <option value="">Tous</option>
+          {% for code in tirage_codes %}
+          <option value="{{ code }}" {% if tirage_code_filter == code %}selected{% endif %}>{{ code }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
+        <i data-lucide="filter" class="h-4 w-4 inline mr-1"></i>
+        Filtrer
+      </button>
+      <a href="{% url 'partner:results' %}" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition">
+        Réinitialiser
+      </a>
+    </form>
+  </div>
+
+  <!-- Results Table -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Date</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Tirage</th>
+            <th class="px-4 py-3 text-center font-medium text-slate-600 dark:text-slate-300">Borlettes</th>
+            <th class="px-4 py-3 text-center font-medium text-slate-600 dark:text-slate-300">Lots</th>
+            <th class="px-4 py-3 text-center font-medium text-slate-600 dark:text-slate-300">Loto3</th>
+            <th class="px-4 py-3 text-center font-medium text-slate-600 dark:text-slate-300">Loto4 (3 opt)</th>
+            <th class="px-4 py-3 text-center font-medium text-slate-600 dark:text-slate-300">Loto5 (2 opt)</th>
+            <th class="px-4 py-3 text-right font-medium text-slate-600 dark:text-slate-300">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% for resultat in resultats %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <td class="px-4 py-3">
+              <div class="text-slate-700 dark:text-slate-300">{{ resultat.date|date:"d/m/Y" }}</div>
+              <div class="text-xs text-slate-500">{{ resultat.created_at|date:"H:i" }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="font-medium text-slate-800 dark:text-white">{{ resultat.tirage.nom }}</div>
+              <div class="text-xs text-slate-500">{{ resultat.tirage.code|default:"-" }}</div>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                {{ resultat.borlettes_count }} borlette{{ resultat.borlettes_count|pluralize:"s" }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <div class="flex justify-center gap-1">
+                <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-mono font-bold">{{ resultat.lot1 }}</span>
+                <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-mono font-bold">{{ resultat.lot2 }}</span>
+                <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-mono font-bold">{{ resultat.lot3 }}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-center">
+              {% if resultat.loto3 %}
+                <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-mono font-bold">{{ resultat.loto3 }}</span>
+              {% else %}
+                <span class="text-slate-400">-</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-center">
+              <div class="space-y-1">
+                {% if resultat.loto4_option1 %}
+                  <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-mono block">{{ resultat.loto4_option1 }}</span>
+                {% endif %}
+                {% if resultat.loto4_option2 %}
+                  <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-mono block">{{ resultat.loto4_option2 }}</span>
+                {% endif %}
+                {% if resultat.loto4_option3 %}
+                  <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-mono block">{{ resultat.loto4_option3 }}</span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <div class="space-y-1">
+                {% if resultat.loto5_option1 %}
+                  <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs font-mono block">{{ resultat.loto5_option1 }}</span>
+                {% endif %}
+                {% if resultat.loto5_option2 %}
+                  <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs font-mono block">{{ resultat.loto5_option2 }}</span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <a href="{% url 'partner:submit_result' resultat.tirage.id %}" 
+                 class="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 text-white text-xs rounded-lg transition">
+                Modifier
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-slate-500">
+              <i data-lucide="trophy" class="h-10 w-10 mx-auto mb-2 text-slate-300"></i>
+              <p>Aucun résultat trouvé</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Note: Les résultats sont groupés par code de tirage - un seul résultat s'applique à toutes les borlettes concernées -->
+</div>
+{% endblock %}

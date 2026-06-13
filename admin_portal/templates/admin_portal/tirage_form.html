@@ -1,0 +1,900 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}{{ page_title }} | Central Borlette{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_meta %}{% endblock %}
+
+{% block page_body %}
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     OVERRIDE PORTAL CONTAINERS (FULL WIDTH)
+     ═══════════════════════════════════════════════════════════ */
+  .portal-page {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .portal-page__header {
+    display: none !important;
+  }
+
+  .portal-page__body {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .portal-main {
+    padding: 0 !important;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     VARIABLES & PAGE LAYOUT
+     ═══════════════════════════════════════════════════════════ */
+  .tirage-form-page {
+    --bg0: #070a12;
+    --bg1: #081426;
+    --card-bg: rgba(10, 18, 35, 0.58);
+    --card-bg2: rgba(12, 28, 55, 0.34);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-color: rgba(255, 255, 255, 0.92);
+    --muted-color: rgba(255, 255, 255, 0.62);
+    --accent-blue: #3aa0ff;
+    --accent-violet: #7c4dff;
+    --accent-danger: #ff4d6d;
+    --accent-success: #10b981;
+    --accent-warning: #f59e0b;
+
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 28px 32px 48px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    box-sizing: border-box;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════ */
+  .tirage-form-page .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 28px;
+  }
+
+  .tirage-form-page .page-header h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 750;
+    color: var(--text-color);
+  }
+
+  .tirage-form-page .page-header p {
+    margin: 6px 0 0;
+    color: var(--muted-color);
+    font-size: 14px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     2-COLUMN LAYOUT
+     ═══════════════════════════════════════════════════════════ */
+  .tirage-form-page .layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     FORM SECTIONS
+     ═══════════════════════════════════════════════════════════ */
+  .tirage-form-page .form-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .tirage-form-page .section {
+    background: linear-gradient(180deg, var(--card-bg), var(--card-bg2));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+  }
+
+  .tirage-form-page .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .tirage-form-page .section-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .tirage-form-page .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+  }
+
+  .tirage-form-page .section-subtitle {
+    font-size: 12px;
+    color: var(--muted-color);
+    margin-top: 2px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     FORM FIELDS
+     ═══════════════════════════════════════════════════════════ */
+  .tirage-form-page .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .tirage-form-page .field-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .tirage-form-page .field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+
+  .tirage-form-page .field-row-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .tirage-form-page label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-color);
+    letter-spacing: 0.2px;
+  }
+
+  .tirage-form-page input[type="text"],
+  .tirage-form-page input[type="number"],
+  .tirage-form-page input[type="time"],
+  .tirage-form-page select {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 10px;
+    color: var(--text-color);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    box-sizing: border-box;
+  }
+
+  .tirage-form-page input:focus,
+  .tirage-form-page select:focus {
+    border-color: var(--accent-blue);
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .tirage-form-page select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
+  .tirage-form-page select option {
+    background: #0a1428;
+    color: var(--text-color);
+  }
+
+  .tirage-form-page .field-error {
+    color: var(--accent-danger);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .tirage-form-page .help-text {
+    color: var(--muted-color);
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     DAY CHIPS
+     ═══════════════════════════════════════════════════════════ */
+  .tirage-form-page .days-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .tirage-form-page .day-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: var(--muted-color);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .tirage-form-page .day-chip:hover {
+    background: rgba(58, 160, 255, 0.1);
+    border-color: rgba(58, 160, 255, 0.25);
+  }
+
+  .tirage-form-page .day-chip.active {
+    background: linear-gradient(135deg, rgba(58, 160, 255, 0.25), rgba(124, 77, 255, 0.2));
+    border-color: rgba(58, 160, 255, 0.5);
+    color: #fff;
+  }
+
+  .tirage-form-page .days-hidden {
+    display: none !important;
+  }
+
+  .tirage-form-page .quick-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tirage-form-page .quick-btn {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    color: var(--muted-color);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+
+  .tirage-form-page .quick-btn:hover {
+    background: rgba(58, 160, 255, 0.15);
+    color: var(--accent-blue);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TOGGLE SWITCH
+     ═══════════════════════════════════════════════════════════ */
+  .tirage-form-page .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .tirage-form-page .toggle-row:last-child {
+    border-bottom: none;
+  }
+
+  .tirage-form-page .toggle-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+
+  .tirage-form-page .toggle-desc {
+    font-size: 12px;
+    color: var(--muted-color);
+    margin-top: 2px;
+  }
+
+  .tirage-form-page .switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+  }
+
+  .tirage-form-page .switch input {
+    display: none;
+  }
+
+  .tirage-form-page .switch-slider {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 26px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .tirage-form-page .switch-slider::before {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+
+  .tirage-form-page .switch input:checked+.switch-slider {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+  }
+
+  .tirage-form-page .switch input:checked+.switch-slider::before {
+    transform: translateX(22px);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     SIDEBAR PANEL
+     ═══════════════════════════════════════════════════════════ */
+  .tirage-form-page .sidebar {
+    position: sticky;
+    top: 100px;
+  }
+
+  .tirage-form-page .summary-card {
+    background: linear-gradient(180deg, var(--card-bg), var(--card-bg2));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .tirage-form-page .summary-card h3 {
+    margin: 0 0 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tirage-form-page .summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 13px;
+  }
+
+  .tirage-form-page .summary-item:last-child {
+    border-bottom: none;
+  }
+
+  .tirage-form-page .summary-item .label {
+    color: var(--muted-color);
+    font-weight: 500;
+  }
+
+  .tirage-form-page .summary-item .value {
+    color: var(--text-color);
+    font-weight: 600;
+  }
+
+  .tirage-form-page .summary-item .value.on {
+    color: var(--accent-success);
+  }
+
+  .tirage-form-page .summary-item .value.off {
+    color: var(--muted-color);
+  }
+
+  .tirage-form-page .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .tirage-form-page .checklist li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 13px;
+    color: var(--muted-color);
+  }
+
+  .tirage-form-page .checklist li:last-child {
+    border-bottom: none;
+  }
+
+  .tirage-form-page .checklist li.done {
+    color: var(--text-color);
+  }
+
+  .tirage-form-page .checklist .check {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .tirage-form-page .checklist li.done .check {
+    background: linear-gradient(135deg, var(--accent-success), #059669);
+    border-color: var(--accent-success);
+    color: #fff;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     ACTION BUTTONS
+     ═══════════════════════════════════════════════════════════ */
+  .tirage-form-page .actions-section {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+  }
+
+  .tirage-form-page .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s;
+    border: none;
+    text-decoration: none;
+  }
+
+  .tirage-form-page .btn--primary {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+    color: #fff;
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .tirage-form-page .btn--primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(58, 160, 255, 0.3);
+  }
+
+  .tirage-form-page .btn--ghost {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--muted-color);
+  }
+
+  .tirage-form-page .btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     RESPONSIVE
+     ═══════════════════════════════════════════════════════════ */
+  @media (max-width: 1100px) {
+    .tirage-form-page .layout {
+      grid-template-columns: 1fr;
+    }
+
+    .tirage-form-page .sidebar {
+      position: static;
+      order: -1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .tirage-form-page {
+      padding: 20px 16px 32px;
+    }
+
+    .tirage-form-page .page-header h1 {
+      font-size: 24px;
+    }
+
+    .tirage-form-page .section {
+      padding: 18px;
+    }
+
+    .tirage-form-page .days-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tirage-form-page .field-row-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="tirage-form-page">
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div>
+      <h1>{{ page_title }}</h1>
+      <p>{{ page_meta|default:"Créer une fenêtre horaire de jeu" }}</p>
+    </div>
+  </header>
+
+  <form method="post" id="tirageForm" novalidate>
+    {% csrf_token %}
+
+    <div class="layout">
+      <!-- MAIN FORM COLUMN -->
+      <div class="form-main">
+
+        <!-- SECTION 1: Informations -->
+        <div class="section">
+          <div class="section-header">
+            <span class="section-num">1</span>
+            <div>
+              <div class="section-title">Informations du tirage</div>
+              <div class="section-subtitle">Nom, type et ordre d'affichage</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group" style="flex: 2;">
+              <label for="id_nom">Nom du tirage</label>
+              <input type="text" name="nom" id="id_nom" value="{{ form.nom.value|default:'' }}"
+                placeholder="Ex: Midi, Soir, New York...">
+              {% if form.nom.errors %}<div class="field-error">{{ form.nom.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field-group">
+              <label for="id_type">Type</label>
+              <select name="type" id="id_type">
+                {% for value, label in form.fields.type.choices %}
+                <option value="{{ value }}" {% if form.type.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              {% if form.type.errors %}<div class="field-error">{{ form.type.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field-group">
+              <label for="id_ordre_affichage">Ordre</label>
+              <input type="number" name="ordre_affichage" id="id_ordre_affichage"
+                value="{{ form.ordre_affichage.value|default:'0' }}" min="0">
+              {% if form.ordre_affichage.errors %}<div class="field-error">{{ form.ordre_affichage.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Jours actifs -->
+        <div class="section">
+          <div class="section-header">
+            <span class="section-num">2</span>
+            <div>
+              <div class="section-title">Jours actifs</div>
+              <div class="section-subtitle">Sélectionnez les jours où ce tirage est disponible</div>
+            </div>
+          </div>
+
+          <!-- Hidden Django checkboxes -->
+          <div class="days-hidden" id="djangoDays">
+            {{ form.jours_actifs }}
+          </div>
+
+          <!-- Visual day chips -->
+          <div class="days-grid" id="daysGrid">
+            <div class="day-chip" data-day="0">Lundi</div>
+            <div class="day-chip" data-day="1">Mardi</div>
+            <div class="day-chip" data-day="2">Mercredi</div>
+            <div class="day-chip" data-day="3">Jeudi</div>
+            <div class="day-chip" data-day="4">Vendredi</div>
+            <div class="day-chip" data-day="5">Samedi</div>
+            <div class="day-chip" data-day="6">Dimanche</div>
+          </div>
+          <div class="quick-btns">
+            <button type="button" class="quick-btn" data-action="all">Tous</button>
+            <button type="button" class="quick-btn" data-action="weekdays">Lun–Ven</button>
+            <button type="button" class="quick-btn" data-action="weekend">Week-end</button>
+            <button type="button" class="quick-btn" data-action="none">Aucun</button>
+          </div>
+          {% if form.jours_actifs.errors %}<div class="field-error" style="margin-top: 12px;">{{ form.jours_actifs.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <!-- SECTION 3: Horaires -->
+        <div class="section">
+          <div class="section-header">
+            <span class="section-num">3</span>
+            <div>
+              <div class="section-title">Horaires</div>
+              <div class="section-subtitle">Définissez la fenêtre temporelle du tirage</div>
+            </div>
+          </div>
+          <div class="field-row-3">
+            <div class="field-group">
+              <label for="id_heure_ouverture">Ouverture</label>
+              <input type="time" name="heure_ouverture" id="id_heure_ouverture"
+                value="{{ form.heure_ouverture.value|default:'' }}">
+              {% if form.heure_ouverture.errors %}<div class="field-error">{{ form.heure_ouverture.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field-group">
+              <label for="id_heure_fermeture">Fermeture</label>
+              <input type="time" name="heure_fermeture" id="id_heure_fermeture"
+                value="{{ form.heure_fermeture.value|default:'' }}">
+              {% if form.heure_fermeture.errors %}<div class="field-error">{{ form.heure_fermeture.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field-group">
+              <label for="id_heure_tirage">Tirage</label>
+              <input type="time" name="heure_tirage" id="id_heure_tirage"
+                value="{{ form.heure_tirage.value|default:'' }}">
+              {% if form.heure_tirage.errors %}<div class="field-error">{{ form.heure_tirage.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="help-text">L'heure de tirage doit être après la fermeture, qui doit être après l'ouverture.</div>
+        </div>
+
+        <!-- SECTION 4: Automatisations & Statut -->
+        <div class="section">
+          <div class="section-header">
+            <span class="section-num">4</span>
+            <div>
+              <div class="section-title">Automatisations & Statut</div>
+              <div class="section-subtitle">Comportement automatique et état initial</div>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Fermeture automatique</div>
+              <div class="toggle-desc">Fermer les paris automatiquement à l'heure prévue</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" name="fermeture_auto" id="id_fermeture_auto" {% if form.fermeture_auto.value %}checked{% endif %}>
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Mariage Automatique</div>
+              <div class="toggle-desc">Générer des mariages gratuits selon les règles configurées</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" name="mariage_automatique" id="id_mariage_automatique" {% if form.mariage_automatique.value %}checked{% endif %}>
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Statut</div>
+              <div class="toggle-desc">Un tirage inactif n'apparaît pas aux joueurs</div>
+            </div>
+            <select name="statut" id="id_statut" style="width: 140px;">
+              {% for value, label in form.fields.statut.choices %}
+              <option value="{{ value }}" {% if form.statut.value == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% if form.instance.id %}
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Actif pour moi</div>
+              <div class="toggle-desc">Si désactivé, ce tirage n'apparaîtra pas pour vos agents</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" name="actif_pour_admin" id="id_actif_pour_admin" {% if actif_pour_admin %}checked{% endif %}>
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- SECTION 5: Actions -->
+        <div class="section">
+          <div class="section-header">
+            <span class="section-num">5</span>
+            <div>
+              <div class="section-title">Actions</div>
+              <div class="section-subtitle">Enregistrer ou annuler les modifications</div>
+            </div>
+          </div>
+          <div class="actions-section">
+            <button type="submit" class="btn btn--primary">
+              <span>💾</span> Enregistrer
+            </button>
+            <a href="{% url 'admin_portal:tirages' %}" class="btn btn--ghost">
+              Annuler
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <!-- SUMMARY CARD -->
+        <div class="summary-card">
+          <h3><span>📋</span> Résumé en direct</h3>
+          <div class="summary-item">
+            <span class="label">Nom</span>
+            <span class="value" id="sumNom">—</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Type</span>
+            <span class="value" id="sumType">—</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Jours</span>
+            <span class="value" id="sumDays">0/7</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Horaires</span>
+            <span class="value" id="sumHours">—</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Auto</span>
+            <span class="value" id="sumAuto">OFF</span>
+          </div>
+        </div>
+
+        <!-- CHECKLIST CARD -->
+        <div class="summary-card">
+          <h3><span>✅</span> Checklist</h3>
+          <ul class="checklist">
+            <li id="checkNom"><span class="check"></span> Nom renseigné</li>
+            <li id="checkDays"><span class="check"></span> Au moins 1 jour sélectionné</li>
+            <li id="checkHours"><span class="check"></span> Horaires valides</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    // ─── Day Chips ───────────────────────────────────────────
+    const daysGrid = document.getElementById('daysGrid');
+    const djangoDays = document.getElementById('djangoDays');
+    const chips = daysGrid.querySelectorAll('.day-chip');
+
+    function syncChipsFromCheckboxes() {
+      chips.forEach(chip => {
+        const day = chip.dataset.day;
+        const cb = djangoDays.querySelector('input[value="' + day + '"]');
+        if (cb && cb.checked) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+      updateSummary();
+    }
+
+    function syncCheckboxFromChip(day, active) {
+      const cb = djangoDays.querySelector('input[value="' + day + '"]');
+      if (cb) cb.checked = active;
+      updateSummary();
+    }
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('active');
+        syncCheckboxFromChip(chip.dataset.day, chip.classList.contains('active'));
+      });
+    });
+
+    // Quick buttons
+    document.querySelectorAll('.quick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        let days = [];
+        if (action === 'all') days = [0, 1, 2, 3, 4, 5, 6];
+        else if (action === 'weekdays') days = [0, 1, 2, 3, 4];
+        else if (action === 'weekend') days = [5, 6];
+        else days = [];
+
+        chips.forEach(chip => {
+          const d = parseInt(chip.dataset.day);
+          const active = days.includes(d);
+          chip.classList.toggle('active', active);
+          syncCheckboxFromChip(d, active);
+        });
+      });
+    });
+
+    // Init sync
+    syncChipsFromCheckboxes();
+
+    // ─── Live Summary ────────────────────────────────────────
+    const sumNom = document.getElementById('sumNom');
+    const sumType = document.getElementById('sumType');
+    const sumDays = document.getElementById('sumDays');
+    const sumHours = document.getElementById('sumHours');
+    const sumAuto = document.getElementById('sumAuto');
+    const checkNom = document.getElementById('checkNom');
+    const checkDays = document.getElementById('checkDays');
+    const checkHours = document.getElementById('checkHours');
+
+    const nomInput = document.getElementById('id_nom');
+    const typeSelect = document.getElementById('id_type');
+    const heureOuv = document.getElementById('id_heure_ouverture');
+    const heureFerm = document.getElementById('id_heure_fermeture');
+    const heureTir = document.getElementById('id_heure_tirage');
+    const autoCheck = document.getElementById('id_fermeture_auto');
+
+    function updateSummary() {
+      // Nom
+      const nom = nomInput.value.trim();
+      sumNom.textContent = nom || '—';
+      checkNom.classList.toggle('done', nom.length > 0);
+      checkNom.querySelector('.check').textContent = nom.length > 0 ? '✓' : '';
+
+      // Type
+      const typeText = typeSelect.options[typeSelect.selectedIndex]?.text || '—';
+      sumType.textContent = typeText;
+
+      // Days
+      const activeDays = document.querySelectorAll('.day-chip.active').length;
+      sumDays.textContent = activeDays + '/7';
+      checkDays.classList.toggle('done', activeDays > 0);
+      checkDays.querySelector('.check').textContent = activeDays > 0 ? '✓' : '';
+
+      // Hours
+      const o = heureOuv.value;
+      const f = heureFerm.value;
+      const t = heureTir.value;
+      if (o && f && t) {
+        sumHours.textContent = o + ' → ' + f + ' → ' + t;
+        const valid = o < f && f < t;
+        checkHours.classList.toggle('done', valid);
+        checkHours.querySelector('.check').textContent = valid ? '✓' : '';
+      } else {
+        sumHours.textContent = '—';
+        checkHours.classList.remove('done');
+        checkHours.querySelector('.check').textContent = '';
+      }
+
+      // Auto
+      const isAuto = autoCheck.checked;
+      sumAuto.textContent = isAuto ? 'ON' : 'OFF';
+      sumAuto.classList.toggle('on', isAuto);
+      sumAuto.classList.toggle('off', !isAuto);
+    }
+
+    // Event listeners
+    nomInput.addEventListener('input', updateSummary);
+    typeSelect.addEventListener('change', updateSummary);
+    heureOuv.addEventListener('change', updateSummary);
+    heureFerm.addEventListener('change', updateSummary);
+    heureTir.addEventListener('change', updateSummary);
+    autoCheck.addEventListener('change', updateSummary);
+
+    // Init
+    updateSummary();
+
+    // Show "Actif pour moi" row only in edit mode (when form has an instance)
+    const actifRow = document.getElementById('actifPourAdminRow');
+    if (actifRow && '{{ page_title }}' === 'Modifier tirage') {
+      actifRow.style.display = 'flex';
+    }
+  })();
+</script>
+{% endblock %}

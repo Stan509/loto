@@ -1,0 +1,317 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Résultats {{ tirage.nom }} | Central Borlette{% endblock %}
+{% block page_title %}Résultats du tirage{% endblock %}
+{% block page_meta %}{{ tirage.nom }}{% endblock %}
+
+{% block page_body %}
+<style>
+  .portal-page { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+  .portal-page__header { display: none !important; }
+  .portal-page__body { width: 100% !important; max-width: none !important; }
+  .portal-main { padding: 0 !important; }
+
+  .resultats-page {
+    --bg0: #070a12;
+    --bg1: #081426;
+    --card-bg: rgba(10, 18, 35, 0.58);
+    --card-bg2: rgba(12, 28, 55, 0.34);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-color: rgba(255, 255, 255, 0.92);
+    --muted-color: rgba(255, 255, 255, 0.62);
+    --accent-blue: #3aa0ff;
+    --accent-violet: #7c4dff;
+    --accent-danger: #ff4d6d;
+    --accent-success: #10b981;
+    --accent-warning: #f59e0b;
+    width: 100%;
+    padding: 28px 32px 48px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    box-sizing: border-box;
+  }
+
+  .resultats-page .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 28px;
+  }
+  .resultats-page .page-header h1 { margin: 0; font-size: 30px; font-weight: 750; color: var(--text-color); }
+  .resultats-page .page-header p { margin: 6px 0 0; color: var(--muted-color); font-size: 14px; }
+
+  .resultats-page .layout { display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start; }
+
+  .resultats-page .section {
+    background: linear-gradient(180deg, var(--card-bg), var(--card-bg2));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .resultats-page .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .resultats-page .section-num {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+    border-radius: 10px; font-weight: 800; font-size: 14px; color: #fff;
+  }
+  .resultats-page .section-title { font-size: 16px; font-weight: 700; color: var(--text-color); }
+  .resultats-page .section-subtitle { font-size: 12px; color: var(--muted-color); margin-top: 2px; }
+
+  .resultats-page .field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .resultats-page .field-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .resultats-page label { font-size: 13px; font-weight: 700; color: var(--text-color); }
+  .resultats-page input[type="text"] {
+    width: 100%; padding: 14px; background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.10); border-radius: 10px;
+    color: var(--text-color); font-size: 18px; font-weight: 700; text-align: center;
+    outline: none; transition: border-color 0.15s;
+  }
+  .resultats-page input:focus { border-color: var(--accent-blue); background: rgba(0, 0, 0, 0.35); }
+  .resultats-page input:disabled { opacity: 0.5; cursor: not-allowed; }
+  .resultats-page .field-error { color: var(--accent-danger); font-size: 12px; margin-top: 4px; }
+
+  .resultats-page .alert { padding: 16px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; }
+  .resultats-page .alert--warning { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: var(--accent-warning); }
+  .resultats-page .alert--success { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--accent-success); }
+  .resultats-page .alert--danger { background: rgba(255, 77, 109, 0.15); border: 1px solid rgba(255, 77, 109, 0.3); color: var(--accent-danger); }
+
+  .resultats-page .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 24px; border-radius: 10px; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: 0.15s; border: none; text-decoration: none;
+  }
+  .resultats-page .btn--primary { background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet)); color: #fff; }
+  .resultats-page .btn--primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(58, 160, 255, 0.3); }
+  .resultats-page .btn--primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .resultats-page .btn--ghost { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--muted-color); }
+
+  .resultats-page .sidebar { position: sticky; top: 100px; }
+  .resultats-page .summary-card {
+    background: linear-gradient(180deg, var(--card-bg), var(--card-bg2));
+    border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 20px;
+  }
+  .resultats-page .summary-card h3 { margin: 0 0 16px; font-size: 14px; font-weight: 700; color: var(--text-color); display: flex; align-items: center; gap: 8px; }
+  .resultats-page .summary-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.04); font-size: 13px; }
+  .resultats-page .summary-item:last-child { border-bottom: none; }
+  .resultats-page .summary-item .label { color: var(--muted-color); }
+  .resultats-page .summary-item .value { color: var(--text-color); font-weight: 600; }
+
+  .resultats-page .loto-preview { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+  .resultats-page .loto-preview h4 { margin: 0 0 12px; font-size: 13px; color: var(--muted-color); }
+  .resultats-page .loto-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .resultats-page .loto-item { background: rgba(0, 0, 0, 0.2); padding: 8px 12px; border-radius: 8px; font-size: 12px; }
+  .resultats-page .loto-item .lbl { color: var(--muted-color); }
+  .resultats-page .loto-item .val { color: var(--accent-blue); font-weight: 700; font-family: monospace; }
+
+  .resultats-page .stats-card { background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.2); }
+  .resultats-page .stats-card .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(16, 185, 129, 0.1); }
+  .resultats-page .stats-card .stat-row:last-child { border-bottom: none; }
+  .resultats-page .stats-card .stat-label { color: rgba(16, 185, 129, 0.8); font-size: 13px; }
+  .resultats-page .stats-card .stat-value { color: var(--accent-success); font-size: 16px; font-weight: 700; }
+
+  @media (max-width: 1100px) { .resultats-page .layout { grid-template-columns: 1fr; } .resultats-page .sidebar { position: static; order: -1; } }
+  @media (max-width: 768px) { .resultats-page { padding: 20px 16px 32px; } .resultats-page .field-row { grid-template-columns: repeat(2, 1fr); } }
+</style>
+
+<div class="resultats-page">
+  <header class="page-header">
+    <div>
+      <h1>
+        Résultats: {{ tirage.nom }}
+        {% if results_status.is_overdue %}
+          <span style="display: inline-block; padding: 4px 12px; background: rgba(255, 77, 109, 0.15); border: 1px solid rgba(255, 77, 109, 0.3); border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--accent-danger); margin-left: 12px;">🔴 >24h en retard!</span>
+        {% endif %}
+      </h1>
+      <p>
+        Session: <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px; font-family: monospace;">{{ tirage.session_key|truncatechars:12 }}</code>
+        · État: <strong>{{ tirage.etat_ouverture }}</strong>
+        {% if results_status.closed_since_hours %}
+          · Fermé depuis: <strong>{{ results_status.closed_since_hours }}h</strong>
+        {% endif %}
+      </p>
+    </div>
+    <a href="{% url 'admin_portal:tirages' %}" class="btn btn--ghost">← Retour aux tirages</a>
+  </header>
+
+  {% if is_open %}
+  <div class="alert alert--warning">
+    ⚠️ <strong>Tirage ouvert</strong> — Les résultats ne peuvent être saisis qu'après la fermeture du tirage.
+  </div>
+  {% endif %}
+
+  {% if errors %}
+  <div class="alert alert--danger">
+    {% for error in errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if calculation_stats %}
+  <div class="section stats-card">
+    <div class="section-header">
+      <span class="section-num">✓</span>
+      <div>
+        <div class="section-title">Calcul terminé</div>
+        <div class="section-subtitle">Gains recalculés avec succès</div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Tickets analysés</span>
+      <span class="stat-value">{{ calculation_stats.tickets_count }}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Tickets gagnants</span>
+      <span class="stat-value">{{ calculation_stats.winners_count }}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Total gains dus</span>
+      <span class="stat-value">{{ calculation_stats.total_gain_du|floatformat:2 }} G</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="layout">
+      <div class="form-main">
+        <div class="section">
+          <div class="section-header">
+            <span class="section-num">1</span>
+            <div>
+              <div class="section-title">Les 3 Lots</div>
+              <div class="section-subtitle">Numéros sortis (00-99)</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label for="id_lot1">1er Lot</label>
+              <input type="text" name="lot1" id="id_lot1" value="{{ form.lot1.value|default:'' }}" maxlength="2" placeholder="00" {% if is_open %}disabled{% endif %}>
+              {% if form.lot1.errors %}<div class="field-error">{{ form.lot1.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field-group">
+              <label for="id_lot2">2ème Lot</label>
+              <input type="text" name="lot2" id="id_lot2" value="{{ form.lot2.value|default:'' }}" maxlength="2" placeholder="00" {% if is_open %}disabled{% endif %}>
+              {% if form.lot2.errors %}<div class="field-error">{{ form.lot2.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field-group">
+              <label for="id_lot3">3ème Lot</label>
+              <input type="text" name="lot3" id="id_lot3" value="{{ form.lot3.value|default:'' }}" maxlength="2" placeholder="00" {% if is_open %}disabled{% endif %}>
+              {% if form.lot3.errors %}<div class="field-error">{{ form.lot3.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field-group">
+              <label for="id_chiffre_loto3">Chiffre Loto3</label>
+              <input type="text" name="chiffre_loto3" id="id_chiffre_loto3" value="{{ form.chiffre_loto3.value|default:'' }}" maxlength="1" placeholder="0" {% if is_open %}disabled{% endif %}>
+              {% if form.chiffre_loto3.errors %}<div class="field-error">{{ form.chiffre_loto3.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+          {% if form.non_field_errors %}
+          <div class="field-error" style="margin-top: 12px;">{{ form.non_field_errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <span class="section-num">2</span>
+            <div>
+              <div class="section-title">Actions</div>
+              <div class="section-subtitle">Enregistrer et calculer les gains automatiquement</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button type="submit" class="btn btn--primary" {% if is_open %}disabled{% endif %}>
+              💾 Enregistrer & Calculer les gains
+            </button>
+            <a href="{% url 'admin_portal:tirages' %}" class="btn btn--ghost">Annuler</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="summary-card">
+          <h3>📊 Informations tirage</h3>
+          <div class="summary-item">
+            <span class="label">Nom</span>
+            <span class="value">{{ tirage.nom }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Type</span>
+            <span class="value">{{ tirage.type }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">État</span>
+            <span class="value" style="color: {% if is_open %}var(--accent-success){% else %}var(--accent-warning){% endif %};">
+              {{ tirage.etat_ouverture }}
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Heure tirage</span>
+            <span class="value">{{ tirage.heure_tirage|time:"H:i" }}</span>
+          </div>
+        </div>
+
+        {% if existing_result %}
+        <div class="summary-card">
+          <h3>🎯 Résultat actuel</h3>
+          <div class="summary-item">
+            <span class="label">1er Lot</span>
+            <span class="value" style="font-family: monospace; font-size: 18px;">{{ existing_result.lot1 }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">2ème Lot</span>
+            <span class="value" style="font-family: monospace; font-size: 18px;">{{ existing_result.lot2 }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">3ème Lot</span>
+            <span class="value" style="font-family: monospace; font-size: 18px;">{{ existing_result.lot3 }}</span>
+          </div>
+          
+          <div class="loto-preview">
+            <h4>Combinaisons calculées</h4>
+            <div class="loto-grid">
+              <div class="loto-item"><span class="lbl">Loto3:</span> <span class="val">{{ existing_result.loto3 }}</span></div>
+              <div class="loto-item"><span class="lbl">Loto4-1:</span> <span class="val">{{ existing_result.loto4_opt1 }}</span></div>
+              <div class="loto-item"><span class="lbl">Loto4-2:</span> <span class="val">{{ existing_result.loto4_opt2 }}</span></div>
+              <div class="loto-item"><span class="lbl">Loto4-3:</span> <span class="val">{{ existing_result.loto4_opt3 }}</span></div>
+              <div class="loto-item"><span class="lbl">Loto5-1:</span> <span class="val">{{ existing_result.loto5_opt1 }}</span></div>
+              <div class="loto-item"><span class="lbl">Loto5-2:</span> <span class="val">{{ existing_result.loto5_opt2 }}</span></div>
+              <div class="loto-item"><span class="lbl">Loto5-3:</span> <span class="val">{{ existing_result.loto5_opt3 }}</span></div>
+            </div>
+          </div>
+
+          {% if existing_result.computed_at %}
+          <div class="summary-item" style="margin-top: 12px;">
+            <span class="label">Calculé le</span>
+            <span class="value">{{ existing_result.computed_at|date:"d/m/Y H:i" }}</span>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="summary-card">
+          <h3>ℹ️ Aucun résultat</h3>
+          <p style="color: var(--muted-color); font-size: 13px; margin: 0;">
+            Aucun résultat n'a été saisi pour cette session de tirage.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+(function() {
+  // Auto-focus next input on 2 digits
+  const inputs = document.querySelectorAll('input[maxlength="2"]');
+  inputs.forEach((input, idx) => {
+    input.addEventListener('input', function() {
+      if (this.value.length >= 2 && idx < inputs.length - 1) {
+        inputs[idx + 1].focus();
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

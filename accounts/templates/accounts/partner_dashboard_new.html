@@ -1,0 +1,402 @@
+{% extends "accounts/_partner_base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Partenaire | Central Borlette{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <!-- Header -->
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Centre de Contrôle Partenaire</div>
+      <div class="portal-page__meta">Gestion complète • {{ partner_profile.user.username }}</div>
+    </div>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Welcome Banner -->
+    <div class="gaboom-card p-4 border-l-4 border-indigo-500">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xl">
+            {{ partner_profile.user.username|first|upper }}
+          </div>
+          <div>
+            <div class="text-lg font-semibold">Bienvenue, {{ partner_profile.user.first_name|default:partner_profile.user.username }}</div>
+            <div class="text-sm text-slate-500 dark:text-slate-400">Partenaire depuis le {{ partner_profile.created_at|date:"d/m/Y" }}</div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+            {{ total_admins }} Admins
+          </span>
+          <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm">
+            {{ total_affiliates }} Affiliés
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="border-b border-slate-200 dark:border-slate-700">
+      <nav class="flex space-x-4" aria-label="Tabs">
+        <button onclick="showTab('abonnements')" id="tab-abonnements" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600">
+          Abonnements
+        </button>
+        <button onclick="showTab('affilies')" id="tab-affilies" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+          Affiliés
+        </button>
+        <button onclick="showTab('tirages')" id="tab-tirages" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+          Tirages & Résultats
+        </button>
+        <button onclick="showTab('paiements')" id="tab-paiements" class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+          Paiements
+        </button>
+      </nav>
+    </div>
+
+    <!-- TAB: Abonnements -->
+    <div id="content-abonnements" class="tab-content space-y-4">
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="gaboom-card p-4 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200">
+          <div class="text-2xl font-bold text-emerald-600">{{ active_subscriptions|length }}</div>
+          <div class="text-sm text-slate-600">Actifs</div>
+        </div>
+        <div class="gaboom-card p-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200">
+          <div class="text-2xl font-bold text-amber-600">{{ urgent_count }}</div>
+          <div class="text-sm text-slate-600">Urgent (&lt;7j)</div>
+        </div>
+        <div class="gaboom-card p-4 bg-red-50 dark:bg-red-900/20 border-red-200">
+          <div class="text-2xl font-bold text-red-600">{{ expired_count }}</div>
+          <div class="text-sm text-slate-600">Expirés</div>
+        </div>
+        <div class="gaboom-card p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200">
+          <div class="text-2xl font-bold text-blue-600">{{ all_subscriptions|length }}</div>
+          <div class="text-sm text-slate-600">Total</div>
+        </div>
+      </div>
+
+      <!-- All Subscriptions Table -->
+      <div class="gaboom-card p-4">
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-sm font-semibold">Tous les Abonnements</div>
+          <div class="flex gap-2">
+            <select id="filter-status" onchange="filterSubscriptions()" class="text-xs border rounded px-2 py-1">
+              <option value="all">Tous</option>
+              <option value="urgent">Urgent</option>
+              <option value="expired">Expirés</option>
+              <option value="active">Actifs</option>
+            </select>
+          </div>
+        </div>
+        
+        {% if all_subscriptions %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+              <tr>
+                <th class="px-3 py-2 text-left">Admin/Borlette</th>
+                <th class="px-3 py-2 text-left">Statut</th>
+                <th class="px-3 py-2 text-left">Expire</th>
+                <th class="px-3 py-2 text-left">Jours restants</th>
+                <th class="px-3 py-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+              {% for sub in all_subscriptions %}
+              <tr class="sub-row" data-status="{{ sub.status_label|lower }}">
+                <td class="px-3 py-3">
+                  <div class="font-medium">{{ sub.borlette.nom_borlette }}</div>
+                  <div class="text-xs text-slate-500">{{ sub.user.username }}</div>
+                </td>
+                <td class="px-3 py-3">
+                  <span class="px-2 py-1 rounded text-xs 
+                    {% if sub.status_color == 'red' %}bg-red-100 text-red-700{% elif sub.status_color == 'amber' %}bg-amber-100 text-amber-700{% elif sub.status_color == 'yellow' %}bg-yellow-100 text-yellow-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                    {{ sub.status_label }}
+                  </span>
+                </td>
+                <td class="px-3 py-3">{{ sub.end_date|date:"d/m/Y" }}</td>
+                <td class="px-3 py-3">
+                  {% if sub.days_remaining > 0 %}
+                    {{ sub.days_remaining }}j
+                  {% else %}
+                    <span class="text-red-600 font-semibold">Expiré</span>
+                  {% endif %}
+                </td>
+                <td class="px-3 py-3 text-right">
+                  <a href="{% url 'partner:renew_subscription' sub.id %}" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition">
+                    <i data-lucide="refresh-cw" class="h-3 w-3 mr-1"></i>
+                    +30j
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-slate-500">
+          <i data-lucide="inbox" class="h-12 w-12 mx-auto mb-3 text-slate-300"></i>
+          <p>Aucun abonnement trouvé</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- TAB: Affiliés -->
+    <div id="content-affilies" class="tab-content space-y-4 hidden">
+      <div class="gaboom-card p-4">
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-sm font-semibold">Gestion des Affiliés</div>
+          <div class="flex gap-2">
+            <input type="text" id="search-affiliate" placeholder="Rechercher..." onkeyup="searchAffiliates()" 
+              class="text-xs border rounded px-3 py-1.5 w-48">
+          </div>
+        </div>
+        
+        {% if affiliate_users %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+              <tr>
+                <th class="px-3 py-2 text-left">Affilié</th>
+                <th class="px-3 py-2 text-left">Email</th>
+                <th class="px-3 py-2 text-left">Inscription</th>
+                <th class="px-3 py-2 text-left">Statut</th>
+                <th class="px-3 py-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+              {% for aff in affiliate_users %}
+              <tr class="affiliate-row">
+                <td class="px-3 py-3">
+                  <div class="flex items-center gap-2">
+                    <div class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 text-xs font-bold">
+                      {{ aff.username|first|upper }}
+                    </div>
+                    <div class="font-medium">{{ aff.username }}</div>
+                  </div>
+                </td>
+                <td class="px-3 py-3 text-slate-500">{{ aff.email|default:"-" }}</td>
+                <td class="px-3 py-3 text-slate-500">{{ aff.date_joined|date:"d/m/Y" }}</td>
+                <td class="px-3 py-3">
+                  {% if aff.is_active %}
+                    <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">Actif</span>
+                  {% else %}
+                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">Suspendu</span>
+                  {% endif %}
+                </td>
+                <td class="px-3 py-3 text-right">
+                  <div class="flex gap-1 justify-end">
+                    <button onclick="toggleAffiliateStatus({{ aff.id }}, '{{ aff.is_active|yesno:'suspendre,reactiver' }}')" 
+                      class="px-2 py-1 {% if aff.is_active %}bg-red-100 text-red-700 hover:bg-red-200{% else %}bg-emerald-100 text-emerald-700 hover:bg-emerald-200{% endif %} rounded text-xs transition">
+                      {% if aff.is_active %}Suspendre{% else %}Réactiver{% endif %}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-slate-500">
+          <i data-lucide="users" class="h-12 w-12 mx-auto mb-3 text-slate-300"></i>
+          <p>Aucun affilié trouvé</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- TAB: Tirages & Résultats -->
+    <div id="content-tirages" class="tab-content space-y-4 hidden">
+      <!-- Tirages needing results -->
+      {% if tirages_needing_results_count > 0 %}
+      <div class="gaboom-card p-4 border-l-4 border-red-500 bg-red-50 dark:bg-red-900/10">
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-semibold text-red-700 dark:text-red-400">
+            <i data-lucide="alert-circle" class="h-4 w-4 inline mr-1"></i>
+            Tirages en attente de résultats ({{ tirages_needing_results_count }})
+          </div>
+        </div>
+        <div class="space-y-2">
+          {% for tirage in tirages_needing_results|slice:":5" %}
+          <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg">
+            <div>
+              <div class="font-medium">{{ tirage.borlette.nom_borlette }} - {{ tirage.nom }}</div>
+              <div class="text-xs text-slate-500">{{ tirage.heure_tirage|date:"d/m/Y H:i" }}</div>
+            </div>
+            <a href="{% url 'partner:submit_result' tirage.id %}" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg transition">
+              Saisir résultats
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Upcoming Tirages -->
+      <div class="gaboom-card p-4">
+        <div class="text-sm font-semibold mb-3">Tirages à venir</div>
+        {% if upcoming_tirages %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {% for tirage in upcoming_tirages %}
+          <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-medium">{{ tirage.nom }}</div>
+                <div class="text-xs text-slate-500">{{ tirage.borlette.nom_borlette }}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-semibold">{{ tirage.heure_tirage|date:"H:i" }}</div>
+                <div class="text-xs text-slate-400">{{ tirage.heure_tirage|date:"d/m" }}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-slate-500 text-sm">Aucun tirage programmé</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- TAB: Paiements -->
+    <div id="content-paiements" class="tab-content space-y-4 hidden">
+      <!-- Pending Withdrawals -->
+      <div class="gaboom-card p-4">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="text-sm font-semibold">Demandes de retrait en attente</div>
+            <div class="text-xs text-slate-500">{{ pending_withdrawals_count }} demande(s) • {{ total_pending_amount }} GDS</div>
+          </div>
+          {% if pending_withdrawals_count > 0 %}
+          <a href="#" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition">
+            Voir tout
+          </a>
+          {% endif %}
+        </div>
+        
+        {% if pending_withdrawals %}
+        <div class="space-y-2">
+          {% for withdrawal in pending_withdrawals|slice:":5" %}
+          <div class="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-l-4 border-amber-500">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold">
+                {{ withdrawal.user.username|first|upper }}
+              </div>
+              <div>
+                <div class="font-medium">{{ withdrawal.user.username }}</div>
+                <div class="text-xs text-slate-500">{{ withdrawal.amount }} GDS • {{ withdrawal.created_at|date:"d/m/Y H:i" }}</div>
+              </div>
+            </div>
+            <a href="{% url 'partner:confirm_withdrawal' withdrawal.id %}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg transition">
+              Confirmer
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-6 text-slate-500">
+          <i data-lucide="check-circle" class="h-10 w-10 mx-auto mb-2 text-emerald-400"></i>
+          <p class="text-sm">Aucune demande en attente</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Recent Paid -->
+      {% if recent_paid_withdrawals %}
+      <div class="gaboom-card p-4">
+        <div class="text-sm font-semibold mb-3">Paiements récents</div>
+        <div class="space-y-2">
+          {% for withdrawal in recent_paid_withdrawals|slice:":5" %}
+          <div class="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+            <div class="flex items-center gap-3">
+              <div class="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-xs font-bold">
+                {{ withdrawal.user.username|first|upper }}
+              </div>
+              <div>
+                <div class="font-medium text-sm">{{ withdrawal.user.username }}</div>
+                <div class="text-xs text-slate-500">{{ withdrawal.amount }} GDS</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">Payé</span>
+              <div class="text-xs text-slate-400">{{ withdrawal.processed_at|date:"d/m H:i" }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Tab switching
+function showTab(tabName) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.add('hidden');
+  });
+  
+  // Show selected tab
+  document.getElementById('content-' + tabName).classList.remove('hidden');
+  
+  // Update button styles
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('border-indigo-500', 'text-indigo-600');
+    btn.classList.add('border-transparent', 'text-slate-500');
+  });
+  
+  document.getElementById('tab-' + tabName).classList.add('border-indigo-500', 'text-indigo-600');
+  document.getElementById('tab-' + tabName).classList.remove('border-transparent', 'text-slate-500');
+  
+  // Re-init Lucide icons
+  lucide.createIcons();
+}
+
+// Filter subscriptions
+function filterSubscriptions() {
+  const filter = document.getElementById('filter-status').value;
+  const rows = document.querySelectorAll('.sub-row');
+  
+  rows.forEach(row => {
+    const status = row.getAttribute('data-status');
+    if (filter === 'all' || status === filter || (filter === 'expired' && status === 'expiré')) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+
+// Search affiliates
+function searchAffiliates() {
+  const search = document.getElementById('search-affiliate').value.toLowerCase();
+  const rows = document.querySelectorAll('.affiliate-row');
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(search) ? '' : 'none';
+  });
+}
+
+// Toggle affiliate status
+function toggleAffiliateStatus(userId, action) {
+  if (confirm('Voulez-vous vraiment ' + action + ' cet affilié ?')) {
+    // AJAX call to toggle status
+    fetch('/partner/toggle-affiliate/' + userId + '/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      }
+    }).then(() => location.reload());
+  }
+}
+</script>
+{% endblock %}

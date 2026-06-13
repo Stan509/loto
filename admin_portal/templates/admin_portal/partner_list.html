@@ -1,0 +1,118 @@
+{% extends "admin_portal/_dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Gestion des Partenaires | Central Borlette{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Gestion des Partenaires</div>
+      <div class="portal-page__meta">Créer et gérer les partenaires avec accès limités</div>
+    </div>
+    <a href="{% url 'admin_portal:create_partner' %}" class="gaboom-btn-primary">
+      + Créer un partenaire
+    </a>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Info Banner -->
+    <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+      <div class="flex items-start gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="text-sm text-indigo-700 dark:text-indigo-300">
+          <p class="font-medium">À propos des partenaires</p>
+          <p class="text-xs mt-1">Les partenaires ont un accès limité : ils peuvent donner les résultats des tirages, confirmer les paiements des affiliés et renouveler les abonnements des directeurs. Ils ne voient pas les montants d'argent accumulés ni le nombre d'agents par borlette.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partners Table -->
+    <section class="gaboom-card p-4 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-200 dark:border-slate-700">
+            <th class="text-left py-2 px-2">Partenaire</th>
+            <th class="text-left py-2 px-2">Permissions</th>
+            <th class="text-left py-2 px-2">Borlettes</th>
+            <th class="text-left py-2 px-2">Statut</th>
+            <th class="text-left py-2 px-2">Créé le</th>
+            <th class="text-left py-2 px-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for partner in partners %}
+          <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="py-3 px-2">
+              <div class="flex items-center gap-2">
+                <div class="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                  {{ partner.user.username|first|upper }}
+                </div>
+                <div>
+                  <div class="font-medium">{{ partner.user.username }}</div>
+                  <div class="text-xs text-slate-500">{{ partner.user.email|default:"-" }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="py-3 px-2">
+              <div class="flex flex-wrap gap-1">
+                {% if partner.can_submit_results %}
+                  <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded text-xs">Résultats</span>
+                {% endif %}
+                {% if partner.can_confirm_affiliate_payments %}
+                  <span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded text-xs">Paiements</span>
+                {% endif %}
+                {% if partner.can_renew_subscriptions %}
+                  <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">Renouvellements</span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="py-3 px-2">
+              {% if partner.allowed_borlettes.exists %}
+                <div class="flex flex-wrap gap-1">
+                  {% for borlette in partner.allowed_borlettes.all %}
+                    <span class="text-xs text-slate-600 dark:text-slate-400">{{ borlette.nom_borlette }}</span>{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                </div>
+              {% else %}
+                <span class="text-xs text-slate-400">Toutes les borlettes</span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-2">
+              <span class="px-2 py-1 rounded-full text-xs
+                {% if partner.is_active %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300
+                {% else %}bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300{% endif %}">
+                {% if partner.is_active %}Actif{% else %}Inactif{% endif %}
+              </span>
+            </td>
+            <td class="py-3 px-2 text-slate-500">
+              {{ partner.created_at|date:"d/m/Y" }}
+            </td>
+            <td class="py-3 px-2">
+              <div class="flex gap-2">
+                <a href="{% url 'admin_portal:edit_partner' partner.id %}" class="text-blue-500 hover:underline text-xs">Modifier</a>
+                <a href="{% url 'admin_portal:toggle_partner' partner.id %}" class="{% if partner.is_active %}text-rose-500{% else %}text-emerald-500{% endif %} hover:underline text-xs">
+                  {% if partner.is_active %}Désactiver{% else %}Activer{% endif %}
+                </a>
+                <a href="{% url 'admin_portal:delete_partner' partner.id %}" class="text-rose-500 hover:underline text-xs" onclick="return confirm('Supprimer ce partenaire ?')">Supprimer</a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="py-8 text-center text-slate-500">
+              <div class="mb-2">Aucun partenaire créé</div>
+              <a href="{% url 'admin_portal:create_partner' %}" class="gaboom-btn-primary text-sm">Créer un partenaire</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

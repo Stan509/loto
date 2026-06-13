@@ -1,0 +1,19 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Supprimer Agent | Central Borlette{% endblock %}
+{% block page_title %}Supprimer agent{% endblock %}
+{% block page_meta %}Action irréversible{% endblock %}
+
+{% block page_body %}
+  <div class="portal-card">
+    <div class="portal-card__content">
+      <div class="empty">Confirmer la suppression de : <strong>{{ agent.nom }}</strong></div>
+
+      <form method="post" class="portal-actions" style="margin-top: 14px;">
+        {% csrf_token %}
+        <button class="btn" type="submit" style="border-color: rgba(255, 92, 119, 0.35); background: rgba(255, 92, 119, 0.12);">Supprimer</button>
+        <a class="btn btn--quiet" href="{% url 'admin_portal:agent_detail' agent.id %}">Annuler</a>
+      </form>
+    </div>
+  </div>
+{% endblock %}

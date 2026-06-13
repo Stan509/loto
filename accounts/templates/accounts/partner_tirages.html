@@ -1,0 +1,132 @@
+{% extends "accounts/_partner_base.html" %}
+{% load static %}
+
+{% block title %}Tirages | Partner Portal{% endblock %}
+{% block page_title %}Gestion des Tirages{% endblock %}
+{% block page_subtitle %}Tous les tirages et leurs résultats{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-indigo-500">
+      <div class="text-2xl font-bold text-indigo-600">{{ total_tirages|default:"0" }}</div>
+      <div class="text-sm text-slate-600">Total Tirages</div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-emerald-500">
+      <div class="text-2xl font-bold text-emerald-600">{{ tirages_with_results|default:"0" }}</div>
+      <div class="text-sm text-slate-600">Avec Résultats</div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
+      <div class="text-2xl font-bold text-amber-600">{{ tirages_needing_results|default:"0" }}</div>
+      <div class="text-sm text-slate-600">En Attente</div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-blue-500">
+      <div class="text-2xl font-bold text-blue-600">{{ upcoming_tirages|default:"0" }}</div>
+      <div class="text-sm text-slate-600">À Venir</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-2">
+    <div class="flex flex-wrap gap-2">
+      <a href="?tab=all" class="px-4 py-2 rounded-lg text-sm font-medium {% if current_tab == 'all' or not current_tab %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700{% endif %}">
+        Tous les Tirages
+      </a>
+      <a href="?tab=pending" class="px-4 py-2 rounded-lg text-sm font-medium {% if current_tab == 'pending' %}bg-amber-600 text-white{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700{% endif %}">
+        En Attente de Résultats
+      </a>
+      <a href="?tab=upcoming" class="px-4 py-2 rounded-lg text-sm font-medium {% if current_tab == 'upcoming' %}bg-blue-600 text-white{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700{% endif %}">
+        Tirages à Venir
+      </a>
+    </div>
+  </div>
+
+  <!-- Tirages Table -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Tirage</th>
+            <th class="px-4 py-3 text-center font-medium text-slate-600 dark:text-slate-300">Borlettes</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Heure</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Résultats</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Statut</th>
+            <th class="px-4 py-3 text-right font-medium text-slate-600 dark:text-slate-300">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% for tirage in tirages %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-bold">
+                  {{ tirage.code|default:tirage.nom|first|upper }}
+                </div>
+                <div>
+                  <div class="font-medium text-slate-800 dark:text-white">{{ tirage.nom }}</div>
+                  <div class="text-xs text-slate-500">{{ tirage.code|default:"-" }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                {{ tirage.borlettes_count }} borlette{{ tirage.borlettes_count|pluralize:"s" }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="text-slate-700 dark:text-slate-300">{{ tirage.heure_tirage|time:"H:i" }}</div>
+              <div class="text-xs text-slate-500">{{ tirage.type|default:"JOUR" }}</div>
+            </td>
+            <td class="px-4 py-3">
+              {% with resultats=tirage.resultats %}
+              {% if tirage.has_any_result and resultats %}
+                <div class="flex gap-1">
+                  <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-mono">{{ resultats.first.lot1 }}</span>
+                  <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-mono">{{ resultats.first.lot2 }}</span>
+                  <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-mono">{{ resultats.first.lot3 }}</span>
+                </div>
+                {% if resultats.first.loto3 %}
+                  <div class="text-xs text-slate-500 mt-1">Loto3: {{ resultats.first.loto3 }}</div>
+                {% endif %}
+              {% else %}
+                <span class="text-slate-400 italic">Non disponible</span>
+              {% endif %}
+              {% endwith %}
+            </td>
+            <td class="px-4 py-3">
+              {% if tirage.has_any_result %}
+                <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">Terminé</span>
+              {% else %}
+                <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">En attente</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-right">
+              {% if not tirage.has_any_result %}
+                <a href="{% url 'partner:submit_result' tirage.id %}" 
+                   class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg transition">
+                  Ajouter Résultat
+                </a>
+              {% else %}
+                <a href="{% url 'partner:submit_result' tirage.id %}" 
+                   class="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 text-white text-xs rounded-lg transition">
+                  Modifier
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-500">
+              <i data-lucide="dices" class="h-10 w-10 mx-auto mb-2 text-slate-300"></i>
+              <p>Aucun tirage trouvé</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

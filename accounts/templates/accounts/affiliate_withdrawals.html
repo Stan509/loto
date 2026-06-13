@@ -1,0 +1,197 @@
+{% extends "accounts/_affiliate_base.html" %}
+{% load static %}
+
+{% block title %}Retraits | Affiliate Dashboard{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Mes Retraits</div>
+      <div class="portal-page__meta">Historique • Demande • Suivi</div>
+    </div>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Stats Cards -->
+    <section>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="gaboom-card p-4">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Solde disponible</div>
+          <div class="mt-2 text-xl font-semibold text-emerald-600 dark:text-emerald-300">{{ available_balance|floatformat:2 }} GDS</div>
+        </div>
+        <div class="gaboom-card p-4">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Total retiré</div>
+          <div class="mt-2 text-xl font-semibold">{{ total_withdrawn|floatformat:2 }} GDS</div>
+        </div>
+        <div class="gaboom-card p-4">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">En attente</div>
+          <div class="mt-2 text-xl font-semibold text-amber-600 dark:text-amber-300">{{ pending_amount|floatformat:2 }} GDS</div>
+        </div>
+        <div class="gaboom-card p-4">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Délai traitement</div>
+          <div class="mt-2 text-xl font-semibold text-blue-600 dark:text-blue-300">48h max</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- New Withdrawal Request -->
+    <section class="gaboom-card p-4 border-l-4 border-emerald-500">
+      <div class="flex items-center gap-2 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="text-sm font-semibold">Demander un retrait</div>
+      </div>
+
+      {% if payment_method %}
+        <form method="post" class="space-y-4">
+          {% csrf_token %}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Montant (GDS)</label>
+              <input type="number" name="amount" min="100" step="0.01" class="gaboom-input w-full" placeholder="Ex: 1000" required>
+              <p class="text-xs text-slate-400 mt-1">Minimum: 100 GDS</p>
+            </div>
+            <div>
+              <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Méthode de paiement</label>
+              <div class="gaboom-input w-full bg-slate-50 dark:bg-slate-800">
+                {% if payment_method == 'moncash' %}MonCash
+                {% elif payment_method == 'natcash' %}NatCash
+                {% elif payment_method == 'western_union' %}Western Union
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Info Display -->
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-sm">
+            <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Informations de paiement enregistrées</div>
+            {% if payment_method == 'moncash' or payment_method == 'natcash' %}
+              <div class="flex items-center gap-2">
+                <span class="text-slate-600 dark:text-slate-400">Numéro:</span>
+                <span class="font-medium">{{ payment_phone|default:"Non configuré" }}</span>
+              </div>
+            {% elif payment_method == 'western_union' %}
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-600 dark:text-slate-400">Nom:</span>
+                  <span class="font-medium">{{ payment_full_name|default:"Non configuré" }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-600 dark:text-slate-400">Ville:</span>
+                  <span class="font-medium">{{ payment_location|default:"Non configuré" }}</span>
+                </div>
+              </div>
+            {% endif %}
+            <a href="{% url 'affiliate:settings' %}" class="text-xs text-blue-500 hover:underline mt-2 inline-block">Modifier dans Paramètres</a>
+          </div>
+
+          <button type="submit" class="gaboom-btn-primary w-full md:w-auto" {% if available_balance < 100 %}disabled{% endif %}>
+            Soumettre la demande
+          </button>
+          {% if available_balance < 100 %}
+            <p class="text-xs text-rose-500 mt-1">Solde insuffisant (minimum 100 GDS)</p>
+          {% endif %}
+        </form>
+      {% else %}
+        <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+          <div class="flex items-center gap-2 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span class="font-medium text-amber-700 dark:text-amber-300">Configuration requise</span>
+          </div>
+          <p class="text-sm text-amber-600 dark:text-amber-400 mb-3">
+            Vous devez configurer vos informations de paiement avant de pouvoir faire un retrait.
+          </p>
+          <a href="{% url 'affiliate:settings' %}" class="gaboom-btn-ghost text-sm">
+            Configurer mes paiements
+          </a>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Withdrawal History -->
+    <section class="gaboom-card p-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-sm font-semibold">Historique des retraits</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">{{ withdrawals|length }} demande{{ withdrawals|length|pluralize }}</div>
+      </div>
+
+      <div class="space-y-3">
+        {% if withdrawals %}
+          {% for withdrawal in withdrawals %}
+            <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border-l-4 
+              {% if withdrawal.status == 'paid' %}border-emerald-500
+              {% elif withdrawal.status == 'pending' %}border-amber-500
+              {% elif withdrawal.status == 'approved' %}border-blue-500
+              {% else %}border-rose-500{% endif %}">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold">{{ withdrawal.amount|floatformat:2 }} GDS</span>
+                    <span class="text-xs px-2 py-1 rounded-full
+                      {% if withdrawal.status == 'paid' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300
+                      {% elif withdrawal.status == 'pending' %}bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300
+                      {% elif withdrawal.status == 'approved' %}bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300
+                      {% else %}bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300{% endif %}">
+                      {% if withdrawal.status == 'paid' %}Payé
+                      {% elif withdrawal.status == 'pending' %}En attente
+                      {% elif withdrawal.status == 'approved' %}Approuvé
+                      {% else %}Refusé{% endif %}
+                    </span>
+                  </div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Demande du {{ withdrawal.created_at|date:"d/m/Y H:i" }}
+                    {% if withdrawal.expected_by and withdrawal.status == 'pending' %}
+                      • Traitement avant le {{ withdrawal.expected_by|date:"d/m/Y H:i" }}
+                    {% endif %}
+                  </div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400">
+                    {% if withdrawal.payment_method == 'moncash' %}MonCash
+                    {% elif withdrawal.payment_method == 'natcash' %}NatCash
+                    {% elif withdrawal.payment_method == 'western_union' %}Western Union
+                    {% endif %}
+                    {% if withdrawal.payment_phone %}• {{ withdrawal.payment_phone }}{% endif %}
+                  </div>
+                </div>
+                <div class="text-right">
+                  {% if withdrawal.status == 'paid' %}
+                    {% if withdrawal.proof_screenshot %}
+                      <a href="{{ withdrawal.proof_screenshot.url }}" target="_blank" class="text-xs text-blue-500 hover:underline flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Voir la preuve
+                      </a>
+                    {% endif %}
+                    <div class="text-xs text-emerald-600 dark:text-emerald-400">
+                      Payé le {{ withdrawal.processed_at|date:"d/m/Y H:i" }}
+                    </div>
+                  {% elif withdrawal.status == 'pending' %}
+                    <div class="text-xs text-amber-600 dark:text-amber-400">
+                      En cours de traitement (48h max)
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <p class="text-sm">Aucun retrait effectué</p>
+            <p class="text-xs mt-1">Vos demandes de retrait apparaîtront ici</p>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

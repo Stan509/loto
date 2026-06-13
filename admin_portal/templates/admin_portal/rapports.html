@@ -1,0 +1,467 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Rapports | Central Borlette{% endblock %}
+{% block page_title %}Rapports{% endblock %}
+
+{% block page_body %}
+<style>
+  .portal-page { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+  .portal-page__header { display: none !important; }
+  .portal-page__body { width: 100% !important; max-width: none !important; }
+  .portal-main { padding: 0 !important; }
+
+  .rapports-page {
+    --card-bg: rgba(10, 18, 35, 0.58);
+    --card-bg2: rgba(12, 28, 55, 0.34);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-color: rgba(255, 255, 255, 0.92);
+    --muted-color: rgba(255, 255, 255, 0.62);
+    --accent-blue: #3aa0ff;
+    --accent-violet: #7c4dff;
+    --accent-success: #10b981;
+    --accent-danger: #ff4d6d;
+    --accent-warning: #f59e0b;
+    width: 100%; padding: 28px 32px 48px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+
+  .rapports-page .page-header { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 24px; }
+  .rapports-page .page-header h1 { margin: 0; font-size: 30px; font-weight: 750; color: var(--text-color); }
+  .rapports-page .page-header p { margin: 6px 0 0; color: var(--muted-color); font-size: 14px; }
+
+  .rapports-page .filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+  .rapports-page .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .rapports-page .filter-group label { font-size: 11px; color: var(--muted-color); font-weight: 600; }
+  .rapports-page .filter-group select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 10px 40px 10px 14px;
+    background-color: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(58, 160, 255, 0.28);
+    border-radius: 18px;
+    color: var(--text-color);
+    font-size: 13px;
+    min-width: 170px;
+    cursor: pointer;
+    outline: none;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.12) inset,
+      0 0 0 1px rgba(58, 160, 255, 0.14),
+      0 0 16px rgba(58, 160, 255, 0.10);
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    background-image:
+      linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.01)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5.5 7.5L10 12l4.5-4.5' stroke='rgba(255,255,255,0.72)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 0 0, right 12px center;
+    background-size: auto, 16px 16px;
+  }
+  .rapports-page .filter-group select:hover {
+    background-color: rgba(255, 255, 255, 0.055);
+    border-color: rgba(58, 160, 255, 0.45);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.12) inset,
+      0 0 0 1px rgba(58, 160, 255, 0.18),
+      0 0 22px rgba(58, 160, 255, 0.22);
+  }
+  .rapports-page .filter-group select:focus {
+    border-color: rgba(58, 160, 255, 0.72);
+    box-shadow:
+      0 0 0 3px rgba(58, 160, 255, 0.28),
+      0 0 0 1px rgba(0,0,0,0.12) inset,
+      0 0 32px rgba(58, 160, 255, 0.28);
+  }
+  .rapports-page .filter-group select:active {
+    background-color: rgba(255, 255, 255, 0.075);
+  }
+  .rapports-page .filter-group select option {
+    background: rgb(10, 18, 35);
+    color: rgba(255, 255, 255, 0.92);
+  }
+  .rapports-page .filter-group select option:checked {
+    background: rgba(58, 160, 255, 0.35);
+    color: rgba(255, 255, 255, 0.98);
+  }
+  .rapports-page .filter-group select option:hover {
+    background: rgba(124, 77, 255, 0.28);
+    color: rgba(255, 255, 255, 0.98);
+  }
+  .rapports-page .btn-export { padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--muted-color); font-size: 13px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .rapports-page .btn-export:hover { background: rgba(255,255,255,0.1); color: var(--text-color); }
+
+  .rapports-page .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .rapports-page .summary-card { background: linear-gradient(180deg, var(--card-bg), var(--card-bg2)); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px; }
+  .rapports-page .summary-card .label { font-size: 12px; color: var(--muted-color); margin-bottom: 8px; }
+  .rapports-page .summary-card .value { font-size: 28px; font-weight: 800; color: var(--text-color); }
+  .rapports-page .summary-card .value.positive { color: var(--accent-success); }
+  .rapports-page .summary-card .value.negative { color: var(--accent-danger); }
+
+  .rapports-page .section { background: linear-gradient(180deg, var(--card-bg), var(--card-bg2)); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+  .rapports-page .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .rapports-page .section-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-color); display: flex; align-items: center; gap: 10px; }
+
+  .rapports-page .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .rapports-page .data-table th { text-align: left; padding: 12px 10px; color: var(--muted-color); font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .rapports-page .data-table td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text-color); }
+  .rapports-page .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .rapports-page .data-table .positive { color: var(--accent-success); }
+  .rapports-page .data-table .negative { color: var(--accent-danger); }
+  .rapports-page .data-table .mono { font-family: monospace; }
+
+  .rapports-page .scroll-box { max-height: 400px; overflow-y: auto; }
+  .rapports-page .loading { text-align: center; padding: 40px; color: var(--muted-color); }
+  .rapports-page .empty-state { text-align: center; padding: 40px; color: var(--muted-color); }
+
+  .rapports-page .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .rapports-page .tab { padding: 10px 18px; background: rgba(255,255,255,0.04); border: 1px solid transparent; border-radius: 8px; color: var(--muted-color); font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.15s; }
+  .rapports-page .tab:hover { background: rgba(255,255,255,0.08); }
+  .rapports-page .tab.active { background: linear-gradient(135deg, rgba(58,160,255,0.2), rgba(124,77,255,0.15)); border-color: rgba(58,160,255,0.3); color: var(--text-color); }
+
+  @media (max-width: 768px) { .rapports-page { padding: 20px 16px 32px; } .rapports-page .summary-cards { grid-template-columns: 1fr 1fr; } }
+</style>
+
+<div class="rapports-page">
+  <header class="page-header">
+    <div>
+      <h1>Rapports</h1>
+      <p id="periodLabel">Chargement...</p>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>Période</label>
+      <select id="filterPeriod">
+        <option value="today">Aujourd'hui</option>
+        <option value="7d" selected>7 derniers jours</option>
+        <option value="15d">15 derniers jours</option>
+        <option value="1m">1 mois</option>
+        <option value="3m">3 mois</option>
+        <option value="6m">6 mois</option>
+        <option value="1y">1 an</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Tirage</label>
+      <select id="filterTirage">
+        <option value="">Tous les tirages</option>
+      </select>
+    </div>
+    <div class="filter-group" style="justify-content: flex-end;">
+      <a href="#" id="btnExport" class="btn-export">📥 Exporter CSV</a>
+    </div>
+  </div>
+
+  <div class="summary-cards" id="summaryCards">
+    <div class="summary-card"><div class="label">Total Mises</div><div class="value" id="sumMises">—</div></div>
+    <div class="summary-card"><div class="label">Total Gains Dus</div><div class="value" id="sumGains">—</div></div>
+    <div class="summary-card"><div class="label">Commissions Agents</div><div class="value" id="sumCommission">—</div></div>
+    <div class="summary-card"><div class="label">Dépenses</div><div class="value" id="sumDepenses">—</div></div>
+    <div class="summary-card"><div class="label">Bénéfice Net</div><div class="value" id="sumBenefice">—</div><div class="help" style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">Mises - Gains - Commissions - Dépenses</div></div>
+    <div class="summary-card"><div class="label">Tickets</div><div class="value" id="sumTickets">—</div></div>
+    <div class="summary-card"><div class="label">Gagnants</div><div class="value" id="sumWinners">—</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="tirages">Par Tirage</button>
+    <button class="tab" data-tab="winners">Tickets Gagnants</button>
+    <button class="tab" data-tab="results">Résultats</button>
+    <button class="tab" data-tab="depenses">Dépenses</button>
+  </div>
+
+  <div class="section" id="sectionTirages">
+    <div class="section-header">
+      <h3>📊 Bénéfices par Tirage</h3>
+      <a href="#" class="btn-export" data-export="tirages">📥 CSV</a>
+    </div>
+    <div class="scroll-box">
+      <table class="data-table" id="tableTirages">
+        <thead><tr><th>Tirage</th><th>Type</th><th>Mises</th><th>Gains Dus</th><th>Bénéfice</th><th>Tickets</th><th>Gagnants</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="sectionWinners" style="display:none;">
+    <div class="section-header">
+      <h3>🏆 Tickets Gagnants</h3>
+      <a href="#" class="btn-export" data-export="winners">📥 CSV</a>
+    </div>
+    <div class="scroll-box">
+      <table class="data-table" id="tableWinners">
+        <thead><tr><th>Ticket</th><th>Agent</th><th>Tirage</th><th>Date</th><th>Mise</th><th>Gain Dû</th><th>Détails</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="sectionResults" style="display:none;">
+    <div class="section-header">
+      <h3>🎯 Résultats des Tirages</h3>
+      <a href="#" class="btn-export" data-export="results">📥 CSV</a>
+    </div>
+    <div class="scroll-box">
+      <table class="data-table" id="tableResults">
+        <thead><tr><th>Tirage</th><th>Date</th><th>Lot 1</th><th>Lot 2</th><th>Lot 3</th><th>Loto3</th><th>Loto4</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="sectionDepenses" style="display:none;">
+    <div class="section-header">
+      <h3>💸 Dépenses</h3>
+      <div style="display:flex;gap:8px;">
+        <a href="{% url 'admin_portal:depense_create' %}" class="btn-export" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3);color:#10b981;">➕ Ajouter</a>
+        <a href="#" class="btn-export" data-export="depenses">📥 CSV</a>
+      </div>
+    </div>
+    <div class="scroll-box">
+      <table class="data-table" id="tableDepenses">
+        <thead><tr><th>Date</th><th>Montant</th><th>Catégorie</th><th>Description</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const filterPeriod = document.getElementById('filterPeriod');
+  const filterTirage = document.getElementById('filterTirage');
+  const periodLabel = document.getElementById('periodLabel');
+
+  // Load tirages for filter
+  fetch('/portal/api/tirages/')
+    .then(r => r.json())
+    .then(data => {
+      data.tirages.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.nom;
+        filterTirage.appendChild(opt);
+      });
+    });
+
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const tabName = tab.dataset.tab;
+      document.getElementById('sectionTirages').style.display = tabName === 'tirages' ? '' : 'none';
+      document.getElementById('sectionWinners').style.display = tabName === 'winners' ? '' : 'none';
+      document.getElementById('sectionResults').style.display = tabName === 'results' ? '' : 'none';
+      document.getElementById('sectionDepenses').style.display = tabName === 'depenses' ? '' : 'none';
+    });
+  });
+
+  // Export buttons
+  document.querySelectorAll('.btn-export[data-export]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const type = btn.dataset.export;
+      const period = filterPeriod.value;
+      const tirage = filterTirage.value;
+      window.location.href = `/portal/api/rapports/export.csv?type=${type}&period=${period}&tirage=${tirage}`;
+    });
+  });
+
+  document.getElementById('btnExport').addEventListener('click', e => {
+    e.preventDefault();
+    const period = filterPeriod.value;
+    const tirage = filterTirage.value;
+    window.location.href = `/portal/api/rapports/export.csv?type=summary&period=${period}&tirage=${tirage}`;
+  });
+
+  function fmt(n) { return (n || 0).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+  function fmtInt(n) { return (n || 0).toLocaleString('fr-FR'); }
+
+  function badgeResultStatus(r) {
+    const statut = (r.statut || 'pending');
+    const source = (r.source || '').toLowerCase();
+    const manual = source === 'manual';
+    const suspicious = !!r.is_suspicious;
+
+    if (statut === 'validated') {
+      return `<span class="badge" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35);color:#10b981;">🟢 Validé</span>`;
+    }
+    if (statut === 'rejected') {
+      return `<span class="badge" style="background:rgba(255,77,109,0.15);border:1px solid rgba(255,77,109,0.35);color:#ff4d6d;">🔴 Rejeté</span>`;
+    }
+    const extra = [
+      manual ? `<span style="color:#f59e0b;font-weight:700;">⚠️ modifié</span>` : '',
+      suspicious ? `<span style="color:#f59e0b;font-weight:700;">⚠️ Incohérence API détectée</span>` : ''
+    ].filter(Boolean).join(' ');
+    return `<span class="badge" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.30);color:#f59e0b;">🟡 En attente</span>${extra ? ` <span style=\"font-size:11px;color:rgba(255,255,255,0.62);\">${extra}</span>` : ''}`;
+  }
+
+  async function postAction(url) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': (document.querySelector('input[name=csrfmiddlewaretoken]') || {}).value || ''
+      }
+    });
+    if (!res.ok) {
+      let msg = 'Erreur';
+      try {
+        const j = await res.json();
+        msg = j.error || msg;
+      } catch (e) {}
+      throw new Error(msg);
+    }
+    return res.json();
+  }
+
+  function loadData() {
+    const period = filterPeriod.value;
+    const tirage = filterTirage.value;
+    const qs = `period=${period}&tirage=${tirage}`;
+
+    // Summary
+    fetch(`/portal/api/rapports/summary/?${qs}`)
+      .then(r => r.json())
+      .then(data => {
+        const s = data.summary;
+        periodLabel.textContent = `${data.period.start} → ${data.period.end}`;
+        document.getElementById('sumMises').textContent = fmt(s.total_mises) + ' G';
+        document.getElementById('sumGains').textContent = fmt(s.total_gains_du) + ' G';
+        document.getElementById('sumCommission').textContent = fmt(s.total_commissions || s.total_commission_due) + ' G';
+        document.getElementById('sumDepenses').textContent = fmt(s.total_depenses || 0) + ' G';
+        const ben = document.getElementById('sumBenefice');
+        ben.textContent = fmt(s.benefice_net) + ' G';
+        ben.className = 'value ' + (s.benefice_net >= 0 ? 'positive' : 'negative');
+        document.getElementById('sumTickets').textContent = fmtInt(s.tickets_count);
+        document.getElementById('sumWinners').textContent = fmtInt(s.winners_count);
+      });
+
+    // Tirages
+    fetch(`/portal/api/rapports/tirages/?${qs}`)
+      .then(r => r.json())
+      .then(data => {
+        const tbody = document.querySelector('#tableTirages tbody');
+        tbody.innerHTML = '';
+        if (!data.tirages.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Aucune donnée</td></tr>';
+          return;
+        }
+        data.tirages.forEach(t => {
+          const benClass = t.benefice_net >= 0 ? 'positive' : 'negative';
+          tbody.innerHTML += `<tr>
+            <td><strong>${t.tirage_nom}</strong></td>
+            <td>${t.tirage_type}</td>
+            <td>${fmt(t.mises)} G</td>
+            <td>${fmt(t.gains_du)} G</td>
+            <td class="${benClass}">${fmt(t.benefice_net)} G</td>
+            <td>${fmtInt(t.tickets_count)}</td>
+            <td>${fmtInt(t.winners_count)}</td>
+          </tr>`;
+        });
+      });
+
+    // Winners
+    fetch(`/portal/api/rapports/winners/?${qs}&limit=100`)
+      .then(r => r.json())
+      .then(data => {
+        const tbody = document.querySelector('#tableWinners tbody');
+        tbody.innerHTML = '';
+        if (!data.winners.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Aucun ticket gagnant</td></tr>';
+          return;
+        }
+        data.winners.forEach(w => {
+          const details = w.winning_lines.map(l => `${l.jeu}:${l.valeur} (${l.win_context})`).join(', ');
+          const date = new Date(w.created_at).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+          tbody.innerHTML += `<tr>
+            <td class="mono">${w.ticket_no}</td>
+            <td>${w.agent_nom}</td>
+            <td>${w.tirage_nom}</td>
+            <td>${date}</td>
+            <td>${fmt(w.total_mise)} G</td>
+            <td class="positive">${fmt(w.total_gain_du)} G</td>
+            <td style="font-size:11px;color:var(--muted-color);">${details}</td>
+          </tr>`;
+        });
+      });
+
+    // Results
+    fetch(`/portal/api/rapports/results/?${qs}`)
+      .then(r => r.json())
+      .then(data => {
+        const tbody = document.querySelector('#tableResults tbody');
+        tbody.innerHTML = '';
+        if (!data.results.length) {
+          tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Aucun résultat</td></tr>';
+          return;
+        }
+        data.results.forEach(r => {
+          const statusHtml = badgeResultStatus(r);
+          const actionsHtml = `
+            <div style="display:flex;gap:6px;justify-content:flex-end;">
+              <button type="button" data-action="validate" data-id="${r.id}" class="btn-export" style="padding:6px 10px;">✅</button>
+              <button type="button" data-action="pending" data-id="${r.id}" class="btn-export" style="padding:6px 10px;">⏸</button>
+              <button type="button" data-action="reject" data-id="${r.id}" class="btn-export" style="padding:6px 10px;">🔴</button>
+              <button type="button" data-action="flag" data-id="${r.id}" class="btn-export" style="padding:6px 10px;">⚠️</button>
+            </div>
+          `;
+          tbody.innerHTML += `<tr>
+            <td><strong>${r.tirage_nom}</strong></td>
+            <td>${r.date}</td>
+            <td class="mono">${r.lot1}</td>
+            <td class="mono">${r.lot2}</td>
+            <td class="mono">${r.lot3}</td>
+            <td class="mono">${r.loto3}</td>
+            <td class="mono" style="font-size:11px;">${r.loto4_opt1}, ${r.loto4_opt2}, ${r.loto4_opt3}</td>
+            <td>${statusHtml}</td>
+            <td style="text-align:right;">${actionsHtml}</td>
+          </tr>`;
+        });
+
+        tbody.querySelectorAll('button[data-action]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const action = btn.dataset.action;
+            try {
+              if (action === 'validate') await postAction(`/portal/api/resultats/${id}/validate/`);
+              if (action === 'reject') await postAction(`/portal/api/resultats/${id}/reject/`);
+              if (action === 'pending') await postAction(`/portal/api/resultats/${id}/pending/`);
+              if (action === 'flag') await postAction(`/portal/api/resultats/${id}/flag/`);
+              loadData();
+            } catch (e) {
+              alert(e.message || 'Erreur');
+            }
+          });
+        });
+      });
+
+    // Dépenses
+    fetch(`/portal/api/rapports/depenses/?${qs}`)
+      .then(r => r.json())
+      .then(data => {
+        const tbody = document.querySelector('#tableDepenses tbody');
+        tbody.innerHTML = '';
+        if (!data.depenses.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Aucune dépense</td></tr>';
+          return;
+        }
+        data.depenses.forEach(d => {
+          tbody.innerHTML += `<tr>
+            <td>${d.date}</td>
+            <td class="negative" style="font-weight:700;">${fmt(d.amount)} G</td>
+            <td>${d.category || '—'}</td>
+            <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.description}</td>
+          </tr>`;
+        });
+      });
+  }
+
+  filterPeriod.addEventListener('change', loadData);
+  filterTirage.addEventListener('change', loadData);
+
+  loadData();
+})();
+</script>
+{% endblock %}

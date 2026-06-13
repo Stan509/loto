@@ -1,0 +1,249 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Paiement {{ agent.nom }} | Central Borlette{% endblock %}
+{% block page_title %}Paiement Agent{% endblock %}
+{% block page_meta %}{{ agent.nom }}{% endblock %}
+
+{% block page_body %}
+<style>
+  .portal-page { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+  .portal-page__header { display: none !important; }
+  .portal-page__body { width: 100% !important; max-width: none !important; }
+  .portal-main { padding: 0 !important; }
+
+  .payout-page {
+    --bg0: #070a12;
+    --card-bg: rgba(10, 18, 35, 0.58);
+    --card-bg2: rgba(12, 28, 55, 0.34);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-color: rgba(255, 255, 255, 0.92);
+    --muted-color: rgba(255, 255, 255, 0.62);
+    --accent-blue: #3aa0ff;
+    --accent-violet: #7c4dff;
+    --accent-danger: #ff4d6d;
+    --accent-success: #10b981;
+    --accent-warning: #f59e0b;
+    width: 100%;
+    padding: 28px 32px 48px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    box-sizing: border-box;
+  }
+
+  .payout-page .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 28px;
+  }
+  .payout-page .page-header h1 { margin: 0; font-size: 30px; font-weight: 750; color: var(--text-color); }
+  .payout-page .page-header p { margin: 6px 0 0; color: var(--muted-color); font-size: 14px; }
+
+  .payout-page .layout { display: grid; grid-template-columns: 1fr 380px; gap: 28px; align-items: start; }
+
+  .payout-page .section {
+    background: linear-gradient(180deg, var(--card-bg), var(--card-bg2));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .payout-page .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .payout-page .section-num {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+    border-radius: 10px; font-weight: 800; font-size: 14px; color: #fff;
+  }
+  .payout-page .section-title { font-size: 16px; font-weight: 700; color: var(--text-color); }
+  .payout-page .section-subtitle { font-size: 12px; color: var(--muted-color); margin-top: 2px; }
+
+  .payout-page .field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .payout-page label { font-size: 13px; font-weight: 700; color: var(--text-color); }
+  .payout-page input, .payout-page textarea {
+    width: 100%; padding: 14px; background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.10); border-radius: 10px;
+    color: var(--text-color); font-size: 14px; outline: none; box-sizing: border-box;
+  }
+  .payout-page input:focus, .payout-page textarea:focus { border-color: var(--accent-blue); }
+  .payout-page .field-error { color: var(--accent-danger); font-size: 12px; margin-top: 4px; }
+
+  .payout-page .alert { padding: 16px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; }
+  .payout-page .alert--success { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--accent-success); }
+  .payout-page .alert--danger { background: rgba(255, 77, 109, 0.15); border: 1px solid rgba(255, 77, 109, 0.3); color: var(--accent-danger); }
+
+  .payout-page .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 24px; border-radius: 10px; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: 0.15s; border: none; text-decoration: none;
+  }
+  .payout-page .btn--primary { background: linear-gradient(135deg, var(--accent-success), #059669); color: #fff; }
+  .payout-page .btn--primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+  .payout-page .btn--ghost { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--muted-color); }
+
+  .payout-page .sidebar { position: sticky; top: 100px; }
+  .payout-page .balance-card {
+    background: linear-gradient(135deg, rgba(58, 160, 255, 0.1), rgba(124, 77, 255, 0.1));
+    border: 1px solid rgba(58, 160, 255, 0.2); border-radius: 16px; padding: 24px; margin-bottom: 20px;
+  }
+  .payout-page .balance-card h3 { margin: 0 0 16px; font-size: 14px; color: var(--muted-color); }
+  .payout-page .balance-card .amount { font-size: 36px; font-weight: 800; color: var(--accent-blue); margin-bottom: 8px; }
+  .payout-page .balance-card .label { font-size: 12px; color: var(--muted-color); }
+
+  .payout-page .info-card {
+    background: linear-gradient(180deg, var(--card-bg), var(--card-bg2));
+    border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 20px;
+  }
+  .payout-page .info-card h3 { margin: 0 0 16px; font-size: 14px; font-weight: 700; color: var(--text-color); display: flex; align-items: center; gap: 8px; }
+  .payout-page .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.04); font-size: 13px; }
+  .payout-page .info-row:last-child { border-bottom: none; }
+  .payout-page .info-row .lbl { color: var(--muted-color); }
+  .payout-page .info-row .val { color: var(--text-color); font-weight: 600; }
+
+  .payout-page .history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .payout-page .history-table th { text-align: left; padding: 12px 8px; color: var(--muted-color); font-weight: 600; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+  .payout-page .history-table td { padding: 12px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: var(--text-color); }
+  .payout-page .history-table tr:last-child td { border-bottom: none; }
+
+  @media (max-width: 1100px) { .payout-page .layout { grid-template-columns: 1fr; } .payout-page .sidebar { position: static; order: -1; } }
+</style>
+
+<div class="payout-page">
+  <header class="page-header">
+    <div>
+      <h1>Paiement: {{ agent.nom }}</h1>
+      <p>Zone: {{ agent.zone }} · Commission: {{ agent.commission }}%</p>
+    </div>
+    <a href="{% url 'admin_portal:agent_detail' agent.id %}" class="btn btn--ghost">← Retour au profil</a>
+  </header>
+
+  {% if errors %}
+  <div class="alert alert--danger">
+    {% for error in errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if payout_created %}
+  <div class="alert alert--success">
+    ✓ Paiement de <strong>{{ payout_created.amount|floatformat:2 }} G</strong> enregistré avec succès.
+  </div>
+  {% endif %}
+
+  <div class="layout">
+    <div class="form-main">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="section">
+          <div class="section-header">
+            <span class="section-num">💰</span>
+            <div>
+              <div class="section-title">Effectuer un paiement</div>
+              <div class="section-subtitle">Le solde sera automatiquement mis à jour</div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label for="id_amount">Montant à payer (G)</label>
+            <input type="number" name="amount" id="id_amount" value="{{ form.amount.value|default:'' }}" step="0.01" min="0.01" placeholder="0.00">
+            {% if form.amount.errors %}<div class="field-error">{{ form.amount.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="field-group">
+            <label for="id_note">Note (optionnel)</label>
+            <textarea name="note" id="id_note" rows="2" placeholder="Ex: Paiement semaine 1-7 janvier...">{{ form.note.value|default:'' }}</textarea>
+            {% if form.note.errors %}<div class="field-error">{{ form.note.errors|striptags }}</div>{% endif %}
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button type="submit" class="btn btn--primary">💵 Confirmer le paiement</button>
+            <a href="{% url 'admin_portal:agent_detail' agent.id %}" class="btn btn--ghost">Annuler</a>
+          </div>
+        </div>
+      </form>
+
+      {% if payouts %}
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">📋</span>
+          <div>
+            <div class="section-title">Historique des paiements</div>
+            <div class="section-subtitle">Derniers paiements effectués</div>
+          </div>
+        </div>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Montant</th>
+              <th>Par</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payouts %}
+            <tr>
+              <td>{{ p.created_at|date:"d/m/Y H:i" }}</td>
+              <td style="font-weight: 700; color: var(--accent-success);">{{ p.amount|floatformat:2 }} G</td>
+              <td>{{ p.created_by.username|default:"—" }}</td>
+              <td style="color: var(--muted-color);">{{ p.note|default:"—"|truncatechars:30 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="sidebar">
+      <div class="balance-card">
+        <h3>Solde actuel à payer</h3>
+        <div class="amount">{{ balance.solde|floatformat:2 }} G</div>
+        <div class="label">Commission cumulée - Paiements effectués</div>
+      </div>
+
+      <div class="info-card">
+        <h3>📊 Détails du calcul</h3>
+        <div class="info-row">
+          <span class="lbl">Total mises vendues</span>
+          <span class="val">{{ balance.total_mises|floatformat:2 }} G</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Taux commission</span>
+          <span class="val">{{ balance.commission_pct }}%</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Commission cumulée</span>
+          <span class="val" style="color: var(--accent-blue);">{{ balance.total_commission|floatformat:2 }} G</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Total paiements</span>
+          <span class="val" style="color: var(--accent-danger);">-{{ balance.total_payouts|floatformat:2 }} G</span>
+        </div>
+        <div class="info-row" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 16px;">
+          <span class="lbl" style="font-weight: 700;">Solde</span>
+          <span class="val" style="font-size: 18px; color: var(--accent-success);">{{ balance.solde|floatformat:2 }} G</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3>👤 Agent</h3>
+        <div class="info-row">
+          <span class="lbl">Nom</span>
+          <span class="val">{{ agent.nom }}</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Téléphone</span>
+          <span class="val">{{ agent.telephone }}</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Zone</span>
+          <span class="val">{{ agent.zone }}</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Statut</span>
+          <span class="val">{{ agent.statut }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

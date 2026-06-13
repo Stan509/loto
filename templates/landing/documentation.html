@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation | Central Borlette</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+        
+        .documentation-page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .documentation-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .documentation-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+        
+        .documentation-header p {
+            font-size: 16px;
+            color: #9ca3af;
+        }
+        
+        .category-section {
+            background: rgba(17, 24, 39, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .category-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .category-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .category-icon.intro {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+        
+        .category-icon.agents {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .category-icon.admin {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        
+        .category-icon.affiliate {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+        
+        .video-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .video-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .video-item img {
+            width: 160px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .video-item-content {
+            flex: 1;
+        }
+        
+        .video-item-content h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        
+        .video-item-content p {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        
+        .video-player-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .video-player-modal.active {
+            display: flex;
+        }
+        
+        .video-player-container {
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .video-player-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .video-player-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .no-videos {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+        
+        .no-videos svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            color: #6b7280;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #9ca3af;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+        
+        .back-link:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="documentation-page">
+        <a href="/" class="back-link">
+            <i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i>
+            Retour à l'accueil
+        </a>
+        
+        <div class="documentation-header">
+            <h1>📚 Documentation</h1>
+            <p>Apprenez à utiliser Central Borlette avec nos vidéos tutoriels</p>
+        </div>
+        
+        <!-- Introduction Section -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-icon intro">
+                    <i data-lucide="play-circle" style="width: 24px; height: 24px;"></i>
+                </div>
+                <h2>Introduction</h2>
+            </div>
+            {% if intro_videos %}
+                {% for video in intro_videos %}
+                <div class="video-item" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                    <img 
+                        src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                        alt="{{ video.title }}"
+                        loading="lazy">
+                    <div class="video-item-content">
+                        <h4>{{ video.title }}</h4>
+                        {% if video.description %}
+                        <p>{{ video.description|truncatewords:20 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="no-videos">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <p>Aucune vidéo d'introduction disponible pour le moment.</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Agents Section -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-icon agents">
+                    <i data-lucide="users" style="width: 24px; height: 24px;"></i>
+                </div>
+                <h2>Agents</h2>
+            </div>
+            {% if agents_videos %}
+                {% for video in agents_videos %}
+                <div class="video-item" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                    <img 
+                        src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                        alt="{{ video.title }}"
+                        loading="lazy">
+                    <div class="video-item-content">
+                        <h4>{{ video.title }}</h4>
+                        {% if video.description %}
+                        <p>{{ video.description|truncatewords:20 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="no-videos">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <p>Aucune vidéo pour les agents disponible pour le moment.</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Admin Borlettes Section -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-icon admin">
+                    <i data-lucide="shield" style="width: 24px; height: 24px;"></i>
+                </div>
+                <h2>Admin Borlettes</h2>
+            </div>
+            {% if admin_videos %}
+                {% for video in admin_videos %}
+                <div class="video-item" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                    <img 
+                        src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                        alt="{{ video.title }}"
+                        loading="lazy">
+                    <div class="video-item-content">
+                        <h4>{{ video.title }}</h4>
+                        {% if video.description %}
+                        <p>{{ video.description|truncatewords:20 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="no-videos">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <p>Aucune vidéo pour les admin borlettes disponible pour le moment.</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Affiliés Section -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-icon affiliate">
+                    <i data-lucide="user-check" style="width: 24px; height: 24px;"></i>
+                </div>
+                <h2>Affiliés</h2>
+            </div>
+            {% if affiliate_videos %}
+                {% for video in affiliate_videos %}
+                <div class="video-item" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                    <img 
+                        src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                        alt="{{ video.title }}"
+                        loading="lazy">
+                    <div class="video-item-content">
+                        <h4>{{ video.title }}</h4>
+                        {% if video.description %}
+                        <p>{{ video.description|truncatewords:20 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="no-videos">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <p>Aucune vidéo pour les affiliés disponible pour le moment.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Video Player Modal -->
+    <div class="video-player-modal" id="videoModal">
+        <div class="video-player-container">
+            <button class="close-modal" onclick="closeVideo()">
+                <i data-lucide="x" style="width: 24px; height: 24px;"></i>
+            </button>
+            <div class="video-player-wrapper">
+                <iframe 
+                    id="videoFrame"
+                    src="" 
+                    title="Video Player"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        function playVideo(videoId, title) {
+            const modal = document.getElementById('videoModal');
+            const iframe = document.getElementById('videoFrame');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeVideo() {
+            const modal = document.getElementById('videoModal');
+            const iframe = document.getElementById('videoFrame');
+            iframe.src = '';
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeVideo();
+            }
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('videoModal').addEventListener('click', (e) => {
+            if (e.target.id === 'videoModal') {
+                closeVideo();
+            }
+        });
+    </script>
+</body>
+</html>

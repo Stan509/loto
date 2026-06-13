@@ -1,0 +1,42 @@
+{% extends 'agent_portal/base_agent.html' %}
+
+{% block content %}
+  <section class="card">
+    <div class="card-title">10 derniers tickets</div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Date</th>
+            <th>Mise</th>
+            <th>Gain</th>
+            <th>Détails</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tickets %}
+            <tr>
+              <td class="mono">{{ t.numero_ticket }}</td>
+              <td>{{ t.created_at|date:'d/m/Y H:i' }}</td>
+              <td class="right">{{ t.total_mise }}</td>
+              <td class="right">{{ t.total_gain|default:"—" }}</td>
+              <td>
+                <div class="lines">
+                  {% for l in t.lignes.all %}
+                    <div class="mono">{{ l.jeu|upper }} {{ l.valeur }} — {{ l.mise }}</div>
+                  {% empty %}
+                    <div class="subtle">—</div>
+                  {% endfor %}
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="subtle">Aucun ticket</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

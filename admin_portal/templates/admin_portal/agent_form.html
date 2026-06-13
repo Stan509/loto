@@ -1,0 +1,490 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}{{ page_title }} | Central Borlette{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_meta %}{{ page_meta }}{% endblock %}
+
+{% block page_body %}
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     AGENT FORM - PREMIUM DARK GLASS
+     ═══════════════════════════════════════════════════════════ */
+  .agent-form-page {
+    max-width: 1440px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 28px 48px;
+  }
+
+  /* ─── Page Header ─────────────────────────────────────────── */
+  .agent-form-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .agent-form-page .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0 0 4px;
+  }
+  .agent-form-page .page-header p {
+    color: var(--muted-color);
+    font-size: 14px;
+    margin: 0;
+  }
+  .agent-form-page .badge-mode {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-success);
+  }
+  .agent-form-page .badge-mode--edit {
+    background: rgba(58, 160, 255, 0.12);
+    border: 1px solid rgba(58, 160, 255, 0.25);
+    color: var(--accent-blue);
+  }
+
+  /* ─── Form Layout (2 columns) ─────────────────────────────── */
+  .agent-form-page .form-layout {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 980px) {
+    .agent-form-page .form-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ─── Card Form ───────────────────────────────────────────── */
+  .agent-form-page .card {
+    background: linear-gradient(135deg, rgba(20, 27, 45, 0.85), rgba(15, 20, 35, 0.92));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+  .agent-form-page .card__body {
+    padding: 28px;
+  }
+
+  /* ─── Section ─────────────────────────────────────────────── */
+  .agent-form-page .form-section {
+    margin-bottom: 28px;
+  }
+  .agent-form-page .form-section:last-child {
+    margin-bottom: 0;
+  }
+  .agent-form-page .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .agent-form-page .section-title span {
+    font-size: 16px;
+  }
+
+  /* ─── Fields Grid ─────────────────────────────────────────── */
+  .agent-form-page .fields-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) {
+    .agent-form-page .fields-row {
+      grid-template-columns: 1fr;
+    }
+  }
+  .agent-form-page .field {
+    margin-bottom: 18px;
+  }
+  .agent-form-page .field--full {
+    grid-column: 1 / -1;
+  }
+  .agent-form-page .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .agent-form-page .field input,
+  .agent-form-page .field select {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(10, 16, 30, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+  }
+  .agent-form-page .field input:focus,
+  .agent-form-page .field select:focus {
+    border-color: var(--accent-blue);
+  }
+  .agent-form-page .field input::placeholder {
+    color: var(--muted-color);
+  }
+  .agent-form-page .field input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  .agent-form-page .field input[type="number"]::-webkit-outer-spin-button,
+  .agent-form-page .field input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* ─── Password Toggle ─────────────────────────────────────── */
+  .agent-form-page .password-wrap {
+    position: relative;
+  }
+  .agent-form-page .password-wrap input {
+    padding-right: 50px;
+  }
+  .agent-form-page .password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--muted-color);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+  .agent-form-page .password-toggle:hover {
+    color: var(--text-color);
+  }
+
+  /* ─── Field Help ──────────────────────────────────────────── */
+  .agent-form-page .field-help {
+    font-size: 12px;
+    color: var(--muted-color);
+    margin-top: 6px;
+  }
+
+  /* ─── Field Error ─────────────────────────────────────────── */
+  .agent-form-page .field-error {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 4px 10px;
+    background: rgba(255, 77, 109, 0.15);
+    border: 1px solid rgba(255, 77, 109, 0.3);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--accent-danger);
+  }
+
+  /* ─── Actions ─────────────────────────────────────────────── */
+  .agent-form-page .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .agent-form-page .btn-primary {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, rgba(58, 160, 255, 0.9), rgba(99, 102, 241, 0.9));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 4px 15px rgba(58, 160, 255, 0.25);
+  }
+  .agent-form-page .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(58, 160, 255, 0.35);
+  }
+  .agent-form-page .btn-ghost {
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .agent-form-page .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* ─── Checklist Panel ─────────────────────────────────────── */
+  .agent-form-page .checklist-panel {
+    position: sticky;
+    top: 24px;
+  }
+  .agent-form-page .checklist-section {
+    margin-bottom: 20px;
+  }
+  .agent-form-page .checklist-section:last-child {
+    margin-bottom: 0;
+  }
+  .agent-form-page .checklist-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+  .agent-form-page .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 13px;
+    color: var(--muted-color);
+  }
+  .agent-form-page .checklist-item:last-child {
+    border-bottom: none;
+  }
+  .agent-form-page .checklist-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .agent-form-page .checklist-icon--ok {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--accent-success);
+  }
+  .agent-form-page .checklist-item--ok {
+    color: var(--text-color);
+  }
+
+  /* ─── Tips ────────────────────────────────────────────────── */
+  .agent-form-page .tips-box {
+    padding: 14px 16px;
+    background: rgba(58, 160, 255, 0.08);
+    border: 1px solid rgba(58, 160, 255, 0.15);
+    border-radius: 12px;
+    margin-top: 16px;
+  }
+  .agent-form-page .tips-box p {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0 0 6px;
+    line-height: 1.5;
+  }
+  .agent-form-page .tips-box p:last-child {
+    margin-bottom: 0;
+  }
+  .agent-form-page .tips-box strong {
+    color: var(--accent-blue);
+  }
+
+  /* ─── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 980px) {
+    .agent-form-page {
+      padding: 24px 20px 40px;
+    }
+    .agent-form-page .checklist-panel {
+      position: static;
+    }
+  }
+</style>
+
+<div class="agent-form-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div>
+      <h1>{{ page_title }}</h1>
+      <p>{{ page_meta }}</p>
+    </div>
+    {% if is_edit %}
+      <span class="badge-mode badge-mode--edit">Modification</span>
+    {% else %}
+      <span class="badge-mode">Création</span>
+    {% endif %}
+  </header>
+
+  <!-- Form Layout -->
+  <div class="form-layout">
+    <!-- Left: Form -->
+    <div class="card">
+      <div class="card__body">
+        <form method="post" class="form" id="agentForm" novalidate>
+          {% csrf_token %}
+
+          <!-- Section: Identité -->
+          <div class="form-section">
+            <div class="section-title"><span>👤</span> Identité de l'agent</div>
+            <div class="fields-row">
+              <div class="field">
+                <label for="id_nom">Nom</label>
+                <input type="text" name="nom" id="id_nom" value="{{ form.nom.value|default:'' }}" placeholder="Nom de l'agent" required>
+                {% if form.nom.errors %}<div class="field-error">{{ form.nom.errors|striptags }}</div>{% endif %}
+              </div>
+              <div class="field">
+                <label for="id_telephone">Téléphone</label>
+                <input type="text" name="telephone" id="id_telephone" value="{{ form.telephone.value|default:'' }}" placeholder="Ex: +509 1234 5678">
+                {% if form.telephone.errors %}<div class="field-error">{{ form.telephone.errors|striptags }}</div>{% endif %}
+              </div>
+            </div>
+            <div class="field">
+              <label for="id_zone">Zone</label>
+              <input type="text" name="zone" id="id_zone" value="{{ form.zone.value|default:'' }}" placeholder="Ex: Port-au-Prince, Cap-Haïtien...">
+              {% if form.zone.errors %}<div class="field-error">{{ form.zone.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+
+          <!-- Section: Sécurité -->
+          <div class="form-section">
+            <div class="section-title"><span>🔒</span> Sécurité</div>
+            <div class="field">
+              <label for="id_password">Mot de passe</label>
+              <div class="password-wrap">
+                <input type="password" name="mot_de_passe" id="id_mot_de_passe" value="{{ form.mot_de_passe.value|default:'' }}" placeholder="{% if is_edit %}Laisser vide pour ne pas changer{% else %}Mot de passe{% endif %}">
+                <button type="button" class="password-toggle" onclick="togglePassword()">Voir</button>
+              </div>
+              {% if form.mot_de_passe.errors %}<div class="field-error">{{ form.mot_de_passe.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+
+          <!-- Section: Paramètres -->
+          <div class="form-section">
+            <div class="section-title"><span>⚙️</span> Paramètres</div>
+            <div class="field">
+              <label for="id_commission">Commission (%)</label>
+              <input type="number" name="commission" id="id_commission" value="{{ form.commission.value|default:'' }}" placeholder="10" min="0" max="100" step="0.1">
+              <div class="field-help">Ex: 10 = 10% de commission sur les ventes</div>
+              {% if form.commission.errors %}<div class="field-error">{{ form.commission.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <button class="btn-primary" type="submit">Enregistrer</button>
+            <a class="btn-ghost" href="{% url 'admin_portal:agents' %}">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right: Checklist Panel -->
+    <div class="card checklist-panel">
+      <div class="card__body">
+        <div class="checklist-section">
+          <div class="checklist-title">À vérifier</div>
+          <div class="checklist-item" id="check-nom">
+            <span class="checklist-icon">○</span>
+            Nom renseigné
+          </div>
+          <div class="checklist-item" id="check-tel">
+            <span class="checklist-icon">○</span>
+            Téléphone valide
+          </div>
+          <div class="checklist-item" id="check-zone">
+            <span class="checklist-icon">○</span>
+            Zone définie
+          </div>
+          <div class="checklist-item" id="check-password">
+            <span class="checklist-icon">○</span>
+            Mot de passe
+          </div>
+          <div class="checklist-item" id="check-commission">
+            <span class="checklist-icon">○</span>
+            Commission définie
+          </div>
+        </div>
+
+        <div class="tips-box">
+          <p><strong>💡 Conseil</strong></p>
+          <p>Commission recommandée : <strong>5–15%</strong></p>
+          <p>Le téléphone servira d'identifiant de connexion pour l'agent.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Toggle password visibility
+  window.togglePassword = function() {
+    const input = document.getElementById('id_mot_de_passe');
+    const btn = input.nextElementSibling;
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = 'Masquer';
+    } else {
+      input.type = 'password';
+      btn.textContent = 'Voir';
+    }
+  };
+
+  // Live checklist update
+  function updateChecklist() {
+    const fields = {
+      'check-nom': document.getElementById('id_nom'),
+      'check-tel': document.getElementById('id_telephone'),
+      'check-zone': document.getElementById('id_zone'),
+      'check-password': document.getElementById('id_mot_de_passe'),
+      'check-commission': document.getElementById('id_commission')
+    };
+
+    for (const [checkId, input] of Object.entries(fields)) {
+      const item = document.getElementById(checkId);
+      const icon = item.querySelector('.checklist-icon');
+      const hasValue = input && input.value.trim().length > 0;
+
+      if (hasValue) {
+        item.classList.add('checklist-item--ok');
+        icon.classList.add('checklist-icon--ok');
+        icon.textContent = '✓';
+      } else {
+        item.classList.remove('checklist-item--ok');
+        icon.classList.remove('checklist-icon--ok');
+        icon.textContent = '○';
+      }
+    }
+  }
+
+  // Listen for input changes
+  document.querySelectorAll('#agentForm input').forEach(input => {
+    input.addEventListener('input', updateChecklist);
+  });
+
+  // Initial check
+  updateChecklist();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}{{ title }} | Central Borlette{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_meta %}{{ tirage.nom }}{% endblock %}
+
+{% block page_body %}
+  <div class="portal-card">
+    <div class="portal-card__header">
+      <div>
+        <div class="portal-card__title">Gestion manuelle</div>
+        <div class="portal-card__subtitle">Blocage admin · Plafond · Blocage auto</div>
+      </div>
+      <div class="portal-actions">
+        <a class="btn btn--quiet" href="{% url 'admin_portal:tirages' %}">Retour</a>
+      </div>
+    </div>
+
+    <div class="portal-card__content" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">
+      <div id="risk_error" class="alert" style="display:none; margin-bottom: 12px;"></div>
+
+      <div class="table-wrap">
+        <table class="table" style="min-width: 980px;">
+          <thead>
+            <tr>
+              <th>Valeur</th>
+              <th>Mises totales</th>
+              <th>Plafond admin</th>
+              <th>Bloqué admin</th>
+              <th>Bloqué auto</th>
+              <th class="table-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr {% if row.risk_level == 'blocked_auto' %}style="background: rgba(255, 92, 119, 0.10);"{% elif row.risk_level == 'blocked_admin' %}style="background: rgba(255, 184, 0, 0.10);"{% elif row.risk_level == 'warning' %}style="background: rgba(255, 184, 0, 0.06);"{% endif %}>
+                <td><span class="badge badge--muted">{{ row.valeur }}</span></td>
+                <td>{{ row.mises_total }}</td>
+                <td>
+                  <form method="post" action="" class="inline js-plafond-form" data-valeur="{{ row.valeur|escape }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_plafond" />
+                    <input type="hidden" name="valeur" value="{{ row.valeur|escape }}" />
+                    <input name="plafond_admin" value="{{ row.plafond_admin }}" style="width: 140px; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.2); color: #fff;" />
+                    <button class="link" type="submit">OK</button>
+                  </form>
+                </td>
+                <td>
+                  {% if row.bloque_admin %}
+                    <span class="badge badge--warning">Oui</span>
+                  {% else %}
+                    <span class="badge badge--online">Non</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.bloque_auto %}
+                    <span class="badge badge--warning">Oui</span>
+                  {% else %}
+                    <span class="badge badge--muted">Non</span>
+                  {% endif %}
+                </td>
+                <td class="table-actions">
+                  {% if row.risk_level == 'warning' %}
+                    <span class="badge badge--warning" style="margin-right: 6px;">À risque</span>
+                  {% endif %}
+                  <form method="post" action="" class="inline js-toggle-form" data-valeur="{{ row.valeur|escape }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle_bloque" />
+                    <input type="hidden" name="valeur" value="{{ row.valeur|escape }}" />
+                    <button class="link" type="submit">{% if row.bloque_admin %}Débloquer{% else %}Bloquer{% endif %}</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if empty_hint %}
+        <div class="empty" style="margin-top: 12px;">{{ empty_hint }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var errorBox = document.getElementById('risk_error');
+
+      function showError(msg) {
+        if (!errorBox) return;
+        errorBox.textContent = msg || 'Erreur';
+        errorBox.style.display = 'block';
+      }
+
+      function postJson(form) {
+        var formData = new FormData(form);
+        var payload = {};
+        formData.forEach(function (value, key) { payload[key] = value; });
+
+        return fetch(window.location.href, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'fetch',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        }).then(function (r) {
+          return r.json().then(function (data) {
+            return { ok: r.ok, data: data };
+          });
+        });
+      }
+
+      function bind(selector) {
+        document.querySelectorAll(selector).forEach(function (form) {
+          form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            postJson(form).then(function (res) {
+              if (!res.ok || !res.data || !res.data.success) {
+                showError((res.data && res.data.error) ? res.data.error : 'Erreur');
+                return;
+              }
+              window.location.reload();
+            }).catch(function () {
+              showError('Erreur réseau');
+            });
+          });
+        });
+      }
+
+      bind('.js-toggle-form');
+      bind('.js-plafond-form');
+    })();
+  </script>
+{% endblock %}

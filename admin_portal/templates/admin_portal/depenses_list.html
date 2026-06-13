@@ -1,0 +1,70 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Dépenses | Central Borlette{% endblock %}
+{% block page_title %}Dépenses{% endblock %}
+
+{% block page_body %}
+<style>
+  .depenses-page { padding: 24px 32px; }
+  .depenses-page .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .depenses-page .page-header h1 { margin: 0; font-size: 28px; font-weight: 700; color: rgba(255,255,255,0.92); }
+  .depenses-page .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid rgba(58,160,255,0.35); background: rgba(58,160,255,0.15); color: rgba(255,255,255,0.92); cursor: pointer; }
+  .depenses-page .btn:hover { background: rgba(58,160,255,0.25); }
+  .depenses-page .data-table { width: 100%; border-collapse: collapse; }
+  .depenses-page .data-table th { text-align: left; padding: 12px; color: rgba(255,255,255,0.7); font-size: 11px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .depenses-page .data-table td { padding: 12px; color: rgba(255,255,255,0.9); font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .depenses-page .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .depenses-page .amount { font-weight: 700; color: #ff6b8a; }
+  .depenses-page .category-badge { display: inline-block; padding: 4px 10px; background: rgba(124,77,255,0.15); border: 1px solid rgba(124,77,255,0.3); border-radius: 12px; font-size: 11px; color: #a78bfa; }
+  .depenses-page .action-btn { padding: 6px 10px; background: rgba(255,255,255,0.05); border: none; border-radius: 6px; color: rgba(255,255,255,0.6); font-size: 11px; cursor: pointer; text-decoration: none; }
+  .depenses-page .action-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+  .depenses-page .action-btn--danger:hover { background: rgba(255,77,109,0.15); color: #ff6b8a; }
+  .depenses-page .empty { text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.5); }
+</style>
+
+<div class="depenses-page">
+  <header class="page-header">
+    <h1>Dépenses</h1>
+    <a href="{% url 'admin_portal:depense_create' %}" class="btn">➕ Nouvelle dépense</a>
+  </header>
+
+  {% if expenses %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Montant</th>
+        <th>Catégorie</th>
+        <th>Description</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in expenses %}
+      <tr>
+        <td>{{ e.date|date:"d/m/Y" }}</td>
+        <td class="amount">{{ e.amount|floatformat:2 }} G</td>
+        <td>
+          {% if e.category %}
+            <span class="category-badge">{{ e.category.name }}</span>
+          {% else %}
+            <span style="color: rgba(255,255,255,0.4);">—</span>
+          {% endif %}
+        </td>
+        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ e.description }}</td>
+        <td>
+          <a href="{% url 'admin_portal:depense_edit' e.id %}" class="action-btn">✏️</a>
+          <a href="{% url 'admin_portal:depense_delete' e.id %}" class="action-btn action-btn--danger">🗑️</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p>Aucune dépense enregistrée.</p>
+    <a href="{% url 'admin_portal:depense_create' %}" class="btn">➕ Ajouter une dépense</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

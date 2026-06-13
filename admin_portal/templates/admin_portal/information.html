@@ -1,0 +1,546 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Information | Central Borlette{% endblock %}
+{% block page_title %}Information{% endblock %}
+{% block page_meta %}Profil borlette & branding{% endblock %}
+
+{% block page_header %}{% endblock %}
+
+{% block page_body %}
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     INFORMATION PAGE - PREMIUM DARK GLASS
+     ═══════════════════════════════════════════════════════════ */
+  .info-page {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 20px 18px 28px;
+  }
+
+  /* ─── Page Header ─────────────────────────────────────────── */
+  .info-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .info-page .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0 0 4px;
+  }
+  .info-page .page-header p {
+    color: var(--muted-color);
+    font-size: 14px;
+    margin: 0;
+  }
+  .info-page .page-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .info-page .btn-edit {
+    padding: 10px 20px;
+    background: rgba(58, 160, 255, 0.12);
+    border: 1px solid rgba(58, 160, 255, 0.25);
+    border-radius: 10px;
+    color: var(--accent-blue);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .info-page .btn-edit:hover {
+    background: rgba(58, 160, 255, 0.2);
+  }
+
+  /* ─── Grid 2 Columns ──────────────────────────────────────── */
+  .info-page .grid-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 980px) {
+    .info-page .grid-two {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ─── Cards (Widgets) ─────────────────────────────────────── */
+  .info-page .card {
+    background: linear-gradient(135deg, rgba(20, 27, 45, 0.85), rgba(15, 20, 35, 0.92));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+  .info-page .card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .info-page .card__header h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+  }
+  .info-page .card__body {
+    padding: 16px 18px 18px;
+  }
+
+  /* ─── Badges ──────────────────────────────────────────────── */
+  .info-page .badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .info-page .badge--blue {
+    background: rgba(58, 160, 255, 0.15);
+    border: 1px solid rgba(58, 160, 255, 0.3);
+    color: var(--accent-blue);
+  }
+  .info-page .badge--purple {
+    background: rgba(124, 77, 255, 0.15);
+    border: 1px solid rgba(124, 77, 255, 0.3);
+    color: #a78bfa;
+  }
+
+  /* ─── Tiles (Internal Mini-Cards) ─────────────────────────── */
+  .info-page .tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 560px) {
+    .info-page .tiles {
+      grid-template-columns: 1fr;
+    }
+  }
+  .info-page .tile {
+    background: rgba(10, 16, 30, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .info-page .tile--full {
+    grid-column: 1 / -1;
+  }
+  .info-page .tile__label {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .info-page .tile__value {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 15px;
+    font-weight: 600;
+    word-break: break-word;
+  }
+  .info-page .tile__value--muted {
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 400;
+  }
+
+  /* ─── Logo Box ────────────────────────────────────────────── */
+  .info-page .logo-box {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 16, 30, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .info-page .logo-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .info-page .logo-box--empty {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 13px;
+  }
+
+  /* ─── Branding Tiles Layout ───────────────────────────────── */
+  .info-page .tiles--branding {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .info-page .tiles--branding .tile-logo {
+    grid-row: span 2;
+  }
+  @media (max-width: 560px) {
+    .info-page .tiles--branding {
+      grid-template-columns: 1fr;
+    }
+    .info-page .tiles--branding .tile-logo {
+      grid-row: auto;
+    }
+  }
+
+  /* ─── Color Chips ─────────────────────────────────────────── */
+  .info-page .color-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .info-page .color-chip {
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* ─── Empty State ─────────────────────────────────────────── */
+  .info-page .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted-color);
+  }
+</style>
+
+<div class="info-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div>
+      <h1>Information</h1>
+      <p>Profil borlette & branding</p>
+    </div>
+    {% if portal_borlette %}
+      <div class="page-actions">
+        {% if edit_mode %}
+          <a class="btn-edit" href="{% url 'admin_portal:information' %}">Annuler</a>
+        {% else %}
+          <a class="btn-edit" href="{% url 'admin_portal:information' %}?edit=1">Modifier</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </header>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="mb-4 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/90">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if portal_borlette %}
+  {% if edit_mode %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+  <!-- Grid 2 Columns -->
+  <section class="grid-two">
+    <!-- Card Borlette -->
+    <article class="card">
+      <div class="card__header">
+        <h2>Borlette</h2>
+        <span class="badge badge--blue">Profil</span>
+      </div>
+      <div class="card__body">
+        <div class="tiles">
+          <div class="tile">
+            <div class="tile__label">Nom</div>
+            <div class="tile__value">{{ form.nom_borlette }}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Téléphone</div>
+            <div class="tile__value">{{ form.telephone }}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Adresse</div>
+            <div class="tile__value">{{ form.adresse }}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Site web</div>
+            <div class="tile__value">{{ form.site_web }}</div>
+          </div>
+          <div class="tile tile--full">
+            <div class="tile__label">Slogan</div>
+            <div class="tile__value">{{ form.slogan }}</div>
+          </div>
+          <div class="tile tile--full">
+            <div class="tile__label">Logo</div>
+            <div class="tile__value">{{ form.logo_borlette }}</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card Configuration Ticket -->
+    <article class="card">
+      <div class="card__header">
+        <h2>Configuration Ticket</h2>
+        <span class="badge badge--blue">Footer</span>
+      </div>
+      <div class="card__body">
+        <div class="tiles">
+          <div class="tile tile--full">
+            <div class="tile__label">Texte de pied de page</div>
+            <div class="tile__value">{{ form.ticket_footer_text }}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Mariage gratuit actif</div>
+            <div class="tile__value">{{ form.mariage_gratuit_actif }}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Montant mariage gratuit</div>
+            <div class="tile__value">{{ form.mariage_gratuit_montant }}</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+          <button type="submit" class="btn-edit">Enregistrer</button>
+        </div>
+      </div>
+    </article>
+  </section>
+  </form>
+  {% else %}
+  <!-- Grid 2 Columns -->
+  <section class="grid-two">
+    <!-- Card Borlette -->
+    <article class="card">
+      <div class="card__header">
+        <h2>Borlette</h2>
+        <span class="badge badge--blue">Profil</span>
+      </div>
+      <div class="card__body">
+        <div class="tiles">
+          <div class="tile">
+            <div class="tile__label">Nom</div>
+            <div class="tile__value">{% if portal_borlette.nom_borlette %}{{ portal_borlette.nom_borlette }}{% else %}<span class="tile__value--muted">—</span>{% endif %}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Téléphone</div>
+            <div class="tile__value">{% if portal_borlette.telephone %}{{ portal_borlette.telephone }}{% else %}<span class="tile__value--muted">—</span>{% endif %}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Adresse</div>
+            <div class="tile__value">{% if portal_borlette.adresse %}{{ portal_borlette.adresse }}{% else %}<span class="tile__value--muted">—</span>{% endif %}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Site web</div>
+            <div class="tile__value">{% if portal_borlette.site_web %}{{ portal_borlette.site_web }}{% else %}<span class="tile__value--muted">—</span>{% endif %}</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card Branding -->
+    <article class="card">
+      <div class="card__header">
+        <h2>Branding</h2>
+        <span class="badge badge--purple">Identité</span>
+      </div>
+      <div class="card__body">
+        <div class="tiles--branding">
+          <div class="tile tile-logo">
+            <div class="tile__label">Logo</div>
+            <div class="logo-box {% if not portal_borlette.logo_borlette %}logo-box--empty{% endif %}">
+              {% if portal_borlette.logo_borlette %}
+                <img src="{{ portal_borlette.logo_borlette.url }}" alt="Logo {{ portal_borlette.nom_borlette }}" />
+              {% else %}
+                Aucun logo
+              {% endif %}
+            </div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Slogan</div>
+            <div class="tile__value">{% if portal_borlette.slogan %}{{ portal_borlette.slogan }}{% else %}<span class="tile__value--muted">—</span>{% endif %}</div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- Grid 2 Columns - Subscription & Agents -->
+  <section class="grid-two" style="margin-top: 20px;">
+    <!-- Card Subscription -->
+    <article class="card">
+      <div class="card__header">
+        <h2>Abonnement</h2>
+        <span class="badge badge--blue">État</span>
+      </div>
+      <div class="card__body">
+        {% if not subscription %}
+        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+          <div style="font-weight: 600; color: #f59e0b; margin-bottom: 4px;">Montant à payer pour l'activation:</div>
+          <div style="font-size: 18px; font-weight: 600; color: #f59e0b;">{{ discounted_price }} GDS{% if has_promo_discount %} <span style="font-size: 12px; color: #10b981;">(au lieu de {{ base_price }} GDS)</span>{% endif %}</div>
+          {% if has_promo_discount %}
+          <div style="font-size: 12px; color: #10b981; margin-top: 4px;">Code promo appliqué: {{ promo_code_used }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Informations de paiement -->
+        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-weight: 600; color: #3b82f6; margin-bottom: 12px; font-size: 14px;">💳 Informations de paiement</div>
+          <div style="font-size: 13px; color: #d1d5db; line-height: 1.6;">
+            <div style="margin-bottom: 8px;"><strong style="color: #3b82f6;">Mon Cash:</strong> 31940146 (Jocelyn Charles)</div>
+            <div style="margin-bottom: 8px;"><strong style="color: #3b82f6;">Natcash:</strong> 32007008 (Jhonny Paulin)</div>
+            <div style="margin-bottom: 8px; color: #f59e0b;"><strong style="color: #f59e0b;">⚠️ Si montant > 75,000 GDS:</strong> Envoyez via Zelle</div>
+            <div style="margin-bottom: 8px;"><strong style="color: #3b82f6;">Zelle:</strong> 8455874927 (Misterline Dantan)</div>
+            <div style="margin-bottom: 8px; font-size: 12px; color: #f59e0b;">⚠️ Tous les frais de transaction sont à votre charge pour les paiements Zelle</div>
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(59, 130, 246, 0.2);">
+              <div style="margin-bottom: 4px;">📞 Questions sur les paiements? WhatsApp: <a href="https://wa.me/18295098412" style="color: #10b981; text-decoration: none;">+18295098412</a></div>
+              <div style="font-size: 12px; color: #9ca3af;">⏱️ Activation dans les 48h après envoi de la preuve</div>
+              <div style="font-size: 12px; color: #f59e0b; margin-top: 4px;">⚠️ Payer 3 jours avant l'expiration de votre abonnement</div>
+            </div>
+          </div>
+        </div>
+        <div class="tiles">
+          <div class="tile tile--full">
+            <div class="tile__label">Type</div>
+            <div class="tile__value">{% if subscription %}{{ subscription.get_subscription_type_display }}{% else %}<span class="tile__value--muted">Aucun abonnement</span>{% endif %}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Date de début</div>
+            <div class="tile__value">{% if subscription %}{{ subscription.start_date|date:"d/m/Y" }}{% else %}<span class="tile__value--muted">—</span>{% endif %}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Date d'expiration</div>
+            <div class="tile__value">{% if subscription %}{{ subscription.end_date|date:"d/m/Y" }}{% else %}<span class="tile__value--muted">—</span>{% endif %}</div>
+          </div>
+          <div class="tile tile--full">
+            <div class="tile__label">Statut</div>
+            <div class="tile__value">
+              {% if subscription %}
+                {% if today < subscription.end_date %}
+                  <span style="color: #10b981;">✓ Actif</span>
+                {% else %}
+                  <span style="color: #ef4444;">✗ Expiré</span>
+                {% endif %}
+              {% else %}
+                <span class="tile__value--muted">—</span>
+              {% endif %}
+            </div>
+          </div>
+          {% if subscription and today < subscription.end_date %}
+          <div class="tile tile--full">
+            <div class="tile__label">Compte à rebours</div>
+            <div class="tile__value" id="countdown" style="font-size: 18px; color: #f59e0b;"></div>
+          </div>
+          {% endif %}
+          <div class="tile tile--full">
+            <div class="tile__label">Preuve de paiement</div>
+            <div class="tile__value">
+              {% if subscription and subscription.payment_proof %}
+                <a href="{{ subscription.payment_proof.url }}" target="_blank" style="color: #3b82f6; text-decoration: underline;">Voir la preuve</a>
+              {% else %}
+                <span class="tile__value--muted">Aucune preuve</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="tile tile--full">
+            <form method="post" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              {% csrf_token %}
+              <input type="file" name="payment_proof" accept="image/*" style="flex: 1; min-width: 200px; padding: 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.05); color: white; font-size: 13px;">
+              <button type="submit" name="upload_payment_proof" style="padding: 8px 16px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 8px; color: #10b981; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.15s;">
+                Envoyer la preuve
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card Agents -->
+    <article class="card">
+      <div class="card__header">
+        <h2>Agents</h2>
+        <span class="badge badge--purple">Frais</span>
+      </div>
+      <div class="card__body">
+        {% if has_promo_discount %}
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="font-size: 18px;">🎉</span>
+            <span style="font-weight: 600; color: #10b981;">Code promo appliqué: {{ promo_code_used }}</span>
+          </div>
+          <div style="font-size: 12px; color: #10b981; margin-bottom: 4px;">Rabais activation: 2,500 GDS (12,500 → 10,000 GDS)</div>
+          <div style="font-size: 12px; color: #10b981;">Rabais par agent: 50 GDS (1,250 → 1,200 GDS)</div>
+          <div style="font-size: 13px; font-weight: 600; color: #10b981; margin-top: 8px;">Économie totale: {{ total_savings }} GDS</div>
+        </div>
+        {% endif %}
+        <div class="tiles">
+          <div class="tile">
+            <div class="tile__label">Nombre d'agents</div>
+            <div class="tile__value">{{ agent_count }}</div>
+          </div>
+          <div class="tile">
+            <div class="tile__label">Frais par agent</div>
+            <div class="tile__value">{{ amount_due_per_agent }} GDS{% if has_promo_discount %} <span style="font-size: 11px; color: #10b981;">(au lieu de 1,250)</span>{% endif %}</div>
+          </div>
+          <div class="tile tile--full">
+            <div class="tile__label">Montant total dû</div>
+            <div class="tile__value" style="font-size: 18px; color: #f59e0b;">{{ total_amount_due }} GDS</div>
+          </div>
+          <div class="tile tile--full">
+            <div class="tile__label">Détails</div>
+            <div class="tile__value" style="font-size: 13px; color: rgba(255,255,255,0.6);">
+              {{ agent_count }} agent(s) × {{ amount_due_per_agent }} GDS = {{ total_amount_due }} GDS
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+  {% endif %}
+  {% else %}
+  <div class="card">
+    <div class="card__body">
+      <div class="empty-state">Aucune borlette associée à ce compte.</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if subscription and today < subscription.end_date %}
+<script>
+(function() {
+  // Countdown timer for subscription expiration
+  function updateCountdown() {
+    const countdownEl = document.getElementById('countdown');
+    if (!countdownEl) return;
+    
+    const endDate = new Date('{{ subscription.end_date|date:"c" }}');
+    const now = new Date();
+    const diff = endDate - now;
+    
+    if (diff <= 0) {
+      countdownEl.textContent = 'Expiré';
+      countdownEl.style.color = '#ef4444';
+      return;
+    }
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    countdownEl.textContent = `${days}j ${hours}h ${minutes}m ${seconds}s`;
+  }
+  
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+})();
+</script>
+{% endif %}
+{% endblock %}

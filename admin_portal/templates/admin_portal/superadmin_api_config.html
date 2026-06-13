@@ -1,0 +1,57 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}SuperAdmin • API Config{% endblock %}
+
+{% block page_title %}
+  API • Configuration Résultats
+{% endblock %}
+
+{% block page_meta %}
+  <div class="text-xs text-slate-700 dark:text-slate-200">
+    SuperAdmin uniquement
+  </div>
+{% endblock %}
+
+{% block page_body %}
+  <div class="mx-auto w-full max-w-2xl">
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for message in messages %}
+          <div class="rounded-2xl border border-white/10 bg-white/20 backdrop-blur-xl px-4 py-3 text-sm text-slate-900 dark:text-white">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-5">
+      {% csrf_token %}
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1">API URL</label>
+          <input name="api_url" type="url" value="{% if config %}{{ config.api_url }}{% endif %}" class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="https://..." required />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1">API KEY</label>
+          <input name="api_key" type="password" value="" class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="{% if has_key %}•••••••• (laisser vide pour conserver){% else %}Saisir la clé{% endif %}" />
+          <div class="mt-1 text-[12px] text-slate-700 dark:text-slate-200">
+            La clé n’est jamais affichée. Laisser vide pour conserver la valeur existante.
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <input id="is_active" name="is_active" type="checkbox" class="h-4 w-4" {% if config and config.is_active %}checked{% endif %} />
+          <label for="is_active" class="text-sm font-semibold text-slate-900 dark:text-white">Activer l’API</label>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="submit" class="gaboom-btn-ghost gap-2 border-gaboom-orange/35 bg-gaboom-orange/20 text-slate-900 hover:bg-gaboom-orange/25 dark:text-white">
+            💾 Enregistrer API
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}

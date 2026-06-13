@@ -1,0 +1,297 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Agent {{ agent.nom }} | Central Borlette{% endblock %}
+{% block page_title %}Agent{% endblock %}
+{% block page_meta %}{{ agent.nom }}{% endblock %}
+
+{% block page_body %}
+<style>
+  .agent-page { padding: 24px 32px; }
+  .agent-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .agent-header h1 { margin: 0; font-size: 28px; font-weight: 700; color: rgba(255,255,255,0.92); }
+  .agent-header .meta { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .agent-header .status { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .agent-header .status--active { background: rgba(16,185,129,0.15); color: #10b981; }
+  .agent-header .status--suspended { background: rgba(255,77,109,0.15); color: #ff6b8a; }
+  .agent-actions { display: flex; gap: 8px; }
+  .agent-actions .btn { padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); cursor: pointer; }
+  .agent-actions .btn:hover { background: rgba(255,255,255,0.1); }
+  .agent-actions .btn--primary { background: linear-gradient(180deg, rgba(58,160,255,0.3), rgba(58,160,255,0.15)); border-color: rgba(58,160,255,0.4); color: #fff; }
+  .agent-actions .btn--success { background: linear-gradient(180deg, rgba(16,185,129,0.3), rgba(16,185,129,0.15)); border-color: rgba(16,185,129,0.4); color: #10b981; }
+
+  .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .dash-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px 20px; }
+  .dash-card .label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .dash-card .value { font-size: 22px; font-weight: 700; color: rgba(255,255,255,0.92); }
+  .dash-card .value.positive { color: #10b981; }
+  .dash-card .value.negative { color: #ff6b8a; }
+  .dash-card--balance { background: linear-gradient(135deg, rgba(58,160,255,0.1), rgba(124,77,255,0.1)); border-color: rgba(58,160,255,0.25); }
+  .dash-card--balance .value { color: #3aa0ff; }
+
+  .section { margin-bottom: 24px; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .section-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.85); }
+
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th { text-align: left; padding: 10px 12px; color: rgba(255,255,255,0.6); font-size: 11px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .data-table td { padding: 10px 12px; color: rgba(255,255,255,0.85); font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .data-table .empty-state { text-align: center; padding: 24px; color: rgba(255,255,255,0.4); }
+
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .info-item .label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 4px; }
+  .info-item .value { font-size: 14px; color: rgba(255,255,255,0.9); }
+
+  .performance-toggle { display: flex; gap: 10px; }
+  .performance-toggle button {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.8);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .performance-toggle button.active {
+    background: rgba(58,160,255,0.2);
+    border-color: rgba(58,160,255,0.5);
+    color: #fff;
+  }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: #1a1d24; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 100%; max-width: 440px; padding: 24px; }
+  .modal h2 { margin: 0 0 20px; font-size: 20px; font-weight: 700; color: rgba(255,255,255,0.92); }
+  .modal .form-group { margin-bottom: 16px; }
+  .modal .form-group label { display: block; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+  .modal .form-group input, .modal .form-group textarea { width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.9); font-size: 14px; }
+  .modal .form-group input:focus { outline: none; border-color: rgba(58,160,255,0.5); }
+  .modal .form-group input:disabled { opacity: 0.6; }
+  .modal .radio-group { display: flex; flex-direction: column; gap: 10px; }
+  .modal .radio-item { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; cursor: pointer; }
+  .modal .radio-item:hover { background: rgba(255,255,255,0.05); }
+  .modal .radio-item.selected { border-color: rgba(58,160,255,0.5); background: rgba(58,160,255,0.08); }
+  .modal .radio-item input[type="radio"] { accent-color: #3aa0ff; }
+  .modal .balance-display { padding: 16px; background: rgba(58,160,255,0.1); border: 1px solid rgba(58,160,255,0.25); border-radius: 10px; margin-bottom: 16px; text-align: center; }
+  .modal .balance-display .label { font-size: 12px; color: rgba(255,255,255,0.6); }
+  .modal .balance-display .value { font-size: 28px; font-weight: 700; color: #3aa0ff; }
+  .modal .actions { display: flex; gap: 12px; margin-top: 20px; }
+  .modal .btn { flex: 1; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; }
+  .modal .btn--primary { background: linear-gradient(180deg, rgba(16,185,129,0.4), rgba(16,185,129,0.2)); border: 1px solid rgba(16,185,129,0.5); color: #10b981; }
+  .modal .btn--ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+  .modal .error { color: #ff6b8a; font-size: 13px; margin-top: 8px; }
+  .modal .success { color: #10b981; font-size: 13px; margin-top: 8px; padding: 12px; background: rgba(16,185,129,0.1); border-radius: 8px; text-align: center; }
+</style>
+
+<div class="agent-page">
+  <header class="agent-header">
+    <div>
+      <h1>{{ agent.nom }}</h1>
+      <div class="meta">
+        {{ agent.zone }} · {{ agent.telephone }}
+        <span class="status {% if agent.statut == 'ACTIF' %}status--active{% else %}status--suspended{% endif %}">
+          {{ agent.get_statut_display }}
+        </span>
+      </div>
+
+  <div class="section" id="performanceSection">
+    <div class="section-header">
+      <h3>📊 Performance (<span id="performancePeriodLabel">7 derniers jours</span>)</h3>
+      <div class="performance-toggle" id="performanceToggle">
+        <button data-period="today">Aujourd'hui</button>
+        <button data-period="7d" class="active">7 jours</button>
+        <button data-period="1m">1 mois</button>
+        <button data-period="1y">1 an</button>
+      </div>
+    </div>
+    <div class="dashboard-cards">
+      <div class="dash-card">
+        <div class="label">Mises</div>
+        <div class="value" id="perfMises">—</div>
+      </div>
+      <div class="dash-card">
+        <div class="label">Gains dus</div>
+        <div class="value" id="perfGains">—</div>
+      </div>
+      <div class="dash-card">
+        <div class="label">Commissions estimées</div>
+        <div class="value positive" id="perfCommission">—</div>
+      </div>
+      <div class="dash-card">
+        <div class="label">Bénéfice net</div>
+        <div class="value" id="perfBenefice">—</div>
+      </div>
+    </div>
+  </div>
+    </div>
+    <div class="agent-actions">
+      <a href="{% url 'admin_portal:agent_edit' agent.id %}" class="btn">✏️ Modifier</a>
+      <form method="post" action="{% url 'admin_portal:agent_suspend' agent.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn">{% if agent.statut == 'ACTIF' %}⏸️ Suspendre{% else %}▶️ Réactiver{% endif %}</button>
+      </form>
+    </div>
+  </header>
+
+  <!-- Mini Dashboard Caisse -->
+  <div class="dashboard-cards" id="dashCards">
+    <div class="dash-card">
+      <div class="label">Total Mises</div>
+      <div class="value" id="statMises">—</div>
+    </div>
+    <div class="dash-card">
+      <div class="label">Total Gains Dus</div>
+      <div class="value" id="statGains">—</div>
+    </div>
+    <div class="dash-card">
+      <div class="label">Commissions Gagnées</div>
+      <div class="value positive" id="statCommission">—</div>
+    </div>
+    <div class="dash-card">
+      <div class="label">Commissions Payées</div>
+      <div class="value" id="statPayouts">—</div>
+    </div>
+    <div class="dash-card dash-card--balance">
+      <div class="label">💰 Solde Caisse</div>
+      <div class="value" id="statBalance">—</div>
+    </div>
+  </div>
+
+  <!-- Infos agent -->
+  <div class="info-grid">
+    <div class="info-item">
+      <div class="label">Connexion</div>
+      <div class="value">{{ agent.etat_connexion }}</div>
+    </div>
+    <div class="info-item">
+      <div class="label">Commission</div>
+      <div class="value">{{ agent.commission }}%</div>
+    </div>
+    <div class="info-item">
+      <div class="label">Créé le</div>
+      <div class="value">{{ agent.created_at|date:"d/m/Y" }}</div>
+    </div>
+  </div>
+
+  <!-- Historique Ledger (Caisse) -->
+  <div class="section">
+    <div class="section-header">
+      <h3>📜 Historique Caisse (20 dernières entrées)</h3>
+    </div>
+    <table class="data-table" id="tableLedger">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Montant</th>
+          <th>Description</th>
+          <th>Admin</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="5" class="empty-state">Chargement...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top: 24px;">
+    <a href="{% url 'admin_portal:agents' %}" class="btn" style="padding: 10px 16px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); text-decoration: none;">← Retour aux agents</a>
+  </div>
+</div>
+
+<script>
+(function() {
+  const agentId = {{ agent.id }};
+  let currentBalance = 0;
+
+  function fmt(n) { return (n || 0).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' G'; }
+
+  function loadStats() {
+    fetch(`/portal/api/agents/${agentId}/stats/`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) return;
+        const s = data.stats;
+        currentBalance = s.balance;
+        document.getElementById('statMises').textContent = fmt(s.total_mises);
+        document.getElementById('statGains').textContent = fmt(s.total_gains_du);
+        document.getElementById('statCommission').textContent = fmt(s.commission_earned);
+        document.getElementById('statPayouts').textContent = fmt(s.commission_payout);
+        document.getElementById('statBalance').textContent = fmt(s.balance);
+        document.getElementById('modalBalance').textContent = fmt(s.balance);
+      });
+  }
+
+  function loadLedger() {
+    fetch(`/portal/api/agents/${agentId}/ledger/`)
+      .then(r => r.json())
+      .then(data => {
+        const tbody = document.querySelector('#tableLedger tbody');
+        if (!data.entries || !data.entries.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Aucune entrée</td></tr>';
+          return;
+        }
+        tbody.innerHTML = '';
+        data.entries.forEach(e => {
+          const date = new Date(e.created_at).toLocaleDateString('fr-FR');
+          const amountColor = e.amount >= 0 ? '#10b981' : '#ff6b8a';
+          const typeColors = {
+            'COMMISSION_EARNED': 'rgba(16,185,129,0.15)',
+            'COMMISSION_PAYOUT': 'rgba(255,77,109,0.15)',
+            'ADJUSTMENT': 'rgba(251,191,36,0.15)',
+            'EXPENSE': 'rgba(139,92,246,0.15)',
+          };
+          const typeBg = typeColors[e.entry_type] || 'rgba(255,255,255,0.05)';
+          tbody.innerHTML += `<tr>
+            <td>${date}</td>
+            <td><span style="padding:3px 8px;border-radius:6px;font-size:11px;background:${typeBg}">${e.entry_type_display}</span></td>
+            <td style="font-weight:700;color:${amountColor};">${fmt(e.amount)}</td>
+            <td style="color:rgba(255,255,255,0.7);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.description || '—'}</td>
+            <td>${e.created_by || '—'}</td>
+          </tr>`;
+        });
+      });
+  }
+
+  // Performance functions
+  function updatePerformanceCards(data) {
+    document.getElementById('perfMises').textContent = fmt(data.total_mises);
+    document.getElementById('perfGains').textContent = fmt(data.total_gains_du);
+    document.getElementById('perfCommission').textContent = fmt(data.commission);
+    document.getElementById('perfBenefice').textContent = fmt(data.benefice);
+  }
+
+  async function loadPerformance(period) {
+    try {
+      const res = await fetch(`/portal/api/agents/${agentId}/performance/?period=${period}`);
+      if (!res.ok) return;
+      const payload = await res.json();
+      if (payload.error) return;
+      updatePerformanceCards(payload.stats);
+      document.getElementById('performancePeriodLabel').textContent = {
+        today: 'Aujourd\'hui',
+        '7d': '7 derniers jours',
+        '1m': '1 mois',
+        '1y': '1 an'
+      }[payload.period] || '7 derniers jours';
+    } catch (err) {
+      console.error('Performance fetch error:', err);
+    }
+  }
+
+  // Init
+  loadStats();
+  loadLedger();
+  loadPerformance('7d');
+  document.querySelectorAll('#performanceToggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#performanceToggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadPerformance(btn.dataset.period);
+    });
+  });
+})();
+</script>
+{% endblock %}

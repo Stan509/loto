@@ -1,0 +1,78 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}{% if is_edit %}Modifier{% else %}Nouvelle{% endif %} Dépense | Central Borlette{% endblock %}
+{% block page_title %}{% if is_edit %}Modifier{% else %}Nouvelle{% endif %} Dépense{% endblock %}
+
+{% block page_body %}
+<style>
+  .depense-form-page { max-width: 600px; padding: 24px 32px; }
+  .depense-form-page .page-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .depense-form-page .page-header h1 { margin: 0; font-size: 24px; font-weight: 700; color: rgba(255,255,255,0.92); }
+  .depense-form-page .form-group { margin-bottom: 20px; }
+  .depense-form-page .form-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); }
+  .depense-form-page .form-group input,
+  .depense-form-page .form-group select,
+  .depense-form-page .form-group textarea { width: 100%; padding: 12px 14px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.92); font-size: 14px; }
+  .depense-form-page .form-group input:focus,
+  .depense-form-page .form-group select:focus,
+  .depense-form-page .form-group textarea:focus { outline: none; border-color: rgba(58,160,255,0.5); }
+  .depense-form-page .form-group .help { margin-top: 4px; font-size: 11px; color: rgba(255,255,255,0.5); }
+  .depense-form-page .form-group .error { color: #ff6b8a; font-size: 12px; margin-top: 4px; }
+  .depense-form-page .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .depense-form-page .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; border: none; cursor: pointer; }
+  .depense-form-page .btn--primary { background: linear-gradient(180deg, rgba(58,160,255,0.4), rgba(58,160,255,0.2)); border: 1px solid rgba(58,160,255,0.5); color: rgba(255,255,255,0.95); }
+  .depense-form-page .btn--ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+  .depense-form-page .btn--ghost:hover { background: rgba(255,255,255,0.1); }
+  .depense-form-page .actions { display: flex; gap: 12px; margin-top: 28px; }
+</style>
+
+<div class="depense-form-page">
+  <header class="page-header">
+    <h1>{% if is_edit %}Modifier la dépense{% else %}Nouvelle dépense{% endif %}</h1>
+  </header>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="id_amount">Montant (G) *</label>
+        <input type="number" name="amount" id="id_amount" step="0.01" min="0.01" value="{{ form.amount.value|default:'' }}" required>
+        {% if form.amount.errors %}<div class="error">{{ form.amount.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label for="id_date">Date *</label>
+        <input type="date" name="date" id="id_date" value="{{ form.date.value|default:'' }}" required>
+        {% if form.date.errors %}<div class="error">{{ form.date.errors.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="id_category">Catégorie</label>
+        <select name="category" id="id_category">
+          {% for value, label in form.fields.category.choices %}
+            <option value="{{ value }}" {% if form.category.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="id_new_category">Ou nouvelle catégorie</label>
+        <input type="text" name="new_category" id="id_new_category" value="{{ form.new_category.value|default:'' }}" placeholder="Ex: Transport">
+        <div class="help">Laissez vide pour utiliser la catégorie existante</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="id_description">Description *</label>
+      <textarea name="description" id="id_description" rows="3" required>{{ form.description.value|default:'' }}</textarea>
+      {% if form.description.errors %}<div class="error">{{ form.description.errors.0 }}</div>{% endif %}
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn--primary">💾 {% if is_edit %}Enregistrer{% else %}Créer{% endif %}</button>
+      <a href="{% url 'admin_portal:depenses_list' %}" class="btn btn--ghost">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

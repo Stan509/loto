@@ -1,0 +1,1360 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaboom - Borlette OS</title>
+    <meta name="description" content="Gérez votre borlette avec une précision absolue. Anti-fraude IA, rapports temps réel et portail agents premium.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-4px);
+        }
+        
+        /* Dashboard Background Styles */
+        .gaboom-app-bg {
+            background: linear-gradient(135deg, #0a0a0b 0%, #111113 50%, #0d0d0e 100%);
+        }
+        .gaboom-hero-layer {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .gaboom-hero-particles {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .gaboom-hero-radial {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(255, 92, 0, 0.15) 0%, transparent 50%);
+        }
+        .gaboom-float-ball {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.4;
+            animation: float 20s ease-in-out infinite;
+        }
+        .gaboom-float-ball--o1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 92, 0, 0.3);
+            top: -10%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+        .gaboom-float-ball--o2 {
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 92, 0, 0.2);
+            bottom: 20%;
+            right: -5%;
+            animation-delay: -10s;
+        }
+        .gaboom-float-ball--b1 {
+            width: 350px;
+            height: 350px;
+            background: rgba(59, 130, 246, 0.15);
+            top: 40%;
+            right: 10%;
+            animation-delay: -5s;
+        }
+        .gaboom-float-ball--b2 {
+            width: 250px;
+            height: 250px;
+            background: rgba(139, 92, 246, 0.2);
+            bottom: -5%;
+            left: 20%;
+            animation-delay: -15s;
+        }
+        .gaboom-hero-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: blobPulse 15s ease-in-out infinite;
+        }
+        .gaboom-hero-blob--a {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, rgba(255, 92, 0, 0.4), rgba(255, 140, 0, 0.2));
+            top: 10%;
+            left: 30%;
+        }
+        .gaboom-hero-blob--b {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.2));
+            top: 50%;
+            right: 20%;
+            animation-delay: -7s;
+        }
+        .gaboom-hero-blob--c {
+            width: 350px;
+            height: 350px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.15));
+            bottom: 20%;
+            left: 10%;
+            animation-delay: -12s;
+        }
+        .gaboom-bg-grain {
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(20px, 10px) scale(1.02); }
+        }
+        @keyframes blobPulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.5; }
+        }
+        
+        @media (max-width: 768px) {
+            .gaboom-float-ball--o1 { width: 200px; height: 200px; }
+            .gaboom-float-ball--o2 { width: 150px; height: 150px; }
+            .gaboom-float-ball--b1 { width: 175px; height: 175px; }
+            .gaboom-float-ball--b2 { width: 125px; height: 125px; }
+            .gaboom-hero-blob--a { width: 250px; height: 250px; }
+            .gaboom-hero-blob--b { width: 200px; height: 200px; }
+            .gaboom-hero-blob--c { width: 175px; height: 175px; }
+        }
+    </style>
+</head>
+<body class="bg-[#020617] text-white overflow-x-hidden overflow-y-auto">
+
+<!-- PREMIUM BACKGROUND (from dashboard) -->
+<div class="gaboom-app-bg fixed inset-0 z-0">
+    <div class="gaboom-hero-layer" aria-hidden="true">
+        <canvas id="gaboomParticles" class="gaboom-hero-particles"></canvas>
+        <div class="gaboom-hero-radial"></div>
+        <div class="gaboom-float-ball gaboom-float-ball--o1"></div>
+        <div class="gaboom-float-ball gaboom-float-ball--b1"></div>
+        <div class="gaboom-float-ball gaboom-float-ball--o2"></div>
+        <div class="gaboom-float-ball gaboom-float-ball--b2"></div>
+    </div>
+    <div class="gaboom-hero-blob gaboom-hero-blob--a" aria-hidden="true"></div>
+    <div class="gaboom-hero-blob gaboom-hero-blob--b" aria-hidden="true"></div>
+    <div class="gaboom-hero-blob gaboom-hero-blob--c" aria-hidden="true"></div>
+    <div class="gaboom-bg-grain" aria-hidden="true"></div>
+</div>
+
+<!-- MAIN CONTENT WRAPPER -->
+<div class="relative z-10">
+
+<!-- NAVBAR -->
+<header class="fixed top-0 inset-x-0 z-50 px-4 md:px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between border border-white/10 bg-black/40 backdrop-blur-xl rounded-xl px-4 md:px-6 py-3">
+        <div class="flex items-center gap-3">
+            <img src="{% static 'logo.png' %}" alt="Gaboom Logo" class="h-10 w-10 object-contain rounded-full">
+            <div>
+                <p class="font-bold text-lg">Gaboom</p>
+                <p class="text-[10px] text-white/50 uppercase tracking-wider">Borlette OS</p>
+            </div>
+        </div>
+
+        <nav class="hidden md:flex items-center gap-8">
+            <a href="#features" class="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Fonctionnalités</a>
+            <a href="#pricing" class="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Tarifs</a>
+            <a href="#affiliate" class="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Affiliation</a>
+            <a href="/documentation/" class="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Documentation</a>
+        </nav>
+
+        <div class="flex items-center gap-3">
+            <a href="/portal/login/" class="hidden sm:block text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Connexion</a>
+            <button data-open-signup class="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg text-xs font-bold uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all">
+                Démarrer
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- HERO -->
+<section class="relative min-h-[35vh] flex items-center pt-8 pb-8 px-6">
+    <div class="max-w-7xl mx-auto w-full">
+        <div class="grid lg:grid-cols-2 gap-4 items-center">
+            <div class="space-y-3">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm">
+                    <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                    <span class="text-xs font-bold text-orange-400 uppercase tracking-widest">Platform v5.0</span>
+                    <span class="text-xs text-zinc-500">Enterprise Ready</span>
+                </div>
+                
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight">
+                    <span class="bg-gradient-to-r from-white via-white to-zinc-400 bg-clip-text text-transparent">
+                        Gestion Intégrale de
+                    </span>
+                    <br>
+                    <span class="text-white">votre Borlette Digitale.</span>
+                </h1>
+                
+                <p class="text-lg text-zinc-400 leading-relaxed max-w-xl">
+                    Le système d'exploitation par excellence pour les administrateurs de Borlette. 
+                    Une précision chirurgicale pour votre réseau d'agences avec anti-fraude IA et automatisation temps réel.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button data-open-signup class="px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:scale-105 transition-all">
+                        Démarrer Gratuitement
+                        <i data-lucide="arrow-right" class="inline ml-2 h-4 w-4"></i>
+                    </button>
+                    <a href="#features" class="px-8 py-4 bg-white/5 border border-white/10 backdrop-blur rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center">
+                        <i data-lucide="play-circle" class="mr-2 h-4 w-4"></i>
+                        Démo Live
+                    </a>
+                    <a href="{% static 'app-debug.apk' %}" class="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:scale-105 transition-all flex items-center justify-center">
+                        <i data-lucide="download" class="mr-2 h-4 w-4"></i>
+                        Télécharger APK
+                    </a>
+                </div>
+                
+                <div class="flex items-center gap-8 pt-4">
+                    <div class="flex items-center gap-2">
+                        <div class="flex -space-x-2">
+                            <div class="w-8 h-8 bg-orange-500 rounded-full border-2 border-[#0a0a0b]"></div>
+                            <div class="w-8 h-8 bg-blue-500 rounded-full border-2 border-[#0a0a0b]"></div>
+                            <div class="w-8 h-8 bg-purple-500 rounded-full border-2 border-[#0a0a0b]"></div>
+                        </div>
+                        <span class="text-sm text-zinc-400">+500 borlettes</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="shield-check" class="h-5 w-5 text-emerald-500"></i>
+                        <span class="text-sm text-zinc-400">Anti-fraude IA</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dashboard Preview -->
+            <div class="relative hidden lg:block">
+                <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
+                    <div class="flex items-center gap-2 px-3 py-2 border-b border-white/5 bg-black/20 rounded-t-lg">
+                        <div class="flex gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-full bg-zinc-600"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-zinc-600"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-zinc-600"></div>
+                        </div>
+                        <div class="mx-auto bg-white/5 rounded px-3 py-1 flex items-center gap-2">
+                            <i data-lucide="lock" class="h-3 w-3 text-zinc-500"></i>
+                            <span class="text-[8px] text-zinc-500 uppercase tracking-widest">secure.gaboom.app</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#020203] rounded-b-lg p-6">
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                                <p class="text-xs text-zinc-500 uppercase tracking-wider">Gains Aujourd'hui</p>
+                                <h3 class="text-2xl font-bold mt-2 text-emerald-400">12,500 HTG</h3>
+                                <p class="text-[10px] text-zinc-500 mt-1">+15% vs hier</p>
+                            </div>
+                            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                                <p class="text-xs text-zinc-500 uppercase tracking-wider">Risque Système</p>
+                                <h3 class="text-2xl font-bold mt-2 text-orange-400">Faible</h3>
+                                <p class="text-[10px] text-zinc-500 mt-1">Plafonds actifs</p>
+                            </div>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-xs text-zinc-500 uppercase tracking-wider">Performance</p>
+                                <span class="text-[10px] text-emerald-400">+23.5%</span>
+                            </div>
+                            <div class="h-20 bg-gradient-to-r from-orange-500/20 to-blue-500/20 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- STATS -->
+<section class="py-12 px-6">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-6">
+            <span class="inline-block px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest mb-4">
+                En Chiffres
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black">
+                Impact Mesurable
+            </h2>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="text-center">
+                <h3 class="text-4xl md:text-5xl font-black text-white">500+</h3>
+                <p class="text-sm text-zinc-500 mt-2 uppercase tracking-wider">Borlettes Actives</p>
+            </div>
+            <div class="text-center">
+                <h3 class="text-4xl md:text-5xl font-black text-white">2M+</h3>
+                <p class="text-sm text-zinc-500 mt-2 uppercase tracking-wider">Tickets/Jour</p>
+            </div>
+            <div class="text-center">
+                <h3 class="text-4xl md:text-5xl font-black text-white">99.9%</h3>
+                <p class="text-sm text-zinc-500 mt-2 uppercase tracking-wider">Uptime</p>
+            </div>
+            <div class="text-center">
+                <h3 class="text-4xl md:text-5xl font-black text-white">-40%</h3>
+                <p class="text-sm text-zinc-500 mt-2 uppercase tracking-wider">Pertes Évitées</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="py-12 px-6 bg-gradient-to-b from-transparent via-white/5 to-transparent">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-6">
+            <span class="inline-block px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest mb-4">
+                Fonctionnalités
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Tout ce dont vous avez besoin
+            </h2>
+            <p class="text-zinc-400 max-w-2xl mx-auto">
+                Une suite complète d'outils pour gérer votre borlette avec précision et efficacité.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="card group">
+                <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-500/20 transition-colors">
+                    <i data-lucide="ticket" class="h-6 w-6 text-blue-400"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Tickets & Tirages</h3>
+                <p class="text-sm text-zinc-400">Gestion complète des tickets avec tous les types de jeux: Boule, Mariage, Loto3, Loto4, Loto5.</p>
+            </div>
+
+            <div class="card group">
+                <div class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-500/20 transition-colors">
+                    <i data-lucide="shield-check" class="h-6 w-6 text-emerald-400"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Anti-fraude IA</h3>
+                <p class="text-sm text-zinc-400">Détection automatique des anomalies et plafonds intelligents pour protéger vos revenus.</p>
+            </div>
+
+            <div class="card group">
+                <div class="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-500/20 transition-colors">
+                    <i data-lucide="users" class="h-6 w-6 text-purple-400"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Portail Agents</h3>
+                <p class="text-sm text-zinc-400">Application mobile pour vos agents avec mode offline et synchronisation automatique.</p>
+            </div>
+
+            <div class="card group">
+                <div class="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-500/20 transition-colors">
+                    <i data-lucide="bar-chart-3" class="h-6 w-6 text-orange-400"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Rapports Avancés</h3>
+                <p class="text-sm text-zinc-400">Analytics détaillés sur les ventes, gains, commissions et performance des agents.</p>
+            </div>
+
+            <div class="card group">
+                <div class="w-12 h-12 bg-pink-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-pink-500/20 transition-colors">
+                    <i data-lucide="credit-card" class="h-6 w-6 text-pink-400"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Paiements Automatisés</h3>
+                <p class="text-sm text-zinc-400">Calcul automatique des commissions et paiements aux agents et partenaires.</p>
+            </div>
+
+            <div class="card group">
+                <div class="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition-colors">
+                    <i data-lucide="zap" class="h-6 w-6 text-cyan-400"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Temps Réel</h3>
+                <p class="text-sm text-zinc-400">Synchronisation WebSocket pour des mises à jour instantanées sur tous les appareils.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- BENEFITS -->
+<section class="py-12 px-6 bg-gradient-to-b from-transparent via-orange-500/10 to-transparent">
+    <div class="max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+            <div>
+                <span class="inline-block px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">
+                    Avantages
+                </span>
+                <h2 class="text-3xl md:text-5xl font-black mb-6">
+                    Plus de profit.<br>Moins de fraude.
+                </h2>
+                <p class="text-zinc-400 mb-8">
+                    Gaboom transforme votre façon de gérer votre borlette en automatisant les processus manuels et en protégeant vos revenus.
+                </p>
+                
+                <div class="space-y-6">
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center shrink-0">
+                            <i data-lucide="trending-up" class="h-5 w-5 text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold mb-1">Augmentation des Gains</h3>
+                            <p class="text-sm text-zinc-400">Contrôle précis de chaque agent et optimisation des plafonds pour maximiser vos profits.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center shrink-0">
+                            <i data-lucide="shield-alert" class="h-5 w-5 text-orange-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold mb-1">Réduction des Pertes</h3>
+                            <p class="text-sm text-zinc-400">Détection automatique des pertes invisibles et alertes en temps réel.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center shrink-0">
+                            <i data-lucide="clock" class="h-5 w-5 text-blue-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold mb-1">Gain de Temps</h3>
+                            <p class="text-sm text-zinc-400">Automatisation complète des calculs, rapports et paiements.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="relative">
+                <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="arrow-up" class="h-5 w-5 text-orange-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-zinc-400">Revenus Mensuels</p>
+                                    <p class="text-lg font-bold">+35%</p>
+                                </div>
+                            </div>
+                            <span class="text-emerald-400 text-sm">vs avant</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="arrow-down" class="h-5 w-5 text-emerald-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-zinc-400">Pertes Fraude</p>
+                                    <p class="text-lg font-bold">-65%</p>
+                                </div>
+                            </div>
+                            <span class="text-emerald-400 text-sm">vs avant</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="clock" class="h-5 w-5 text-blue-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-zinc-400">Temps Gestion</p>
+                                    <p class="text-lg font-bold">-70%</p>
+                                </div>
+                            </div>
+                            <span class="text-emerald-400 text-sm">vs avant</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- DIRECTEURS -->
+<section class="py-12 px-6 bg-gradient-to-b from-transparent via-purple-500/5 to-transparent">
+    <div class="max-w-4xl mx-auto text-center">
+        <span class="inline-block px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold uppercase tracking-widest mb-4">
+            Pour les Directeurs
+        </span>
+        <h2 class="text-3xl md:text-5xl font-black mb-6">
+            Vous avez déjà une borlette ?
+        </h2>
+        <p class="text-zinc-400 text-lg mb-8">
+            Vos méthodes actuelles créent des erreurs, pertes et manque de contrôle. 
+            Gaboom automatise tout et augmente vos profits dès le premier jour.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button data-open-signup class="px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-all">
+                Migrer vers Gaboom
+            </button>
+            <a href="#features" class="px-8 py-4 bg-white/5 border border-white/10 backdrop-blur rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
+                En savoir plus
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="py-12 px-6 bg-gradient-to-b from-transparent via-blue-500/5 to-transparent">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-6">
+            <span class="inline-block px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest mb-4">
+                Tarifs
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Des tarifs en Gourdes (GDS)
+            </h2>
+            <p class="text-zinc-400 max-w-2xl mx-auto">
+                Activation simple et transparente. Économisez avec un code promo affilié !
+            </p>
+        </div>
+
+        <!-- Calculateur de prix -->
+        <div class="max-w-4xl mx-auto mb-12">
+            <div class="card border-indigo-500/30">
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold mb-2">Calculez votre prix</h3>
+                    <p class="text-sm text-zinc-400">Entrez le nombre d'agents pour voir votre tarif</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="text-xs font-bold text-zinc-500 uppercase mb-2 block">Nombre d'agents</label>
+                        <input type="number" id="agentCountInput" value="5" min="0" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                    </div>
+                    <div class="flex items-center justify-center gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="promoCodeCheck" class="w-5 h-5 rounded bg-white/10 border-white/20 text-indigo-500 focus:ring-indigo-500/50">
+                            <span class="text-sm">J'ai un code promo affilié</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4">
+                    <!-- Sans promo -->
+                    <div class="p-4 bg-white/5 rounded-xl">
+                        <div class="text-xs text-zinc-500 uppercase mb-1">Sans code promo</div>
+                        <div class="text-2xl font-black text-zinc-400" id="priceWithoutPromo">18,750 GDS</div>
+                        <div class="text-xs text-zinc-600 mt-1">/mois</div>
+                    </div>
+                    <!-- Avec promo -->
+                    <div class="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">ÉCONOMIE</div>
+                        <div class="text-xs text-emerald-400 uppercase mb-1">Avec code promo</div>
+                        <div class="text-2xl font-black text-emerald-400" id="priceWithPromo">15,500 GDS</div>
+                        <div class="text-xs text-emerald-600 mt-1">/mois (économisez <span id="savingsAmount">3,250</span> GDS)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div class="card">
+                <div class="text-center mb-6">
+                    <h3 class="text-lg font-bold mb-2">Activation</h3>
+                    <div class="text-4xl font-black text-orange-400">12,500</div>
+                    <p class="text-sm text-zinc-500 mt-1">GDS / mois</p>
+                </div>
+                <ul class="space-y-3 mb-6">
+                    <li class="flex items-center gap-2 text-sm text-zinc-400">
+                        <i data-lucide="check" class="h-4 w-4 text-emerald-400"></i>
+                        Accès complet au système
+                    </li>
+                    <li class="flex items-center gap-2 text-sm text-zinc-400">
+                        <i data-lucide="check" class="h-4 w-4 text-emerald-400"></i>
+                        Anti-fraude IA inclus
+                    </li>
+                    <li class="flex items-center gap-2 text-sm text-zinc-400">
+                        <i data-lucide="check" class="h-4 w-4 text-emerald-400"></i>
+                        Support dédié
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card border-indigo-500/30">
+                <div class="text-center mb-6">
+                    <h3 class="text-lg font-bold mb-2">Par Agent</h3>
+                    <div class="text-4xl font-black text-indigo-400">1,250</div>
+                    <p class="text-sm text-zinc-500 mt-1">GDS / agent / mois</p>
+                </div>
+                <ul class="space-y-3 mb-6">
+                    <li class="flex items-center gap-2 text-sm text-zinc-400">
+                        <i data-lucide="check" class="h-4 w-4 text-emerald-400"></i>
+                        Portail agent dédié
+                    </li>
+                    <li class="flex items-center gap-2 text-sm text-zinc-400">
+                        <i data-lucide="check" class="h-4 w-4 text-emerald-400"></i>
+                        Impression tickets
+                    </li>
+                    <li class="flex items-center gap-2 text-sm text-zinc-400">
+                        <i data-lucide="check" class="h-4 w-4 text-emerald-400"></i>
+                        Suivi en temps réel
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Promo banner -->
+        <div class="max-w-4xl mx-auto mt-8">
+            <div class="card border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-transparent">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                            <i data-lucide="gift" class="h-6 w-6 text-purple-400"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Avec code promo affilié :</h4>
+                            <p class="text-sm text-zinc-400">-2,500 GDS sur l'activation • -50 GDS par agent</p>
+                        </div>
+                    </div>
+                    <button data-open-signup class="px-6 py-3 bg-purple-500 hover:bg-purple-400 rounded-xl text-sm font-bold transition-all whitespace-nowrap">
+                        S'inscrire avec promo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="py-12 px-6 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-6">
+            <span class="inline-block px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">
+                Témoignages
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Ce que disent nos clients
+            </h2>
+            <p class="text-zinc-400 max-w-2xl mx-auto">
+                +500 directeurs de borlette nous font confiance pour gérer leur activité.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="card">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-lg font-bold">
+                        JM
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Jean-Marc D.</h4>
+                        <p class="text-xs text-zinc-500">Directeur, Elite Borlette</p>
+                    </div>
+                </div>
+                <p class="text-sm text-zinc-400 leading-relaxed">
+                    "Depuis que j'utilise Gaboom, mes gains ont augmenté de 35%. Le système anti-fraude m'a permis d'économiser des milliers de gourdes chaque mois."
+                </p>
+                <div class="flex gap-1 mt-4">
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-lg font-bold">
+                        MC
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Marie-Claire P.</h4>
+                        <p class="text-xs text-zinc-500">Directrice, Central Borlette</p>
+                    </div>
+                </div>
+                <p class="text-sm text-zinc-400 leading-relaxed">
+                    "Le portail agents a transformé mon business. Mes agents peuvent maintenant travailler en mode offline et tout se synchronise automatiquement."
+                </p>
+                <div class="flex gap-1 mt-4">
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-lg font-bold">
+                        FR
+                    </div>
+                    <div>
+                        <h4 class="font-bold">François R.</h4>
+                        <p class="text-xs text-zinc-500">Directeur, Royal Borlette</p>
+                    </div>
+                </div>
+                <p class="text-sm text-zinc-400 leading-relaxed">
+                    "Les rapports détaillés me permettent de prendre des décisions éclairées. Je vois exactement où je gagne et où je perds en temps réel."
+                </p>
+                <div class="flex gap-1 mt-4">
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-orange-400 fill-orange-400"></i>
+                    <i data-lucide="star" class="h-4 w-4 text-zinc-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="py-12 px-6 bg-gradient-to-b from-transparent via-rose-500/5 to-transparent">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-6">
+            <span class="inline-block px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest mb-4">
+                Comparaison
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Avant vs Après Gaboom
+            </h2>
+            <p class="text-zinc-400 max-w-2xl mx-auto">
+                Découvrez la différence que Gaboom peut faire pour votre borlette.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="card border-rose-500/30">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-rose-500/20 rounded-lg flex items-center justify-center">
+                        <i data-lucide="x" class="h-5 w-5 text-rose-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-rose-400">Sans Gaboom</h3>
+                </div>
+                <ul class="space-y-4">
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="x-circle" class="h-5 w-5 text-rose-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Calculs manuels des gains et pertes</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="x-circle" class="h-5 w-5 text-rose-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Pas de visibilité sur les agents</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="x-circle" class="h-5 w-5 text-rose-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Fraude difficile à détecter</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="x-circle" class="h-5 w-5 text-rose-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Rapports incomplets et retardés</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="x-circle" class="h-5 w-5 text-rose-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Paiements manuels aux agents</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="x-circle" class="h-5 w-5 text-rose-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Pas de contrôle des plafonds</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card border-emerald-500/30">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                        <i data-lucide="check" class="h-5 w-5 text-emerald-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-emerald-400">Avec Gaboom</h3>
+                </div>
+                <ul class="space-y-4">
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="h-5 w-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Calculs automatiques en temps réel</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="h-5 w-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Visibilité complète sur tous les agents</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="h-5 w-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Anti-fraude IA avec alertes automatiques</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="h-5 w-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Rapports détaillés instantanés</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="h-5 w-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Paiements automatisés et traçables</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="h-5 w-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                        <span class="text-sm text-zinc-400">Plafonds intelligents personnalisables</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="py-12 px-6 bg-gradient-to-b from-transparent via-purple-500/5 to-transparent">
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-6">
+            <span class="inline-block px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold uppercase tracking-widest mb-4">
+                FAQ
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Questions fréquentes
+            </h2>
+            <p class="text-zinc-400">
+                Tout ce que vous devez savoir sur Gaboom.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="card">
+                <details class="group">
+                    <summary class="flex items-center justify-between cursor-pointer">
+                        <h3 class="font-bold">Comment fonctionne l'essai gratuit ?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-zinc-500 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <p class="mt-4 text-sm text-zinc-400 leading-relaxed">
+                        L'essai gratuit dure 3 jours avec accès complet à toutes les fonctionnalités. Aucune carte bancaire n'est requise. À la fin de l'essai, vous pouvez choisir de vous abonner ou non.
+                    </p>
+                </details>
+            </div>
+
+            <div class="card">
+                <details class="group">
+                    <summary class="flex items-center justify-between cursor-pointer">
+                        <h3 class="font-bold">Combien d'agents puis-je avoir ?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-zinc-500 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <p class="mt-4 text-sm text-zinc-400 leading-relaxed">
+                        Il n'y a pas de limite sur le nombre d'agents. Vous pouvez en ajouter autant que vous le souhaitez. Le système est conçu pour gérer des réseaux de toute taille.
+                    </p>
+                </details>
+            </div>
+
+            <div class="card">
+                <details class="group">
+                    <summary class="flex items-center justify-between cursor-pointer">
+                        <h3 class="font-bold">Mes données sont-elles sécurisées ?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-zinc-500 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <p class="mt-4 text-sm text-zinc-400 leading-relaxed">
+                        Absolument. Vos données sont chiffrées et stockées sur des serveurs sécurisés. Nous utilisons les protocoles de sécurité les plus avancés pour protéger votre activité.
+                    </p>
+                </details>
+            </div>
+
+            <div class="card">
+                <details class="group">
+                    <summary class="flex items-center justify-between cursor-pointer">
+                        <h3 class="font-bold">Puis-je utiliser Gaboom sans connexion internet ?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-zinc-500 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <p class="mt-4 text-sm text-zinc-400 leading-relaxed">
+                        Oui ! Le portail agents dispose d'un mode offline. Vos agents peuvent continuer à vendre des tickets même sans connexion, et tout se synchronise automatiquement quand ils retrouvent internet.
+                    </p>
+                </details>
+            </div>
+
+            <div class="card">
+                <details class="group">
+                    <summary class="flex items-center justify-between cursor-pointer">
+                        <h3 class="font-bold">Comment fonctionne le programme d'affiliation ?</h3>
+                        <i data-lucide="chevron-down" class="h-5 w-5 text-zinc-500 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <p class="mt-4 text-sm text-zinc-400 leading-relaxed">
+                        Vous recevez un code promo unique. Pour chaque directeur qui s'inscrit avec votre code, vous gagnez <strong class="text-orange-400">2,000 GDS</strong> à l'activation plus <strong class="text-emerald-400">200 GDS</strong> pour chaque agent de ce directeur. Les bonus sont valables pendant 6 mois.
+                    </p>
+                </details>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- INTEGRATION -->
+<section class="py-12 px-6 bg-gradient-to-b from-transparent via-orange-500/5 to-transparent">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-6">
+            <span class="inline-block px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest mb-4">
+                Intégration
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Compatible avec votre workflow
+            </h2>
+            <p class="text-zinc-400 max-w-2xl mx-auto">
+                Gaboom s'intègre facilement avec vos outils existants.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="card text-center">
+                <div class="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="smartphone" class="h-8 w-8 text-blue-400"></i>
+                </div>
+                <h3 class="font-bold mb-2">Mobile</h3>
+                <p class="text-sm text-zinc-400">Application iOS et Android pour vos agents</p>
+            </div>
+
+            <div class="card text-center">
+                <div class="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="monitor" class="h-8 w-8 text-emerald-400"></i>
+                </div>
+                <h3 class="font-bold mb-2">Desktop</h3>
+                <p class="text-sm text-zinc-400">Dashboard accessible depuis n'importe quel navigateur</p>
+            </div>
+
+            <div class="card text-center">
+                <div class="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="database" class="h-8 w-8 text-purple-400"></i>
+                </div>
+                <h3 class="font-bold mb-2">API</h3>
+                <p class="text-sm text-zinc-400">API REST pour intégrations personnalisées</p>
+            </div>
+
+            <div class="card text-center">
+                <div class="w-16 h-16 bg-orange-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="printer" class="h-8 w-8 text-orange-400"></i>
+                </div>
+                <h3 class="font-bold mb-2">Impression</h3>
+                <p class="text-sm text-zinc-400">Imprimantes thermiques compatibles</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="py-12 px-6 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-6">
+            <span class="inline-block px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-4">
+                Roadmap
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Ce qui arrive prochainement
+            </h2>
+            <p class="text-zinc-400 max-w-2xl mx-auto">
+                Nous améliorons constamment Gaboom avec de nouvelles fonctionnalités.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="card border-emerald-500/30">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded">DISPONIBLE</span>
+                </div>
+                <h3 class="font-bold mb-2">Mode Offline Avancé</h3>
+                <p class="text-sm text-zinc-400">Synchronisation bidirectionnelle et gestion des conflits améliorée.</p>
+            </div>
+
+            <div class="card border-blue-500/30">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold rounded">EN DÉV</span>
+                </div>
+                <h3 class="font-bold mb-2">Analytics IA</h3>
+                <p class="text-sm text-zinc-400">Prédictions de tendances et recommandations automatiques.</p>
+            </div>
+
+            <div class="card border-purple-500/30">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs font-bold rounded">Bientôt</span>
+                </div>
+                <h3 class="font-bold mb-2">Multi-borlette</h3>
+                <p class="text-sm text-zinc-400">Gérez plusieurs borlettes depuis un seul dashboard.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-12 px-6 bg-gradient-to-b from-transparent via-orange-500/10 to-transparent">
+    <div class="max-w-4xl mx-auto text-center">
+        <span class="inline-block px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest mb-4">
+            Commencez Maintenant
+        </span>
+        <h2 class="text-4xl md:text-6xl font-black mb-6">
+            Prêt à transformer<br>votre borlette ?
+        </h2>
+        <p class="text-zinc-400 text-lg mb-8 max-w-2xl mx-auto">
+            Rejoignez +500 directeurs qui utilisent Gaboom pour augmenter leurs profits et réduire leurs pertes.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button data-open-signup class="px-10 py-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:scale-105 transition-all">
+                Démarrer l'essai gratuit
+            </button>
+            <a href="#features" class="px-10 py-4 bg-white/5 border border-white/10 backdrop-blur rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
+                Voir la démo
+            </a>
+        </div>
+        <p class="text-zinc-500 text-sm mt-6">
+            Essai gratuit 3 jours • Sans carte bancaire • Annulation à tout moment
+        </p>
+    </div>
+</section>
+
+<!-- AFFILIATION -->
+<section id="affiliate" class="py-12 px-6 bg-gradient-to-b from-transparent via-purple-500/5 to-transparent">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-gradient-to-br from-purple-500/10 to-orange-500/10 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-12 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(circle at 1px 1px, #fff 1px, transparent 0); background-size: 40px 40px;"></div>
+            
+            <div class="grid lg:grid-cols-2 gap-8 items-center relative z-10">
+                <div>
+                    <span class="inline-block px-4 py-2 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-bold uppercase tracking-widest mb-4">
+                        Programme Partenaires
+                    </span>
+                    <h2 class="text-3xl md:text-5xl font-black mb-6">
+                        Devenez partenaire<br>et gagnez ensemble
+                    </h2>
+                    <p class="text-zinc-400 mb-8">
+                        Intégrez notre programme d'affiliation et générez des revenus substantiels en développant le réseau Gaboom.
+                    </p>
+                    
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <div class="text-3xl font-black text-orange-400">2,000</div>
+                            <p class="text-sm text-zinc-500 uppercase tracking-wider">GDS par Directeur</p>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-black text-emerald-400">200</div>
+                            <p class="text-sm text-zinc-500 uppercase tracking-wider">GDS par Agent</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8 p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                        <p class="text-sm text-zinc-400">
+                            <i data-lucide="clock" class="inline h-4 w-4 mr-1 text-purple-400"></i>
+                            Bonus valables pendant <span class="text-purple-400 font-bold">6 mois</span> après l'inscription de chaque directeur
+                        </p>
+                    </div>
+                    
+                    <button id="openAffiliateModalBtn" class="px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-purple-500/30 hover:shadow-purple-500/40 transition-all">
+                        Rejoindre le programme
+                        <i data-lucide="arrow-right" class="inline ml-2 h-4 w-4"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-white/5 p-6 rounded-xl border border-white/10">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                                <i data-lucide="users" class="h-5 w-5 text-orange-400"></i>
+                            </div>
+                            <h3 class="font-bold">Vos Filleuls</h3>
+                        </div>
+                        <p class="text-sm text-zinc-400">Suivez tous vos filleuls et leurs performances en temps réel.</p>
+                    </div>
+                    
+                    <div class="bg-white/5 p-6 rounded-xl border border-white/10">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                                <i data-lucide="trending-up" class="h-5 w-5 text-emerald-400"></i>
+                            </div>
+                            <h3 class="font-bold">Commissions Garanties</h3>
+                        </div>
+                        <p class="text-sm text-zinc-400">2,000 GDS à l'activation + 200 GDS par agent de chaque directeur référé.</p>
+                    </div>
+                    
+                    <div class="bg-white/5 p-6 rounded-xl border border-white/10">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <i data-lucide="bar-chart-3" class="h-5 w-5 text-blue-400"></i>
+                            </div>
+                            <h3 class="font-bold">Dashboard</h3>
+                        </div>
+                        <p class="text-sm text-zinc-400">Tableau de bord dédié pour suivre vos gains et retraits.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="border-t-2 border-orange-500/30 py-10 px-6 bg-[#0a0a0b] relative z-10">
+    <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div class="col-span-2 md:col-span-1">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="h-10 w-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="zap" class="h-5 w-5 text-white"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-lg">Gaboom</p>
+                        <p class="text-[10px] text-white/50 uppercase tracking-wider">Borlette OS</p>
+                    </div>
+                </div>
+                <p class="text-sm text-zinc-500">
+                    Le système d'exploitation par excellence pour les administrateurs de Borlette.
+                </p>
+            </div>
+            
+            <div>
+                <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">Produit</h4>
+                <ul class="space-y-2">
+                    <li><a href="#features" class="text-sm text-zinc-500 hover:text-white transition-colors">Fonctionnalités</a></li>
+                    <li><a href="#pricing" class="text-sm text-zinc-500 hover:text-white transition-colors">Tarifs</a></li>
+                    <li><a href="#affiliate" class="text-sm text-zinc-500 hover:text-white transition-colors">Affiliation</a></li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">Support</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">Centre d'aide</a></li>
+                    <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">Documentation</a></li>
+                    <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">Contact</a></li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">Légal</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">Confidentialité</a></li>
+                    <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">Conditions</a></li>
+                    <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">Sécurité</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p class="text-xs text-zinc-500">© 2026 Gaboom. Tous droits réservés.</p>
+            <div class="flex items-center gap-6">
+                <a href="#" class="text-zinc-500 hover:text-white transition-colors"><i data-lucide="twitter" class="h-4 w-4"></i></a>
+                <a href="#" class="text-zinc-500 hover:text-white transition-colors"><i data-lucide="linkedin" class="h-4 w-4"></i></a>
+                <a href="#" class="text-zinc-500 hover:text-white transition-colors"><i data-lucide="instagram" class="h-4 w-4"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- SIGNUP MODAL -->
+<div id="signupModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-xl" id="signupModalBackdrop"></div>
+    <div class="relative w-full max-w-xl bg-[#111113]/90 border border-white/10 max-h-[90vh] flex flex-col transform scale-95 transition-transform duration-300 shadow-2xl shadow-black/50 rounded-2xl backdrop-blur-xl overflow-hidden" id="signupModalContent">
+        <button class="absolute top-4 right-4 h-10 w-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all z-10" id="closeSignupModalBtn">
+            <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+        <div class="flex-1 overflow-y-auto p-6 md:p-10">
+        <div id="signupStepForm">
+            <form id="signupForm" class="space-y-6">
+                <!-- Step 1: User Info -->
+                <div id="signupStep1">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-white mb-2">Créer votre compte</h2>
+                        <p class="text-zinc-500 text-sm">Commencez maintenant</p>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Email</label>
+                        <input name="email" type="email" placeholder="john@gaboom.com" required 
+                            {% if user.is_authenticated %}value="{{ user.email }}"{% endif %}
+                            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Téléphone</label>
+                        <input name="phone" placeholder="+509 0000-0000" required 
+                            {% if user.is_authenticated and user.borlette %}value="{{ user.borlette.telephone }}"{% endif %}
+                            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                    </div>
+                    {% if not user.is_authenticated %}
+                    <div class="space-y-2 mb-4">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Nom d'utilisateur</label>
+                        <input name="username" type="text" placeholder="Votre pseudo" required
+                            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                    </div>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    <div class="space-y-2 mb-8">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Nom d'utilisateur</label>
+                        <input name="username" type="text" value="{{ user.username }}" readonly
+                            class="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-400 cursor-not-allowed" />
+                        <p class="text-xs text-zinc-500 mt-1">Connecté en tant que {{ user.username }}</p>
+                    </div>
+                    {% endif %}
+                    <button type="button" id="nextToStep2" class="w-full h-12 bg-orange-500 rounded-xl text-sm font-bold text-white shadow-lg shadow-orange-500/20 flex items-center justify-center gap-3 transition-all hover:bg-orange-400">
+                        Suivant
+                        <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                    </button>
+                </div>
+
+                <!-- Step 2: Borlette Entity -->
+                <div id="signupStep2" style="display:none;">
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold text-white">Votre entreprise</h3>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Nom de votre Borlette</label>
+                        <input name="borlette_name" placeholder="Ex: Central Borlette Elite" required 
+                            {% if user.is_authenticated and user.borlette %}value="{{ user.borlette.nom_borlette }}"{% endif %}
+                            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Adresse</label>
+                        <input name="adresse" placeholder="Delmas, Port-au-Prince" required 
+                            {% if user.is_authenticated and user.borlette %}value="{{ user.borlette.adresse }}"{% endif %}
+                            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Slogan</label>
+                        <input name="slogan" placeholder="La borlette de confiance" required 
+                            {% if user.is_authenticated and user.borlette %}value="{{ user.borlette.slogan }}"{% endif %}
+                            class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                    </div>
+                    {% if user.is_authenticated %}
+                    <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-6">
+                        <p class="text-xs text-blue-400">
+                            <i data-lucide="info" class="inline h-3 w-3 mr-1"></i>
+                            Les informations de votre borlette existante seront mises à jour.
+                        </p>
+                    </div>
+                    {% endif %}
+                    <div class="flex gap-4">
+                        <button type="button" id="backToStep1" class="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl text-sm font-bold hover:bg-white/10 transition-all">Retour</button>
+                        <button type="button" id="nextToStep3" class="flex-[2] h-12 bg-orange-500 rounded-xl text-sm font-bold text-white shadow-lg shadow-orange-500/20 flex items-center justify-center gap-3 transition-all hover:bg-orange-400">
+                            Suivant
+                            <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Security & Promo -->
+                <div id="signupStep3" style="display:none;">
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold text-white">Sécurisez votre compte</h3>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase ml-1">Mot de passe</label>
+                            <input name="password" type="password" placeholder="••••••••" required class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase ml-1">Confirmation</label>
+                            <input name="password_confirm" type="password" placeholder="••••••••" required class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                        </div>
+                    </div>
+                    <div class="space-y-2 mb-8">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Code promo (optionnel)</label>
+                        <input name="promo_code" placeholder="Entrez votre code" class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all placeholder:text-zinc-600" />
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="button" id="backToStep2" class="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl text-sm font-bold hover:bg-white/10 transition-all">Retour</button>
+                        <button type="submit" id="submitSignupBtn" class="flex-[2] h-12 bg-orange-500 rounded-xl text-sm font-bold text-white shadow-lg shadow-orange-500/20 flex items-center justify-center gap-3 transition-all hover:bg-orange-400">
+                            Créer mon compte
+                            <i data-lucide="rocket" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Loading State -->
+        <div id="signupStepLoading" style="display:none;" class="py-20 flex flex-col items-center">
+            <div class="h-14 w-14 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin"></div>
+            <p class="mt-6 text-zinc-400 font-medium">Création de votre compte...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="signupStepError" style="display:none;" class="py-20 text-center">
+            <i data-lucide="alert-triangle" class="h-16 w-16 text-rose-500 mx-auto mb-6"></i>
+            <h3 class="text-2xl font-bold mb-2 text-white">Oups, une erreur.</h3>
+            <p id="signupErrorText" class="text-zinc-400 mb-10">Détails de l'erreur ici.</p>
+            <button id="retrySignupBtn" class="px-10 h-12 bg-white/5 border border-white/10 rounded-xl font-bold flex items-center justify-center mx-auto hover:bg-white/10 transition-all text-white">Réessayer</button>
+        </div>
+        </div>
+    </div>
+</div>
+
+<!-- AFFILIATE MODAL -->
+<div id="affiliateModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-xl" id="affiliateModalBackdrop"></div>
+    <div class="relative w-full max-w-xl bg-[#111113]/90 border border-white/10 p-6 md:p-10 overflow-hidden transform scale-95 transition-transform duration-300 shadow-2xl shadow-black/50 rounded-2xl backdrop-blur-xl max-h-[90vh] flex flex-col" id="affiliateModalContent">
+        <div class="flex-1 overflow-y-auto pr-2">
+        <button class="absolute top-6 right-6 h-10 w-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all" id="closeAffiliateModalBtn">
+            <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+
+        <div id="affiliateStepForm">
+            <div class="mb-10">
+                <h2 class="text-2xl font-bold text-white mb-2">Rejoindre le programme</h2>
+                <p class="text-zinc-500 text-sm">Devenez partenaire Gaboom</p>
+            </div>
+
+            <form class="space-y-6" id="affiliateForm">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Nom Complet</label>
+                    <input name="full_name" placeholder="Jean Dupont" required class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Email</label>
+                    <input name="email" type="email" placeholder="jean@gaboom.com" required class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Téléphone</label>
+                    <input name="phone" placeholder="+509 0000-0000" required class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">ID Souhaité</label>
+                    <input name="username" placeholder="Ex: GABOOM_PARTNER" required class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Mot de passe</label>
+                        <input name="password" type="password" placeholder="••••••••" required class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase ml-1">Confirmation</label>
+                        <input name="password_confirm" type="password" placeholder="••••••••" required class="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all placeholder:text-zinc-600" />
+                    </div>
+                </div>
+                <button type="submit" id="submitAffiliateBtn" class="w-full h-12 bg-orange-500 rounded-xl text-sm font-bold text-white shadow-lg shadow-orange-500/20 flex items-center justify-center gap-3 transition-all hover:bg-orange-400">
+                    Soumettre
+                    <i data-lucide="send" class="h-4 w-4"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Loading State -->
+        <div id="affiliateStepLoading" style="display:none;" class="py-20 flex flex-col items-center">
+            <div class="h-10 w-10 border-2 border-white/10 border-t-orange-500 rounded-full animate-spin"></div>
+            <p class="mt-8 text-zinc-500 text-xs font-bold uppercase">Validation...</p>
+        </div>
+
+        <!-- Success/Error State -->
+        <div id="affiliateStepResult" style="display:none;" class="py-20 text-center">
+            <div id="affiliateSuccessIcon" class="hidden">
+                <i data-lucide="check-circle" class="h-16 w-16 text-emerald-500 mx-auto mb-8"></i>
+                <h3 class="text-2xl font-bold mb-4">Candidature envoyée</h3>
+                <p class="text-zinc-500 mb-10">Votre demande a été enregistrée.</p>
+            </div>
+            <div id="affiliateErrorIcon" class="hidden">
+                <i data-lucide="alert-octagon" class="h-16 w-16 text-rose-500 mx-auto mb-8"></i>
+                <h3 class="text-2xl font-bold mb-4">Erreur</h3>
+                <p id="affiliateErrorText" class="text-zinc-400 mb-10">Détails de l'erreur ici.</p>
+                <button id="retryAffiliateBtn" class="px-10 h-12 bg-white/5 border border-white/10 rounded-xl uppercase text-xs font-bold mx-auto hover:bg-white/10 transition-all">Réessayer</button>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="{% static 'js/gaboom-hero.js' %}"></script>
+<script src="{% static 'js/landing.js' %}?v=2"></script>
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

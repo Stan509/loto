@@ -1,0 +1,96 @@
+{% extends 'agent_portal/base_agent.html' %}
+
+{% block content %}
+  <div class="grid">
+    <section class="card">
+      <div class="card-title">Nouveau ticket</div>
+
+      <form method="post" class="form">
+        {% csrf_token %}
+
+        <div class="form-row">
+          <label class="label">Tirages (IDs séparés par virgule)</label>
+          <input class="input" name="draw_ids" value="{{ draw_ids }}" placeholder="ex: 1,2">
+        </div>
+
+        <div class="form-row">
+          <label class="label">Lignes (JSON list[dict])</label>
+          <textarea class="textarea" name="ticket_lines_json" rows="10">{{ ticket_lines_json }}</textarea>
+          <div class="help">Ex: [{"jeu":"boule","valeur":"12","mise":"5"}]</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" name="action" value="preview" type="submit">Valider + Prévisualiser</button>
+          <button class="btn btn-primary" name="action" value="confirm" type="submit" {% if not preview.is_valid %}disabled{% endif %}>Confirmer (enregistrer)</button>
+        </div>
+      </form>
+
+      {% if saved_ticket %}
+        <div class="alert alert-success">
+          Ticket enregistré: <strong>{{ saved_ticket.numero_ticket }}</strong>
+        </div>
+      {% endif %}
+
+      <div class="subtle">
+        Tirages disponibles:
+        {% for d in available_draws %}
+          <span class="pill">{{ d.id }} · {{ d.nom }}</span>
+        {% empty %}
+          <span class="pill">—</span>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Prévisualisation thermique</div>
+
+      <div class="thermal">
+        <div class="thermal-actions">
+          {% if saved_ticket %}
+            <button class="btn" type="button" onclick="window.open('/api/agent/ticket/{{ saved_ticket.id }}/pdf/', '_blank'); return false;">Imprimer / Sauvegarder PDF</button>
+          {% elif preview.is_valid %}
+            <button class="btn" type="button" disabled>Sauvegardez d'abord pour imprimer</button>
+          {% endif %}
+        </div>
+
+        {% if preview.errors %}
+          <div class="alert alert-error">
+            {% for e in preview.errors %}<div>{{ e }}</div>{% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="thermal-frame">
+          <div class="mono" style="padding: 12px; background: white; color: black;">
+            <div style="text-align:center; font-weight:700;">GABOOM CENTRAL</div>
+            <div style="text-align:center;">{{ preview.borlette_name }}</div>
+            <div style="text-align:center;">"{{ preview.borlette_slogan }}"</div>
+            <div style="margin-top:10px;">Tel: {{ preview.borlette_tel }}</div>
+            <div>{{ preview.borlette_city }}</div>
+            <div style="margin-top:8px;">--------------------------------</div>
+            <div>Ticket: {{ preview.ticket_number }}</div>
+            <div>Date: {{ preview.date_str }}</div>
+            <div>Heure: {{ preview.time_str }}</div>
+            <div style="margin-top:8px;">Agent: {{ preview.agent_name }}</div>
+            <div>Tirage: {% if preview.draw_names %}{{ preview.draw_names|join:", " }}{% else %}—{% endif %}</div>
+            <div style="margin-top:8px;">--------------------------------</div>
+            <pre style="margin:0; white-space:pre;">{% for line in preview.ticket_lines_print %}{{ line }}
+{% endfor %}</pre>
+
+            {% if preview.free_marriages %}
+              <div>--- BONUS ---</div>
+              <pre style="margin:0; white-space:pre;">{% for line in preview.free_marriages_print %}{{ line }}
+{% endfor %}MISE: 0
+</pre>
+            {% endif %}
+
+            <div>--------------------------------</div>
+            <div style="text-align:center;">Bonne chance</div>
+            <div style="text-align:center;">Merci pour votre confiance</div>
+          </div>
+        </div>
+
+        <div class="help">La confirmation applique automatiquement les mises au risk management (blocage/plafonds).</div>
+      </div>
+    </section>
+  </div>
+{% endblock %}

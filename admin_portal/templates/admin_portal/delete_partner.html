@@ -1,0 +1,56 @@
+{% extends "admin_portal/_dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Supprimer Partenaire | Central Borlette{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Supprimer le Partenaire</div>
+      <div class="portal-page__meta">Action irréversible</div>
+    </div>
+    <a href="{% url 'admin_portal:partner_list' %}" class="gaboom-btn-ghost">← Retour</a>
+  </div>
+
+  <div class="portal-page__body">
+    <div class="max-w-md mx-auto">
+      <div class="gaboom-card p-6 border-2 border-rose-200 dark:border-rose-800">
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center justify-center h-16 w-16 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-rose-600 dark:text-rose-400">Confirmer la suppression</h3>
+        </div>
+
+        <p class="text-sm text-slate-600 dark:text-slate-400 text-center mb-6">
+          Voulez-vous vraiment supprimer le partenaire <strong>{{ partner.user.username }}</strong> ?
+        </p>
+
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg mb-6 text-sm">
+          <div class="grid grid-cols-2 gap-2">
+            <div class="text-slate-500">Utilisateur:</div>
+            <div class="font-medium">{{ partner.user.username }}</div>
+            <div class="text-slate-500">Email:</div>
+            <div>{{ partner.user.email|default:"-" }}</div>
+            <div class="text-slate-500">Créé le:</div>
+            <div>{{ partner.created_at|date:"d/m/Y" }}</div>
+          </div>
+        </div>
+
+        <form method="post" class="flex gap-3 justify-center">
+          {% csrf_token %}
+          <button type="submit" class="gaboom-btn-danger">
+            Oui, supprimer
+          </button>
+          <a href="{% url 'admin_portal:partner_list' %}" class="gaboom-btn-ghost">
+            Annuler
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

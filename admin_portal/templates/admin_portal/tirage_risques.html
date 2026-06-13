@@ -1,0 +1,1025 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Risques | Central Borlette{% endblock %}
+{% block page_title %}Risques{% endblock %}
+{% block page_meta %}{% endblock %}
+
+{% block page_body %}
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     OVERRIDE PORTAL CONTAINERS (FULL WIDTH)
+     ═══════════════════════════════════════════════════════════ */
+  .portal-page {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .portal-page__header { display: none !important; }
+  .portal-page__body { width: 100% !important; max-width: none !important; }
+  .portal-main { padding: 0 !important; }
+
+  /* ═══════════════════════════════════════════════════════════
+     VARIABLES & PAGE LAYOUT
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page {
+    --bg0: #070a12;
+    --bg1: #081426;
+    --card-bg: rgba(10, 18, 35, 0.58);
+    --card-bg2: rgba(12, 28, 55, 0.34);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-color: rgba(255, 255, 255, 0.92);
+    --muted-color: rgba(255, 255, 255, 0.62);
+    --accent-blue: #3aa0ff;
+    --accent-violet: #7c4dff;
+    --accent-danger: #ff4d6d;
+    --accent-success: #10b981;
+    --accent-warning: #f59e0b;
+
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 28px 32px 48px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    box-sizing: border-box;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 24px;
+  }
+  .risques-page .page-header h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 750;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .risques-page .page-header .tirage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(124, 77, 255, 0.15);
+    border: 1px solid rgba(124, 77, 255, 0.3);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #a78bfa;
+  }
+  .risques-page .page-header p {
+    margin: 8px 0 0;
+    color: var(--muted-color);
+    font-size: 14px;
+  }
+  .risques-page .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    border: none;
+    text-decoration: none;
+  }
+  .risques-page .btn--ghost {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--muted-color);
+  }
+  .risques-page .btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CATEGORY DROPDOWN
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .category-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .risques-page .category-bar label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-color);
+  }
+  .risques-page .category-select {
+    padding: 10px 40px 10px 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    min-width: 160px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .risques-page .category-select:focus {
+    border-color: var(--accent-blue);
+  }
+  .risques-page .category-select option {
+    background: #0a1428;
+    color: var(--text-color);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     ALERT MESSAGE
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--accent-success);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TOOLBAR (SEARCH + FILTERS)
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    flex-wrap: wrap;
+  }
+  .risques-page .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-width: 160px;
+  }
+  .risques-page .search-box input {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+  }
+  .risques-page .search-box input::placeholder {
+    color: var(--muted-color);
+  }
+  .risques-page .filter-select {
+    padding: 8px 32px 8px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: var(--muted-color);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    outline: none;
+  }
+  .risques-page .filter-select option {
+    background: #0a1428;
+    color: var(--text-color);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TABLE
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+  .risques-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
+  .risques-page .data-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .risques-page .data-table thead th {
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.88);
+    background: rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    letter-spacing: 0.5px;
+    padding: 14px 12px;
+    text-transform: uppercase;
+    font-size: 11px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .risques-page .data-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.15s;
+  }
+  .risques-page .data-table tbody tr:hover {
+    background: rgba(58, 160, 255, 0.06);
+  }
+  .risques-page .data-table td {
+    padding: 14px 12px;
+    color: var(--text-color);
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  .risques-page .data-table .col-valeur {
+    font-weight: 700;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 15px;
+  }
+  .risques-page .data-table .col-mises {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 13px;
+    color: var(--muted-color);
+  }
+  .risques-page .data-table .col-actions {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     PLAFOND INPUT
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .plafond-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .risques-page .plafond-input {
+    width: 100px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 13px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .risques-page .plafond-input:focus {
+    border-color: var(--accent-blue);
+  }
+  .risques-page .plafond-btn {
+    padding: 8px 12px;
+    background: rgba(58, 160, 255, 0.15);
+    border: 1px solid rgba(58, 160, 255, 0.3);
+    border-radius: 8px;
+    color: var(--accent-blue);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .risques-page .plafond-btn:hover {
+    background: rgba(58, 160, 255, 0.25);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     BADGES
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .risques-page .badge--yes {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: var(--accent-warning);
+  }
+  .risques-page .badge--no {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--muted-color);
+  }
+  .risques-page .badge--derived {
+    background: rgba(124, 77, 255, 0.15);
+    border: 1px solid rgba(124, 77, 255, 0.3);
+    color: #a78bfa;
+  }
+  .risques-page .badge--admin {
+    background: rgba(58, 160, 255, 0.15);
+    border: 1px solid rgba(58, 160, 255, 0.3);
+    color: var(--accent-blue);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     PHASE J: MARIAGE TWO-COLUMN LAYOUT
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .mariage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 20px;
+  }
+  @media (max-width: 900px) {
+    .risques-page .mariage-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .risques-page .mariage-column {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .risques-page .mariage-column h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .risques-page .mariage-column.manual h3 { color: var(--accent-blue); }
+  .risques-page .mariage-column.auto h3 { color: var(--accent-violet); }
+  
+  .risques-page .combo-list {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+  .risques-page .combo-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 14px;
+  }
+  .risques-page .combo-item:last-child { border-bottom: none; }
+  .risques-page .combo-item:hover { background: rgba(255,255,255,0.03); }
+  
+  .risques-page .combo-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .risques-page .combo-badge--manual {
+    background: rgba(58, 160, 255, 0.15);
+    border: 1px solid rgba(58, 160, 255, 0.3);
+    color: var(--accent-blue);
+  }
+  .risques-page .combo-badge--auto {
+    background: rgba(124, 77, 255, 0.15);
+    border: 1px solid rgba(124, 77, 255, 0.3);
+    color: #a78bfa;
+  }
+  .risques-page .combo-badge--both {
+    background: linear-gradient(135deg, rgba(58,160,255,0.15), rgba(124,77,255,0.15));
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--text-color);
+  }
+  
+  .risques-page .add-mariage-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .risques-page .add-mariage-form label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+  .risques-page .add-mariage-form .num-input {
+    width: 60px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 14px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    text-align: center;
+    outline: none;
+  }
+  .risques-page .add-mariage-form .num-input:focus {
+    border-color: var(--accent-blue);
+  }
+  .risques-page .add-mariage-form .sep {
+    color: var(--muted-color);
+    font-size: 16px;
+  }
+  .risques-page .add-mariage-form .add-btn {
+    padding: 8px 16px;
+    background: rgba(58, 160, 255, 0.15);
+    border: 1px solid rgba(58, 160, 255, 0.3);
+    border-radius: 8px;
+    color: var(--accent-blue);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .risques-page .add-mariage-form .add-btn:hover {
+    background: rgba(58, 160, 255, 0.25);
+  }
+  .risques-page .delete-btn {
+    background: none;
+    border: none;
+    color: var(--accent-danger);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+  .risques-page .delete-btn:hover { opacity: 1; }
+  .risques-page .toggle-auto-btn {
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: var(--muted-color);
+    font-size: 12px;
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+  .risques-page .toggle-auto-btn:hover {
+    background: rgba(255,255,255,0.1);
+  }
+  .risques-page .search-mariage {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 13px;
+    margin-bottom: 12px;
+    outline: none;
+  }
+  .risques-page .search-mariage:focus {
+    border-color: var(--accent-blue);
+  }
+  .risques-page .empty-state-small {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--muted-color);
+    font-size: 13px;
+  }
+  .risques-page .blocked-boules-info {
+    background: rgba(124, 77, 255, 0.1);
+    border: 1px solid rgba(124, 77, 255, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: var(--muted-color);
+  }
+  .risques-page .blocked-boules-info strong {
+    color: #a78bfa;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     ACTION BUTTONS
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .action-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    border: none;
+  }
+  .risques-page .action-btn--block {
+    background: rgba(255, 77, 109, 0.12);
+    border: 1px solid rgba(255, 77, 109, 0.25);
+    color: var(--accent-danger);
+  }
+  .risques-page .action-btn--block:hover {
+    background: rgba(255, 77, 109, 0.2);
+  }
+  .risques-page .action-btn--unblock {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: var(--accent-success);
+  }
+  .risques-page .action-btn--unblock:hover {
+    background: rgba(16, 185, 129, 0.2);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     EMPTY STATE
+     ═══════════════════════════════════════════════════════════ */
+  .risques-page .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted-color);
+    font-size: 14px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     RESPONSIVE
+     ═══════════════════════════════════════════════════════════ */
+  @media (max-width: 1100px) {
+    .risques-page {
+      padding: 24px 20px 40px;
+    }
+  }
+  @media (max-width: 768px) {
+    .risques-page {
+      padding: 20px 16px 32px;
+    }
+    .risques-page .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .risques-page .page-header h1 {
+      font-size: 24px;
+      flex-wrap: wrap;
+    }
+    .risques-page .toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .risques-page .search-box {
+      width: 100%;
+    }
+    .risques-page .data-table .hide-mobile {
+      display: none;
+    }
+    .risques-page .data-table td,
+    .risques-page .data-table th {
+      padding: 10px 8px;
+      font-size: 12px;
+    }
+    .risques-page .plafond-input {
+      width: 70px;
+    }
+  }
+</style>
+
+<div class="risques-page">
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div>
+      <h1>
+        Risques
+        <span class="tirage-badge">🎯 {{ tirage.nom }}</span>
+      </h1>
+      <p>Gestion des risques • blocages automatiques & manuels</p>
+    </div>
+    <a href="{% url 'admin_portal:tirages' %}" class="btn btn--ghost">
+      ← Retour
+    </a>
+  </header>
+
+  <!-- CATEGORY DROPDOWN -->
+  <div class="category-bar">
+    <label for="categorySelect">Catégorie :</label>
+    <select id="categorySelect" class="category-select" data-base-url="{% url 'admin_portal:tirage_risques' tirage.id %}">
+      <option value="boule" {% if jeu == 'boule' %}selected{% endif %}>Boule</option>
+      <option value="mariage" {% if jeu == 'mariage' %}selected{% endif %}>Mariage</option>
+      <option value="loto3" {% if jeu == 'loto3' %}selected{% endif %}>Loto 3</option>
+      <option value="loto4" {% if jeu == 'loto4' %}selected{% endif %}>Loto 4</option>
+      <option value="loto5" {% if jeu == 'loto5' %}selected{% endif %}>Loto 5</option>
+    </select>
+  </div>
+
+  {% if message %}
+    <div class="alert-success">✓ {{ message }}</div>
+  {% endif %}
+
+  <!-- ADD MANUAL BLOCK FORM -->
+  {% if jeu == 'mariage' %}
+  <!-- Phase J: Mariage Risk Management -->
+  <form id="addMariageForm" class="add-mariage-form">
+    {% csrf_token %}
+    <label>Ajouter blocage manuel :</label>
+    <input type="text" id="numA" class="num-input" placeholder="00" maxlength="2" pattern="\d{2}" required>
+    <span class="sep">×</span>
+    <input type="text" id="numB" class="num-input" placeholder="00" maxlength="2" pattern="\d{2}" required>
+    <button type="submit" class="add-btn">+ Bloquer</button>
+  </form>
+
+  <!-- Two Column Layout -->
+  <div class="mariage-grid">
+    <!-- Left: Manual Blocks -->
+    <div class="mariage-column manual">
+      <h3>🛡️ BLOCAGES MANUELS</h3>
+      <input type="text" id="searchManual" class="search-mariage" placeholder="Rechercher...">
+      <div id="manualList" class="combo-list">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Right: Auto-Derived Blocks -->
+    <div class="mariage-column auto">
+      <h3>⚡ BLOCAGES AUTO (DÉRIVÉS)</h3>
+      <div id="blockedBoulesInfo" class="blocked-boules-info">
+        <!-- Populated by JS -->
+      </div>
+      <button id="toggleAutoBtn" class="toggle-auto-btn">Masquer auto</button>
+      <input type="text" id="searchAuto" class="search-mariage" placeholder="Rechercher...">
+      <div id="autoList" class="combo-list">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    const tirageId = "{{ tirage.id }}";
+    const apiBaseUrl = `/portal/api/tirages/${tirageId}/mariage-blocks/`;
+    
+    // Load and render blocks
+    async function loadBlocks() {
+      try {
+        const response = await fetch(apiBaseUrl);
+        const data = await response.json();
+        if (data.success) {
+          renderManualList(data.manual, data.all);
+          renderAutoList(data.auto, data.all);
+          updateBlockedBoulesInfo();
+        }
+      } catch (err) {
+        console.error('Failed to load blocks:', err);
+      }
+    }
+    
+    function renderManualList(manualCombos, allCombos) {
+      const list = document.getElementById('manualList');
+      if (!manualCombos.length) {
+        list.innerHTML = '<div class="empty-state-small">Aucun blocage manuel. Ajoutez-en ci-dessus.</div>';
+        return;
+      }
+      
+      // Get source for each combo
+      const comboSources = {};
+      allCombos.forEach(item => {
+        comboSources[item.combo] = item.source;
+      });
+      
+      list.innerHTML = manualCombos.map(combo => {
+        const source = comboSources[combo] || 'MANUAL';
+        const badgeClass = source === 'BOTH' ? 'combo-badge--both' : 'combo-badge--manual';
+        const badgeText = source === 'BOTH' ? 'MANUEL+AUTO' : 'MANUEL';
+        return `
+          <div class="combo-item" data-combo="${combo}">
+            <span>${combo}</span>
+            <div>
+              <span class="combo-badge ${badgeClass}">${badgeText}</span>
+              <button class="delete-btn" data-combo="${combo}" title="Supprimer">×</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // Add delete handlers
+      list.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const combo = e.target.dataset.combo;
+          if (confirm(`Supprimer le blocage ${combo} ?`)) {
+            try {
+              const response = await fetch(`${apiBaseUrl}remove/?combo=${combo}`, {
+                method: 'DELETE',
+                headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value}
+              });
+              const data = await response.json();
+              if (data.success) {
+                loadBlocks();
+              } else {
+                alert(data.error || 'Erreur');
+              }
+            } catch (err) {
+              console.error('Delete failed:', err);
+            }
+          }
+        });
+      });
+    }
+    
+    function renderAutoList(autoCombos, allCombos) {
+      const list = document.getElementById('autoList');
+      if (!autoCombos.length) {
+        list.innerHTML = '<div class="empty-state-small">Aucun blocage auto. Bloquez des boules pour en générer.</div>';
+        return;
+      }
+      
+      // Get source for each combo
+      const comboSources = {};
+      allCombos.forEach(item => {
+        comboSources[item.combo] = item.source;
+      });
+      
+      list.innerHTML = autoCombos.map(combo => {
+        const source = comboSources[combo] || 'AUTO';
+        const badgeClass = source === 'BOTH' ? 'combo-badge--both' : 'combo-badge--auto';
+        const badgeText = source === 'BOTH' ? 'MANUEL+AUTO' : 'AUTO';
+        return `
+          <div class="combo-item" data-combo="${combo}">
+            <span>${combo}</span>
+            <span class="combo-badge ${badgeClass}">${badgeText}</span>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    async function updateBlockedBoulesInfo() {
+      // Get blocked boules from the boules page API or embed in page
+      const info = document.getElementById('blockedBoulesInfo');
+      info.innerHTML = '<strong>Boules bloquées:</strong> Chargement...';
+      // This would need to be populated from server-side or another API call
+    }
+    
+    // Add form handler
+    document.getElementById('addMariageForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const numA = document.getElementById('numA').value.padStart(2, '0');
+      const numB = document.getElementById('numB').value.padStart(2, '0');
+      const combo = `${numA}x${numB}`;
+      
+      try {
+        const response = await fetch(`${apiBaseUrl}add/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          },
+          body: JSON.stringify({combo: combo})
+        });
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('numA').value = '';
+          document.getElementById('numB').value = '';
+          loadBlocks();
+        } else {
+          alert(data.error || 'Erreur lors de l\'ajout');
+        }
+      } catch (err) {
+        console.error('Add failed:', err);
+      }
+    });
+    
+    // Search handlers
+    document.getElementById('searchManual').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll('#manualList .combo-item').forEach(item => {
+        item.style.display = item.dataset.combo.includes(term) ? '' : 'none';
+      });
+    });
+    
+    document.getElementById('searchAuto').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll('#autoList .combo-item').forEach(item => {
+        item.style.display = item.dataset.combo.includes(term) ? '' : 'none';
+      });
+    });
+    
+    // Toggle auto visibility
+    let autoVisible = true;
+    document.getElementById('toggleAutoBtn').addEventListener('click', (e) => {
+      autoVisible = !autoVisible;
+      document.getElementById('autoList').style.display = autoVisible ? '' : 'none';
+      e.target.textContent = autoVisible ? 'Masquer auto' : 'Afficher auto';
+    });
+    
+    // Initial load
+    loadBlocks();
+  })();
+  </script>
+
+  {% elif jeu == 'loto3' %}
+  <form method="post" action="{% url 'admin_portal:tirage_risques' tirage.id %}?jeu=loto3" class="add-mariage-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add_combi">
+    <label>Ajouter blocage Loto3 :</label>
+    <input type="text" name="valeur" class="num-input" style="width:80px;" placeholder="456" maxlength="3" pattern="\d{3}" required>
+    <button type="submit" class="add-btn">+ Bloquer</button>
+  </form>
+  {% elif jeu == 'loto4' %}
+  <form method="post" action="{% url 'admin_portal:tirage_risques' tirage.id %}?jeu=loto4" class="add-mariage-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add_combi">
+    <label>Ajouter blocage Loto4 :</label>
+    <input type="text" name="valeur" class="num-input" style="width:90px;" placeholder="2543" maxlength="4" pattern="\d{4}" required>
+    <button type="submit" class="add-btn">+ Bloquer</button>
+  </form>
+  {% elif jeu == 'loto5' %}
+  <form method="post" action="{% url 'admin_portal:tirage_risques' tirage.id %}?jeu=loto5" class="add-mariage-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add_combi">
+    <label>Ajouter blocage Loto5 :</label>
+    <input type="text" name="valeur" class="num-input" style="width:100px;" placeholder="45674" maxlength="5" pattern="\d{5}" required>
+    <button type="submit" class="add-btn">+ Bloquer</button>
+  </form>
+  {% endif %}
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="Rechercher valeur...">
+    </div>
+    <select id="filterAuto" class="filter-select">
+      <option value="">Bloqué auto: Tous</option>
+      <option value="yes">Bloqué auto: Oui</option>
+      <option value="no">Bloqué auto: Non</option>
+    </select>
+    <select id="filterAdmin" class="filter-select">
+      <option value="">Bloqué admin: Tous</option>
+      <option value="yes">Bloqué admin: Oui</option>
+      <option value="no">Bloqué admin: Non</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="hide-mobile">Type</th>
+          <th>Valeur</th>
+          <th class="hide-mobile">Mises totales</th>
+          <th>Plafond</th>
+          <th>Bloqué auto</th>
+          {% if jeu == 'mariage' %}
+          <th>Source</th>
+          {% else %}
+          <th>Bloqué admin</th>
+          {% endif %}
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="risquesTableBody">
+        {% for row in rows %}
+        <tr data-valeur="{{ row.valeur|lower }}" data-auto="{% if row.bloque_auto %}yes{% else %}no{% endif %}" data-admin="{% if row.bloque_admin %}yes{% else %}no{% endif %}" data-derived="{% if row.bloque_derived %}yes{% else %}no{% endif %}">
+          <td class="hide-mobile">{{ row.type }}</td>
+          <td class="col-valeur">{{ row.valeur }}</td>
+          <td class="col-mises hide-mobile">{{ row.mises_total }}</td>
+          <td>
+            <form method="post" action="{% url 'admin_portal:tirage_risques' tirage.id %}?jeu={{ jeu }}" class="plafond-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="set_plafond">
+              <input type="hidden" name="key" value="{{ row.key }}">
+              <input type="number" name="plafond_admin" value="{{ row.plafond_admin }}" class="plafond-input">
+              <button type="submit" class="plafond-btn">OK</button>
+            </form>
+          </td>
+          <td>
+            {% if row.bloque_auto %}
+              <span class="badge badge--yes">Oui</span>
+            {% else %}
+              <span class="badge badge--no">Non</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if jeu == 'mariage' %}
+              {% if row.source == 'admin+dérivé' %}
+                <span class="badge badge--admin">Admin</span>
+                <span class="badge badge--derived">Dérivé</span>
+              {% elif row.source == 'admin' %}
+                <span class="badge badge--admin">Admin</span>
+              {% elif row.source == 'dérivé' %}
+                <span class="badge badge--derived">Dérivé</span>
+              {% else %}
+                <span class="badge badge--no">—</span>
+              {% endif %}
+            {% else %}
+              {% if row.bloque_admin %}
+                <span class="badge badge--yes">Oui</span>
+              {% else %}
+                <span class="badge badge--no">Non</span>
+              {% endif %}
+            {% endif %}
+          </td>
+          <td class="col-actions">
+            {% if jeu == 'mariage' and row.bloque_derived and not row.bloque_admin %}
+              <span class="badge badge--derived" title="Blocage automatique depuis boules">Auto</span>
+            {% else %}
+            <form method="post" action="{% url 'admin_portal:tirage_risques' tirage.id %}?jeu={{ jeu }}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="toggle_bloque_admin">
+              <input type="hidden" name="key" value="{{ row.key }}">
+              {% if row.bloque_admin %}
+                <button type="submit" class="action-btn action-btn--unblock">Débloquer</button>
+              {% else %}
+                <button type="submit" class="action-btn action-btn--block">Bloquer</button>
+              {% endif %}
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    {% if jeu == 'mariage' %}
+      Aucun blocage mariage. Bloquez des boules pour générer des dérivés automatiques, ou ajoutez un blocage manuel ci-dessus.
+    {% elif empty_hint %}
+      {{ empty_hint }}
+    {% else %}
+      Aucune donnée pour cette catégorie.
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function() {
+  // ─── Category Dropdown Navigation ───────────────────────
+  const categorySelect = document.getElementById('categorySelect');
+  if (categorySelect) {
+    categorySelect.addEventListener('change', function() {
+      const baseUrl = this.dataset.baseUrl;
+      const jeu = this.value;
+      window.location.href = baseUrl + '?jeu=' + jeu;
+    });
+  }
+
+  // ─── Search & Filters ───────────────────────────────────
+  const searchInput = document.getElementById('searchInput');
+  const filterAuto = document.getElementById('filterAuto');
+  const filterAdmin = document.getElementById('filterAdmin');
+  const tbody = document.getElementById('risquesTableBody');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+
+  function filterRows() {
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const autoFilter = filterAuto ? filterAuto.value : '';
+    const adminFilter = filterAdmin ? filterAdmin.value : '';
+
+    rows.forEach(function(row) {
+      let show = true;
+
+      // Search filter
+      if (searchTerm && !row.dataset.valeur.includes(searchTerm)) {
+        show = false;
+      }
+
+      // Auto filter
+      if (show && autoFilter && row.dataset.auto !== autoFilter) {
+        show = false;
+      }
+
+      // Admin filter
+      if (show && adminFilter && row.dataset.admin !== adminFilter) {
+        show = false;
+      }
+
+      row.style.display = show ? '' : 'none';
+    });
+  }
+
+  if (searchInput) searchInput.addEventListener('input', filterRows);
+  if (filterAuto) filterAuto.addEventListener('change', filterRows);
+  if (filterAdmin) filterAdmin.addEventListener('change', filterRows);
+})();
+</script>
+{% endblock %}

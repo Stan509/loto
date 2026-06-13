@@ -1,0 +1,117 @@
+{% extends "admin_portal/_dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Modifier Partenaire | Central Borlette{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Modifier le Partenaire</div>
+      <div class="portal-page__meta">{{ partner.user.username }}</div>
+    </div>
+    <a href="{% url 'admin_portal:partner_list' %}" class="gaboom-btn-ghost">← Retour</a>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <form method="post" class="space-y-4 max-w-2xl">
+      {% csrf_token %}
+
+      <!-- User Info -->
+      <section class="gaboom-card p-4">
+        <div class="text-sm font-semibold mb-4">Informations du compte</div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Nom d'utilisateur</label>
+            <input type="text" value="{{ partner.user.username }}" disabled class="gaboom-input w-full bg-slate-100 dark:bg-slate-800">
+            <div class="text-xs text-slate-400 mt-1">Non modifiable</div>
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Email</label>
+            <input type="email" name="email" value="{{ partner.user.email }}" class="gaboom-input w-full">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
+            <input type="password" name="password" class="gaboom-input w-full" placeholder="••••••••">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Prénom</label>
+            <input type="text" name="first_name" value="{{ partner.user.first_name }}" class="gaboom-input w-full">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Nom</label>
+            <input type="text" name="last_name" value="{{ partner.user.last_name }}" class="gaboom-input w-full">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Compte actif</label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="is_active" {% if partner.is_active %}checked{% endif %} class="w-5 h-5 text-emerald-500 rounded">
+              <span class="text-sm">Activer le compte</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Permissions -->
+      <section class="gaboom-card p-4 border-l-4 border-indigo-500">
+        <div class="text-sm font-semibold mb-4">Permissions du partenaire</div>
+        
+        <div class="space-y-3">
+          <label class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+            <input type="checkbox" name="can_submit_results" {% if partner.can_submit_results %}checked{% endif %} class="mt-1 w-5 h-5 text-indigo-500 rounded">
+            <div>
+              <div class="font-medium text-sm">Donner les résultats des tirages</div>
+              <div class="text-xs text-slate-500">Le partenaire peut soumettre les résultats des tirages pour les borlettes autorisées</div>
+            </div>
+          </label>
+          
+          <label class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+            <input type="checkbox" name="can_confirm_affiliate_payments" {% if partner.can_confirm_affiliate_payments %}checked{% endif %} class="mt-1 w-5 h-5 text-indigo-500 rounded">
+            <div>
+              <div class="font-medium text-sm">Confirmer les paiements des affiliés</div>
+              <div class="text-xs text-slate-500">Le partenaire peut marquer les demandes de retrait des affiliés comme payées</div>
+            </div>
+          </label>
+          
+          <label class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+            <input type="checkbox" name="can_renew_subscriptions" {% if partner.can_renew_subscriptions %}checked{% endif %} class="mt-1 w-5 h-5 text-indigo-500 rounded">
+            <div>
+              <div class="font-medium text-sm">Renouveler les abonnements des directeurs</div>
+              <div class="text-xs text-slate-500">Le partenaire peut renouveler les abonnements des directeurs pour les borlettes autorisées</div>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Borlettes Access -->
+      <section class="gaboom-card p-4">
+        <div class="text-sm font-semibold mb-4">Accès aux borlettes</div>
+        <div class="text-xs text-slate-500 mb-3">Laissez vide pour donner accès à toutes les borlettes</div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {% for borlette in borlettes %}
+          <label class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer">
+            <input type="checkbox" name="allowed_borlettes" value="{{ borlette.id }}" {% if borlette in partner.allowed_borlettes.all %}checked{% endif %} class="w-4 h-4 text-indigo-500 rounded">
+            <span class="text-sm">{{ borlette.nom_borlette }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- Submit -->
+      <div class="flex gap-3">
+        <button type="submit" class="gaboom-btn-primary">
+          Enregistrer les modifications
+        </button>
+        <a href="{% url 'admin_portal:partner_list' %}" class="gaboom-btn-ghost">
+          Annuler
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+{% endblock %}

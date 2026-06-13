@@ -1,0 +1,133 @@
+{% extends "accounts/_partner_base.html" %}
+{% load static %}
+
+{% block title %}Retraits | Partner Portal{% endblock %}
+{% block page_title %}Gestion des Retraits{% endblock %}
+{% block page_subtitle %}Demandes de retrait des affiliés{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
+      <div class="text-2xl font-bold text-amber-600">{{ pending_count|default:"0" }}</div>
+      <div class="text-sm text-slate-600">En Attente</div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-emerald-500">
+      <div class="text-2xl font-bold text-emerald-600">{{ paid_count|default:"0" }}</div>
+      <div class="text-sm text-slate-600">Payés (30j)</div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-rose-500">
+      <div class="text-2xl font-bold text-rose-600">{{ rejected_count|default:"0" }}</div>
+      <div class="text-sm text-slate-600">Rejetés (30j)</div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-indigo-500">
+      <div class="text-2xl font-bold text-indigo-600">{{ total_pending_amount|default:"0" }} GDS</div>
+      <div class="text-sm text-slate-600">Montant en Attente</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-2">
+    <div class="flex flex-wrap gap-2">
+      <a href="?status=pending" class="px-4 py-2 rounded-lg text-sm font-medium {% if current_status == 'pending' or not current_status %}bg-amber-600 text-white{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700{% endif %}">
+        En Attente ({{ pending_count }})
+      </a>
+      <a href="?status=paid" class="px-4 py-2 rounded-lg text-sm font-medium {% if current_status == 'paid' %}bg-emerald-600 text-white{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700{% endif %}">
+        Payés
+      </a>
+      <a href="?status=rejected" class="px-4 py-2 rounded-lg text-sm font-medium {% if current_status == 'rejected' %}bg-rose-600 text-white{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700{% endif %}">
+        Rejetés
+      </a>
+      <a href="?status=all" class="px-4 py-2 rounded-lg text-sm font-medium {% if current_status == 'all' %}bg-slate-600 text-white{% else %}text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700{% endif %}">
+        Tous
+      </a>
+    </div>
+  </div>
+
+  <!-- Withdrawals Table -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Affilié</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Montant</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Méthode</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Demandé le</th>
+            {% if current_status == 'paid' or current_status == 'rejected' or current_status == 'all' %}
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Traité le</th>
+            {% endif %}
+            <th class="px-4 py-3 text-center font-medium text-slate-600 dark:text-slate-300">Statut</th>
+            {% if current_status == 'pending' or not current_status %}
+            <th class="px-4 py-3 text-right font-medium text-slate-600 dark:text-slate-300">Actions</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% for withdrawal in withdrawals %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold">
+                  {{ withdrawal.user.username|first|upper }}
+                </div>
+                <div>
+                  <div class="font-medium text-slate-800 dark:text-white">{{ withdrawal.user.username }}</div>
+                  <div class="text-xs text-slate-500">{{ withdrawal.user.email|default:"-" }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="font-bold text-slate-800 dark:text-white">{{ withdrawal.amount }} GDS</span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="text-slate-700 dark:text-slate-300">{{ withdrawal.get_payment_method_display|default:withdrawal.payment_method }}</div>
+              <div class="text-xs text-slate-500">{{ withdrawal.phone_number|default:"-" }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="text-slate-700 dark:text-slate-300">{{ withdrawal.created_at|date:"d/m/Y" }}</div>
+              <div class="text-xs text-slate-500">{{ withdrawal.created_at|date:"H:i" }}</div>
+            </td>
+            {% if current_status == 'paid' or current_status == 'rejected' or current_status == 'all' %}
+            <td class="px-4 py-3">
+              {% if withdrawal.processed_at %}
+                <div class="text-slate-700 dark:text-slate-300">{{ withdrawal.processed_at|date:"d/m/Y" }}</div>
+                <div class="text-xs text-slate-500">par {{ withdrawal.processed_by.username|default:"-" }}</div>
+              {% else %}
+                <span class="text-slate-400">-</span>
+              {% endif %}
+            </td>
+            {% endif %}
+            <td class="px-4 py-3 text-center">
+              {% if withdrawal.status == 'pending' %}
+                <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">En attente</span>
+              {% elif withdrawal.status == 'paid' %}
+                <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">Payé</span>
+              {% elif withdrawal.status == 'rejected' %}
+                <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs">Rejeté</span>
+              {% endif %}
+            </td>
+            {% if current_status == 'pending' or not current_status %}
+            <td class="px-4 py-3 text-right">
+              <a href="{% url 'partner:confirm_withdrawal' withdrawal.id %}" 
+                 class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg transition">
+                Confirmer
+              </a>
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if current_status == 'paid' or current_status == 'rejected' or current_status == 'all' %}7{% else %}6{% endif %}" class="px-4 py-8 text-center text-slate-500">
+              <i data-lucide="banknote" class="h-10 w-10 mx-auto mb-2 text-slate-300"></i>
+              <p>Aucune demande de retrait trouvée</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

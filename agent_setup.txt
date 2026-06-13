@@ -1,0 +1,41 @@
+# INSTRUCTIONS POUR CRÉER L'AGENT DE TEST
+
+## Étape 1: Exécuter le script
+```bash
+python create_agent_management.py
+```
+
+## Étape 2: Utiliser les identifiants dans l'app
+Une fois le script exécuté, utilisez ces identifiants dans l'app Android:
+
+- **Device ID**: test_device_001
+- **Device Secret**: test_secret_key_123456789
+- **Device Name**: Test Device
+
+## Étape 3: Pour se déconnecter/reconnecter dans l'app
+1. Allez dans les paramètres de l'app
+2. Trouvez "Déconnexion" ou "Logout"
+3. Reconnectez-vous avec les mêmes identifiants
+
+## Si le script ne fonctionne pas:
+Exécutez manuellement dans le shell Django:
+```python
+from admin_portal.models import Agent, AgentDevice
+from django.utils import timezone
+
+agent = Agent.objects.create(
+    first_name="Test",
+    last_name="Agent", 
+    phone="50912345678",
+    email="test@gaboom.com",
+    is_active=True
+)
+
+device = AgentDevice.objects.create(
+    agent=agent,
+    device_id="test_device_001",
+    device_secret="test_secret_key_123456789",
+    device_name="Test Device",
+    is_active=True
+)
+```

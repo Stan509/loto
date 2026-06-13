@@ -1,0 +1,16 @@
+{% extends "admin_portal/_dashboard_base.html" %}
+
+{% block content %}
+  <div class="portal-page">
+    {% block page_header %}
+      <div class="portal-page__header">
+        <div class="portal-page__title">{% block page_title %}{% endblock %}</div>
+        <div class="portal-page__meta">{% block page_meta %}{% endblock %}</div>
+      </div>
+    {% endblock %}
+
+    <div class="portal-page__body">
+      {% block page_body %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

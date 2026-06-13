@@ -1,0 +1,151 @@
+{% extends "accounts/_affiliate_base.html" %}
+{% load static %}
+
+{% block title %}Paramètres | Affiliate Dashboard{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Paramètres</div>
+      <div class="portal-page__meta">Informations de paiement • Profil</div>
+    </div>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Payment Settings -->
+    <section class="gaboom-card p-4 border-l-4 border-emerald-500">
+      <div class="flex items-center gap-2 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <div class="text-sm font-semibold">Informations de paiement</div>
+      </div>
+
+      <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+        Ces informations seront utilisées pour effectuer vos retraits. Assurez-vous qu'elles sont correctes.
+      </p>
+
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+
+        <!-- Payment Method -->
+        <div>
+          <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Méthode de paiement préférée</label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label class="cursor-pointer">
+              <input type="radio" name="payment_method" value="moncash" {% if profile.payment_method == 'moncash' %}checked{% endif %} class="peer sr-only">
+              <div class="p-3 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 dark:peer-checked:bg-emerald-900/20 transition text-center">
+                <div class="font-medium text-sm">MonCash</div>
+                <div class="text-xs text-slate-500">Digicel</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="payment_method" value="natcash" {% if profile.payment_method == 'natcash' %}checked{% endif %} class="peer sr-only">
+              <div class="p-3 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 dark:peer-checked:bg-emerald-900/20 transition text-center">
+                <div class="font-medium text-sm">NatCash</div>
+                <div class="text-xs text-slate-500">Natcom</div>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="payment_method" value="western_union" {% if profile.payment_method == 'western_union' %}checked{% endif %} class="peer sr-only">
+              <div class="p-3 rounded-lg border-2 border-slate-200 dark:border-slate-700 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 dark:peer-checked:bg-emerald-900/20 transition text-center">
+                <div class="font-medium text-sm">Western Union</div>
+                <div class="text-xs text-slate-500">International</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Phone Number (for MonCash/NatCash) -->
+        <div id="phone_fields" class="{% if profile.payment_method == 'western_union' %}hidden{% endif %}">
+          <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Numéro de téléphone</label>
+          <input type="tel" name="payment_phone" value="{{ profile.payment_phone|default:'' }}" class="gaboom-input w-full" placeholder="Ex: +509 34 56 78 90">
+          <p class="text-xs text-slate-400 mt-1">Ce numéro sera utilisé pour recevoir les transferts MonCash ou NatCash</p>
+        </div>
+
+        <!-- Western Union Fields -->
+        <div id="wu_fields" class="{% if profile.payment_method != 'western_union' %}hidden{% endif %} space-y-3">
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Nom complet</label>
+            <input type="text" name="payment_full_name" value="{{ profile.payment_full_name|default:'' }}" class="gaboom-input w-full" placeholder="Nom complet tel qu'apparaissant sur la pièce d'identité">
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Ville / Localisation</label>
+            <input type="text" name="payment_location" value="{{ profile.payment_location|default:'' }}" class="gaboom-input w-full" placeholder="Ex: Port-au-Prince, Haïti">
+            <p class="text-xs text-slate-400 mt-1">Ville où vous pourrez retirer l'argent Western Union</p>
+          </div>
+        </div>
+
+        <button type="submit" class="gaboom-btn-primary w-full sm:w-auto">
+          Enregistrer les modifications
+        </button>
+      </form>
+    </section>
+
+    <!-- Account Info -->
+    <section class="gaboom-card p-4">
+      <div class="flex items-center gap-2 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <div class="text-sm font-semibold">Informations du compte</div>
+      </div>
+
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700">
+          <span class="text-slate-500 dark:text-slate-400">Nom d'utilisateur</span>
+          <span class="font-medium">{{ request.user.username }}</span>
+        </div>
+        <div class="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700">
+          <span class="text-slate-500 dark:text-slate-400">Email</span>
+          <span class="font-medium">{{ request.user.email|default:"Non défini" }}</span>
+        </div>
+        <div class="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700">
+          <span class="text-slate-500 dark:text-slate-400">Code promo</span>
+          <span class="font-medium text-indigo-600 dark:text-indigo-400">{{ promo_code }}</span>
+        </div>
+        <div class="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700">
+          <span class="text-slate-500 dark:text-slate-400">Membre depuis</span>
+          <span class="font-medium">{{ request.user.date_joined|date:"d/m/Y" }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Security Note -->
+    <section class="gaboom-card p-4 border-l-4 border-amber-500">
+      <div class="flex items-start gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <div>
+          <div class="text-sm font-semibold">Sécurité de vos informations</div>
+          <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            Vos informations de paiement sont stockées de manière sécurisée et ne sont utilisées que pour effectuer vos retraits. Ne partagez jamais votre code promo avec des personnes que vous ne connaissez pas.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+// Toggle payment fields based on selected method
+document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const phoneFields = document.getElementById('phone_fields');
+    const wuFields = document.getElementById('wu_fields');
+    
+    if (this.value === 'western_union') {
+      phoneFields.classList.add('hidden');
+      wuFields.classList.remove('hidden');
+    } else {
+      phoneFields.classList.remove('hidden');
+      wuFields.classList.add('hidden');
+    }
+  });
+});
+</script>
+{% endblock %}

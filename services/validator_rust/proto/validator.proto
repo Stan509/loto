@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+option go_package = "gateway_go/proto";
+
+package validator;
+
+service Validator {
+  rpc SignTicket (SignTicketRequest) returns (SignTicketResponse);
+  rpc VerifyTicket (VerifyTicketRequest) returns (VerifyTicketResponse);
+  rpc HealthCheck (HealthRequest) returns (HealthResponse);
+}
+
+message TicketPayload {
+  string ticket_uuid = 1;
+  string agent_id = 2;
+  string borlette_id = 3;
+  repeated string tirage_ids = 4;
+  repeated TicketLine lines = 5;
+  double total_mise = 6;
+  int64 timestamp = 7;
+  string session_key = 8;
+}
+
+message TicketLine {
+  string game_type = 1;
+  string numbers = 2;
+  double mise = 3;
+}
+
+message SignTicketRequest {
+  TicketPayload payload = 1;
+}
+
+message SignTicketResponse {
+  string signature = 1;
+  string ticket_uuid = 2;
+  bool success = 3;
+  string error = 4;
+}
+
+message VerifyTicketRequest {
+  TicketPayload payload = 1;
+  string signature = 2;
+}
+
+message VerifyTicketResponse {
+  bool valid = 1;
+  string ticket_uuid = 2;
+  string error = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+}

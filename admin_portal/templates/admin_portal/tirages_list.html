@@ -1,0 +1,875 @@
+{% extends "admin_portal/_page_shell.html" %}
+{% load static %}
+
+{% block title %}Tirages | Central Borlette{% endblock %}
+{% block page_title %}Tirages{% endblock %}
+
+{% block page_body %}
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     OVERRIDE PORTAL CONTAINERS (FULL WIDTH) - FORCE !important
+     ═══════════════════════════════════════════════════════════ */
+  .portal-page {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .portal-page__header {
+    display: none !important;
+  }
+  .portal-page__body {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .portal-main {
+    padding: 0 !important;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     VARIABLES & PAGE LAYOUT
+     ═══════════════════════════════════════════════════════════ */
+  .tirages-page {
+    --bg0: #070a12;
+    --bg1: #081426;
+    --card-bg: rgba(10, 18, 35, 0.58);
+    --card-bg2: rgba(12, 28, 55, 0.34);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-color: rgba(255, 255, 255, 0.92);
+    --muted-color: rgba(255, 255, 255, 0.62);
+    --accent-blue: #3aa0ff;
+    --accent-violet: #7c4dff;
+    --accent-danger: #ff4d6d;
+    --accent-success: #10b981;
+    --accent-warning: #f59e0b;
+    --shadow-card: 0 18px 45px rgba(0, 0, 0, 0.45);
+
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 28px 32px 48px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    box-sizing: border-box;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════ */
+  .tirages-page .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 2px 2px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 24px;
+  }
+
+  .tirages-page .page-header h1 {
+    margin: 0;
+    font-size: 32px;
+    letter-spacing: 0.2px;
+    font-weight: 750;
+    line-height: 1.1;
+    color: var(--text-color);
+  }
+
+  .tirages-page .page-header p {
+    margin: 8px 0 0;
+    color: var(--muted-color);
+    font-size: 14px;
+  }
+
+  .tirages-page .page-header .count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(58, 160, 255, 0.12);
+    border: 1px solid rgba(58, 160, 255, 0.25);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin-left: 12px;
+  }
+
+  .tirages-page .page-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     BUTTONS
+     ═══════════════════════════════════════════════════════════ */
+  .tirages-page .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(58, 160, 255, 0.35);
+    background: rgba(58, 160, 255, 0.16);
+    color: var(--text-color);
+    padding: 11px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    transition: 0.15s ease;
+    user-select: none;
+    font-size: 14px;
+    text-decoration: none;
+  }
+
+  .tirages-page .btn:hover {
+    background: rgba(58, 160, 255, 0.24);
+    transform: translateY(-1px);
+  }
+
+  .tirages-page .btn--primary {
+    border: 1px solid rgba(58, 160, 255, 0.55);
+    background: linear-gradient(180deg, rgba(58, 160, 255, 0.42), rgba(58, 160, 255, 0.18));
+  }
+
+  .tirages-page .btn--ghost {
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TOOLBAR (FILTERS) - DIRECT ON PAGE
+     ═══════════════════════════════════════════════════════════ */
+  .tirages-page .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 0 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-wrap: wrap;
+  }
+
+  .tirages-page .toolbar .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 12px;
+    flex: 1;
+    min-width: 180px;
+    max-width: 280px;
+  }
+
+  .tirages-page .toolbar .search-box input {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+  }
+
+  .tirages-page .toolbar .search-box input::placeholder {
+    color: var(--muted-color);
+  }
+
+  .tirages-page .toolbar .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--muted-color);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+
+  .tirages-page .toolbar .filter-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-color);
+  }
+
+  .tirages-page .toolbar .filter-btn.active {
+    background: rgba(58, 160, 255, 0.15);
+    border-color: rgba(58, 160, 255, 0.3);
+    color: var(--accent-blue);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     BADGES
+     ═══════════════════════════════════════════════════════════ */
+  .tirages-page .badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    letter-spacing: 0.2px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .tirages-page .badge--success {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+  }
+
+  .tirages-page .badge--warning {
+    border-color: rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+  }
+
+  .tirages-page .badge--online {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+  }
+
+  .tirages-page .badge--closed {
+    border-color: rgba(255, 77, 109, 0.3);
+    background: rgba(255, 77, 109, 0.12);
+    color: #ff6b8a;
+  }
+
+  .tirages-page .badge--auto {
+    border-color: rgba(124, 77, 255, 0.3);
+    background: rgba(124, 77, 255, 0.12);
+    color: #a78bfa;
+  }
+
+  .tirages-page .badge--v1 {
+    border-color: rgba(58, 160, 255, 0.25);
+    background: rgba(58, 160, 255, 0.1);
+    color: var(--accent-blue);
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TABLE - FULL WIDTH
+     ═══════════════════════════════════════════════════════════ */
+  .tirages-page .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+    padding: 0 8px 8px;
+    box-sizing: border-box;
+  }
+
+  .tirages-page .table-wrap::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .tirages-page .table-wrap::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .tirages-page .table-wrap::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+  }
+
+  .tirages-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
+
+  .tirages-page .data-table thead th {
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.88);
+    background: rgba(0, 0, 0, 0.22);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    letter-spacing: 0.5px;
+    padding: 16px 14px;
+    text-transform: uppercase;
+    font-size: 11px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .tirages-page .data-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.15s;
+  }
+
+  .tirages-page .data-table tbody tr:hover {
+    background: rgba(58, 160, 255, 0.06);
+  }
+
+  .tirages-page .data-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .tirages-page .data-table td {
+    padding: 16px 14px;
+    color: var(--text-color);
+    font-size: 14px;
+    vertical-align: middle;
+  }
+
+  /* Column alignment */
+  .tirages-page .data-table .col-heure { text-align: center; }
+  .tirages-page .data-table .col-auto { text-align: center; }
+  .tirages-page .data-table .col-actions { text-align: right; min-width: 180px; }
+
+  /* Jours compact */
+  .tirages-page .data-table td.jours {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: help;
+    color: var(--muted-color);
+    font-size: 12px;
+  }
+
+  /* Heure mono */
+  .tirages-page .data-table td.heure {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 12px;
+    color: var(--muted-color);
+    text-align: center;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     ACTIONS
+     ═══════════════════════════════════════════════════════════ */
+  .tirages-page .actions-cell {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .tirages-page .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.15s;
+    border: none;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--muted-color);
+  }
+
+  .tirages-page .action-btn:hover {
+    background: rgba(58, 160, 255, 0.15);
+    color: var(--accent-blue);
+  }
+
+  .tirages-page .action-btn--danger:hover {
+    background: rgba(255, 77, 109, 0.15);
+    color: var(--accent-danger);
+  }
+
+  .tirages-page form.inline-form {
+    display: inline;
+  }
+
+  .tirages-page .action-btn--suspend {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent-warning);
+  }
+
+  .tirages-page .action-btn--suspend:hover {
+    background: rgba(245, 158, 11, 0.2);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     EMPTY STATE
+     ═══════════════════════════════════════════════════════════ */
+  .tirages-page .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted-color);
+  }
+
+  .tirages-page .empty-state p {
+    margin: 0 0 20px;
+    font-size: 15px;
+  }
+
+  .tirages-page .tirage-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .tirages-page .tirage-icon--ny {
+    background: rgba(58, 160, 255, 0.18);
+    border-color: rgba(58, 160, 255, 0.35);
+  }
+
+  .tirages-page .tirage-icon--fl {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+
+  .tirages-page .tirage-icon--ga {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.35);
+  }
+
+  .tirages-page .tirage-icon--tn {
+    background: rgba(124, 77, 255, 0.18);
+    border-color: rgba(124, 77, 255, 0.35);
+  }
+
+  .tirages-page .tirage-icon--chi {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+
+  .tirages-page .tirage-icon--tx {
+    background: rgba(236, 72, 153, 0.18);
+    border-color: rgba(236, 72, 153, 0.35);
+  }
+
+  .tirages-page .tirage-icon--il {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.35);
+  }
+
+  .tirages-page tr.is-match {
+    box-shadow: inset 0 0 0 9999px rgba(58, 160, 255, 0.06);
+  }
+
+  .tirages-page tr.is-disabled {
+    opacity: 0.4;
+    background: rgba(128, 128, 128, 0.1);
+  }
+
+  .tirages-page tr.is-disabled:hover {
+    opacity: 0.5;
+    background: rgba(128, 128, 128, 0.15);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     RESPONSIVE
+     ═══════════════════════════════════════════════════════════ */
+  /* Hide specific columns on all screens */
+  .tirages-page .data-table td.hide-column,
+  .tirages-page .data-table th.hide-column {
+    display: none;
+  }
+
+  @media (max-width: 1200px) {
+    .tirages-page {
+      padding: 24px 20px 40px;
+    }
+  }
+
+  @media (max-width: 980px) {
+    .tirages-page {
+      padding: 20px 16px calc(96px + env(safe-area-inset-bottom));
+    }
+    .tirages-page .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .tirages-page .page-actions {
+      justify-content: flex-start;
+      width: 100%;
+    }
+    .tirages-page .page-header h1 {
+      font-size: 26px;
+    }
+    .tirages-page .toolbar {
+      flex-wrap: wrap;
+    }
+    .tirages-page .toolbar .search-box {
+      max-width: 100%;
+      flex: 1 1 100%;
+    }
+    /* Hide secondary columns on mobile */
+    .tirages-page .data-table td.hide-mobile,
+    .tirages-page .data-table th.hide-mobile {
+      display: none;
+    }
+    /* Hide specific columns on all screens */
+    .tirages-page .data-table td.hide-column,
+    .tirages-page .data-table th.hide-column {
+      display: none;
+    }
+    .tirages-page .data-table td,
+    .tirages-page .data-table th {
+      padding: 12px 10px;
+      font-size: 12px;
+    }
+  }
+</style>
+
+<div class="tirages-page">
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div>
+      <h1>
+        Tirages
+        <span class="count">{{ tirages|length }} tirage{{ tirages|length|pluralize }}</span>
+      </h1>
+      <p>Fenêtre horaire • fermeture auto (V1)</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn btn--primary" href="{% url 'admin_portal:tirage_create' %}">
+        <span>➕</span> Nouveau tirage
+      </a>
+    </div>
+  </header>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="Rechercher un tirage...">
+    </div>
+    <div class="search-box" style="max-width: 190px;">
+      <span>⚙️</span>
+      <select id="statutSelect" style="width:100%; background: transparent; border: none; outline: none; color: var(--text-color);">
+        <option value="">Tous</option>
+        <option value="open">Ouverts</option>
+        <option value="closed">Fermés</option>
+      </select>
+    </div>
+    <button type="button" class="filter-btn" data-filter="statut" data-value="ACTIF">
+      ✓ Actifs
+    </button>
+    <button type="button" class="filter-btn" data-filter="etat" data-value="OUVERT">
+      🟢 Ouverts
+    </button>
+    <button type="button" class="filter-btn" data-filter="auto" data-value="true">
+      ⚡ Auto
+    </button>
+  </div>
+
+  <!-- TABLE -->
+  {% if tirages %}
+  <div class="table-wrap hidden md:block">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th class="hide-mobile">Type</th>
+          <th>Jours</th>
+          <th class="col-heure hide-column">Ouverture</th>
+          <th class="col-heure hide-mobile">Fermeture</th>
+          <th class="col-heure">Tirage</th>
+          <th class="col-auto hide-column">Auto</th>
+          <th>Statut</th>
+          <th>État</th>
+          <th class="hide-column">Session</th>
+          <th>Résultats</th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tiragesTableBody">
+        {% for t in tirages %}
+        {% with minutes=t.minutes_to_close %}
+        <tr data-id="{{ t.id }}" data-nom="{{ t.nom|lower }}" data-statut="{{ t.statut }}" data-etat="{{ t.etat_ouverture }}" data-auto="{{ t.fermeture_auto|yesno:'true,false' }}" class="transition md:hover:bg-white/10 md:hover:scale-[1.01] {% if not t.actif_pour_admin %}is-disabled{% endif %} {% if t.statut == 'ACTIF' and t.etat_ouverture == 'OUVERT' %}{% if minutes <= 2 and minutes > 0 %}bg-red-500/20 opacity-90 md:animate-pulse{% elif minutes <= 5 and minutes > 0 %}bg-red-500/10{% else %}bg-blue-500/5{% endif %}{% endif %}">
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:4px;height:32px;border-radius:9999px;flex:0 0 auto;" class="{% if t.statut == 'ACTIF' and t.etat_ouverture == 'OUVERT' %}{% if minutes <= 5 and minutes > 0 %}bg-red-400{% else %}bg-blue-400{% endif %}{% else %}bg-gray-500/40{% endif %}"></div>
+              {% with code=t.code|default:""|upper %}
+                <div class="tirage-icon {% if code|slice:':2' == 'NY' %}tirage-icon--ny{% elif code|slice:':2' == 'FL' %}tirage-icon--fl{% elif code|slice:':2' == 'GA' %}tirage-icon--ga{% elif code|slice:':2' == 'TN' %}tirage-icon--tn{% elif code|slice:':2' == 'IL' %}tirage-icon--il{% elif code|slice:':3' == 'CHI' %}tirage-icon--chi{% elif code|slice:':2' == 'TX' %}tirage-icon--tx{% endif %}" title="{{ t.code|default:'' }}">{{ t.get_icon_emoji }}</div>
+              {% endwith %}
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                  <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ t.nom }}</strong>
+                  {% if t.etat_ouverture == 'OUVERT' and minutes <= 2 and minutes > 0 %}
+                    <span class="text-red-400 text-xs">⚠️ Ferme maintenant</span>
+                  {% elif t.etat_ouverture == 'OUVERT' and minutes <= 5 and minutes > 0 %}
+                    <span class="text-red-400 text-xs">⚠️ Ferme bientôt</span>
+                  {% endif %}
+                </div>
+                {% if t.code %}
+                  {% with code=t.code|upper %}
+                    {% if code|slice:":2" == "NY" %}
+                      <span class="badge" style="background: rgba(58,160,255,0.14); border: 1px solid rgba(58,160,255,0.28); color: #3aa0ff;">{{ code }}</span>
+                    {% elif code|slice:":2" == "FL" %}
+                      <span class="badge" style="background: rgba(245,158,11,0.14); border: 1px solid rgba(245,158,11,0.28); color: #f59e0b;">{{ code }}</span>
+                    {% elif code|slice:":2" == "GA" %}
+                      <span class="badge" style="background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.28); color: #10b981;">{{ code }}</span>
+                    {% elif code|slice:":2" == "TN" %}
+                      <span class="badge" style="background: rgba(124,77,255,0.14); border: 1px solid rgba(124,77,255,0.28); color: #7c4dff;">{{ code }}</span>
+                    {% elif code|slice:":2" == "IL" %}
+                      <span class="badge" style="background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.28); color: #10b981;">{{ code }}</span>
+                    {% elif code|slice:":3" == "CHI" %}
+                      <span class="badge" style="background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.72);">{{ code }}</span>
+                    {% elif code|slice:":2" == "TX" %}
+                      <span class="badge" style="background: rgba(236,72,153,0.14); border: 1px solid rgba(236,72,153,0.28); color: #ec4899;">{{ code }}</span>
+                    {% else %}
+                      <span class="badge" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); color: var(--muted-color);">{{ code }}</span>
+                    {% endif %}
+                  {% endwith %}
+                {% endif %}
+              </div>
+            </div>
+          </td>
+          <td class="hide-mobile">{{ t.get_type_display }}</td>
+          <td class="jours" title="{{ t.jours_actifs_display }}">{{ t.jours_actifs_display }}</td>
+          <td class="heure hide-column">{{ t.heure_ouverture|time:"H:i" }}</td>
+          <td class="heure hide-mobile">{{ t.heure_fermeture|time:"H:i" }}</td>
+          <td class="heure">{{ t.heure_tirage|time:"H:i" }}</td>
+          <td class="hide-column">
+            {% if t.fermeture_auto %}
+              <span class="badge badge--auto">Auto</span>
+            {% else %}
+              <span style="color: var(--muted-color); font-size: 12px;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if t.statut == 'ACTIF' %}
+              <span class="badge badge--success">Actif</span>
+            {% else %}
+              <span class="badge badge--warning">Suspendu</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if t.etat_ouverture == 'OUVERT' %}
+              <span class="badge badge--online">Ouvert</span>
+            {% else %}
+              <span class="badge badge--closed">Fermé</span>
+            {% endif %}
+          </td>
+          <td class="hide-column" style="font-family: monospace; font-size: 11px; color: var(--muted-color);">
+            {{ t.session_key|truncatechars:12 }}
+          </td>
+          <td>
+            {% if t.results_status %}
+              {% if t.results_status.is_open %}
+                <span class="badge" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--muted-color);">—</span>
+              {% elif t.results_status.has_results %}
+                <span class="badge badge--success">✓ OK</span>
+              {% elif t.results_status.is_overdue %}
+                <span class="badge badge--danger">🔴 >24h</span>
+              {% else %}
+                <span class="badge badge--warning">⚠️ Manquant</span>
+              {% endif %}
+            {% else %}
+              <span style="color: var(--muted-color);">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="actions-cell">
+              <a class="action-btn" href="{% url 'admin_portal:tirage_edit' t.id %}" title="Modifier">✏️</a>
+              <a class="action-btn" href="{% url 'admin_portal:tirage_risques' t.id %}" title="Risques">⚠️</a>
+              <a class="action-btn {% if t.etat_ouverture == 'OUVERT' %}opacity-40 pointer-events-none{% endif %}" href="{% url 'admin_portal:tirage_resultats' t.id %}" title="{% if t.etat_ouverture == 'OUVERT' %}Fermez le tirage d'abord{% else %}Résultats{% endif %}">🎯</a>
+              <form method="post" action="{% url 'admin_portal:tirage_suspend' t.id %}" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" class="action-btn action-btn--suspend" title="{% if t.statut == 'ACTIF' %}Suspendre{% else %}Réactiver{% endif %}">
+                  {% if t.statut == 'ACTIF' %}⏸️{% else %}▶️{% endif %}
+                </button>
+              </form>
+              <a class="action-btn action-btn--danger" href="{% url 'admin_portal:tirage_delete' t.id %}" title="Supprimer">🗑️</a>
+            </div>
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="md:hidden px-2" id="tiragesCards">
+    <div class="max-w-3xl mx-auto w-full space-y-2">
+      {% for t in tirages %}
+      <div data-tirage-card="1" data-id="{{ t.id }}" data-nom="{{ t.nom|lower }}" data-statut="{{ t.statut }}" data-etat="{{ t.etat_ouverture }}" data-auto="{{ t.fermeture_auto|yesno:'true,false' }}" class="flex items-center justify-between px-4 py-3 rounded-lg bg-white/5 md:hover:bg-white/10 {% if not t.actif_pour_admin %}opacity-40 bg-gray-500/10{% endif %}">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="text-lg shrink-0">{{ t.get_icon_emoji }}</div>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-white truncate">{{ t.nom }}</p>
+            <p class="text-xs text-gray-400">
+              {% if t.statut == 'ACTIF' %}Actif{% else %}Inactif{% endif %} • {% if t.etat_ouverture == 'OUVERT' %}Ouvert{% else %}Fermé{% endif %}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 shrink-0">
+          <a class="p-1 opacity-70 hover:opacity-100" href="{% url 'admin_portal:tirage_edit' t.id %}" title="Modifier">✏️</a>
+          <a class="p-1 opacity-70 hover:opacity-100" href="{% url 'admin_portal:tirage_risques' t.id %}" title="Risques">⚠️</a>
+          <a class="p-1 opacity-70 hover:opacity-100 {% if t.etat_ouverture == 'OUVERT' %}opacity-40 pointer-events-none{% endif %}" href="{% url 'admin_portal:tirage_resultats' t.id %}" title="{% if t.etat_ouverture == 'OUVERT' %}Fermez le tirage d'abord{% else %}Résultats{% endif %}">🎯</a>
+          <form method="post" action="{% url 'admin_portal:tirage_suspend' t.id %}" class="inline-form">
+            {% csrf_token %}
+            <button type="submit" class="p-1 opacity-70 hover:opacity-100" title="{% if t.statut == 'ACTIF' %}Suspendre{% else %}Réactiver{% endif %}">{% if t.statut == 'ACTIF' %}⏸️{% else %}▶️{% endif %}</button>
+          </form>
+          <a class="p-1 opacity-70 hover:opacity-100" href="{% url 'admin_portal:tirage_delete' t.id %}" title="Supprimer">🗑️</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>Aucun tirage configuré pour l'instant.</p>
+    <a class="btn btn--primary" href="{% url 'admin_portal:tirage_create' %}">
+      <span>➕</span> Créer un tirage
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="md:hidden fixed bottom-16 left-0 right-0 h-10 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
+</div>
+
+<script>
+(function() {
+  const searchInput = document.getElementById('searchInput');
+  const statutSelect = document.getElementById('statutSelect');
+  const filterBtns = document.querySelectorAll('.tirages-page .filter-btn');
+  const tbody = document.getElementById('tiragesTableBody');
+  const cardsWrap = document.getElementById('tiragesCards');
+  const cards = Array.from(document.querySelectorAll('[data-tirage-card="1"]'));
+  if (!tbody && !cardsWrap) return;
+
+  const rows = tbody ? Array.from(tbody.querySelectorAll('tr')) : [];
+  let activeFilters = {};
+
+  const apiUrl = "{% url 'admin_portal:api_tirages_list' %}";
+  let debounceTimer = null;
+  let lastController = null;
+
+  function scheduleRemoteSearch() {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runRemoteSearch, 300);
+  }
+
+  async function runRemoteSearch() {
+    const q = searchInput ? (searchInput.value || '').trim() : '';
+    const statut = statutSelect ? (statutSelect.value || '').trim() : '';
+
+    if (lastController) {
+      try { lastController.abort(); } catch (e) {}
+    }
+    lastController = new AbortController();
+
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (statut) params.set('statut', statut);
+
+    let ids = null;
+    try {
+      const res = await fetch(apiUrl + '?' + params.toString(), { signal: lastController.signal });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const payload = await res.json();
+      ids = new Set((payload.ids || []).map(String));
+    } catch (e) {
+      ids = null;
+    }
+
+    rows.forEach(function(row) {
+      const rowId = row.dataset.id;
+      const matchRemote = ids ? ids.has(String(rowId)) : true;
+      row.style.display = matchRemote ? '' : 'none';
+      const name = row.dataset.nom || '';
+      row.classList.toggle('is-match', q && name.includes(q.toLowerCase()) && matchRemote);
+    });
+
+    cards.forEach(function(card) {
+      const cardId = card.dataset.id;
+      const matchRemote = ids ? ids.has(String(cardId)) : true;
+      card.style.display = matchRemote ? '' : 'none';
+      const name = card.dataset.nom || '';
+      card.classList.toggle('is-match', q && name.includes(q.toLowerCase()) && matchRemote);
+    });
+  }
+
+  // Search
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      scheduleRemoteSearch();
+    });
+  }
+
+  if (statutSelect) {
+    statutSelect.addEventListener('change', scheduleRemoteSearch);
+  }
+
+  // Filter buttons
+  filterBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const filterType = btn.dataset.filter;
+      const filterValue = btn.dataset.value;
+
+      if (btn.classList.contains('active')) {
+        btn.classList.remove('active');
+        delete activeFilters[filterType];
+      } else {
+        btn.classList.add('active');
+        activeFilters[filterType] = filterValue;
+      }
+      filterRows();
+    });
+  });
+
+  function filterRows() {
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    rows.forEach(function(row) {
+      let show = true;
+
+      // Search filter
+      if (searchTerm && !row.dataset.nom.includes(searchTerm)) {
+        show = false;
+      }
+
+      // Active filters
+      if (show && activeFilters.statut && row.dataset.statut !== activeFilters.statut) {
+        show = false;
+      }
+      if (show && activeFilters.etat && row.dataset.etat !== activeFilters.etat) {
+        show = false;
+      }
+      if (show && activeFilters.auto && row.dataset.auto !== activeFilters.auto) {
+        show = false;
+      }
+
+      row.style.display = show ? '' : 'none';
+    });
+
+    cards.forEach(function(card) {
+      let show = true;
+
+      if (searchTerm && !(card.dataset.nom || '').includes(searchTerm)) {
+        show = false;
+      }
+
+      if (show && activeFilters.statut && card.dataset.statut !== activeFilters.statut) {
+        show = false;
+      }
+      if (show && activeFilters.etat && card.dataset.etat !== activeFilters.etat) {
+        show = false;
+      }
+      if (show && activeFilters.auto && card.dataset.auto !== activeFilters.auto) {
+        show = false;
+      }
+
+      card.style.display = show ? '' : 'none';
+    });
+  }
+
+  scheduleRemoteSearch();
+})();
+</script>
+{% endblock %}

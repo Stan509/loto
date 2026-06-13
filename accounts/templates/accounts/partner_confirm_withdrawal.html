@@ -1,0 +1,97 @@
+{% extends "accounts/_partner_base.html" %}
+{% load static %}
+
+{% block title %}Confirmer Paiement | Partenaire{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Confirmer un paiement affilié</div>
+      <div class="portal-page__meta">{{ withdrawal.user.username }}</div>
+    </div>
+    <a href="{% url 'partner:dashboard' %}" class="gaboom-btn-ghost">← Retour</a>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Withdrawal Details -->
+    <section class="gaboom-card p-4 border-l-4 border-amber-500">
+      <div class="text-sm font-semibold mb-4">Détails de la demande</div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Montant demandé</div>
+          <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ withdrawal.amount|floatformat:2 }} GDS</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Date de demande</div>
+          <div class="font-medium">{{ withdrawal.created_at|date:"d/m/Y à H:i" }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Affilié</div>
+          <div class="font-medium">{{ withdrawal.user.username }}</div>
+          <div class="text-xs text-slate-400">{{ withdrawal.user.email|default:"-" }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Méthode de paiement</div>
+          <div class="font-medium">
+            {% if withdrawal.payment_method == 'moncash' %}MonCash
+            {% elif withdrawal.payment_method == 'natcash' %}NatCash
+            {% elif withdrawal.payment_method == 'western_union' %}Western Union
+            {% else %}Non spécifié{% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if withdrawal.payment_method == 'moncash' or withdrawal.payment_method == 'natcash' %}
+      <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+        <div class="text-xs text-slate-500">Numéro de téléphone pour le paiement:</div>
+        <div class="font-medium text-lg">{{ withdrawal.payment_phone|default:"Non configuré" }}</div>
+      </div>
+      {% elif withdrawal.payment_method == 'western_union' %}
+      <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+        <div class="text-xs text-slate-500">Nom complet:</div>
+        <div class="font-medium">{{ withdrawal.payment_full_name|default:"Non configuré" }}</div>
+        <div class="text-xs text-slate-500 mt-2">Localisation:</div>
+        <div class="font-medium">{{ withdrawal.payment_location|default:"Non configuré" }}</div>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- Action Form -->
+    <section class="gaboom-card p-4">
+      <div class="text-sm font-semibold mb-4">Action à effectuer</div>
+      
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        
+        <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+          <p class="text-sm text-emerald-700 dark:text-emerald-300">
+            En confirmant ce paiement, vous attesteze avoir effectué le transfert de <strong>{{ withdrawal.amount|floatformat:2 }} GDS</strong> à l'affilié <strong>{{ withdrawal.user.username }}</strong>.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+            Notes (optionnel)
+          </label>
+          <textarea name="admin_notes" rows="3" class="gaboom-input w-full" placeholder="Ex: Transaction effectuée via MonCash. ID de transaction: ABC123..."></textarea>
+        </div>
+
+        <input type="hidden" name="action" value="confirm">
+
+        <div class="flex gap-3">
+          <button type="submit" class="gaboom-btn-primary">
+            Confirmer le paiement
+          </button>
+          <a href="{% url 'partner:dashboard' %}" class="gaboom-btn-ghost">
+            Annuler
+          </a>
+        </div>
+      </form>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

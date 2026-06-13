@@ -1,0 +1,121 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Audit | Central Borlette{% endblock %}
+{% block page_title %}Audit{% endblock %}
+{% block page_meta %}Journal des actions sensibles{% endblock %}
+
+{% block page_body %}
+<style>
+  .audit-page { padding: 24px 32px; }
+  .audit-page .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding: 14px 16px; background: rgba(15,20,35,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; }
+  .audit-page .toolbar input, .audit-page .toolbar select { padding: 10px 12px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: rgba(255,255,255,0.9); font-size: 13px; outline: none; }
+  .audit-page .toolbar input::placeholder { color: rgba(255,255,255,0.45); }
+  .audit-page .toolbar option { background: #1a1f2e; color: rgba(255,255,255,0.9); }
+  .audit-page .btn { padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(58,160,255,0.35); background: rgba(58,160,255,0.15); color: rgba(255,255,255,0.92); font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: none; }
+  .audit-page .btn:hover { background: rgba(58,160,255,0.25); }
+  .audit-page .btn-quiet { border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); }
+  .audit-page .btn-quiet:hover { background: rgba(255,255,255,0.07); }
+
+  .audit-page .table-wrap { background: linear-gradient(135deg, rgba(20,27,45,0.85), rgba(15,20,35,0.92)); border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; overflow: hidden; }
+  .audit-page .data-table { width: 100%; border-collapse: collapse; }
+  .audit-page .data-table thead { background: rgba(0,0,0,0.3); }
+  .audit-page .data-table th { padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .audit-page .data-table td { padding: 14px 16px; font-size: 13px; color: rgba(255,255,255,0.92); border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+  .audit-page .muted { color: rgba(255,255,255,0.55); }
+  .audit-page .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  .audit-page .badge { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.05); }
+  .audit-page .badge--blue { border-color: rgba(58,160,255,0.25); background: rgba(58,160,255,0.12); color: rgba(58,160,255,0.95); }
+  .audit-page .badge--red { border-color: rgba(255,77,109,0.25); background: rgba(255,77,109,0.12); color: rgba(255,120,150,0.95); }
+
+  .audit-page .pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; }
+  .audit-page .pagination .pages { display: flex; align-items: center; gap: 10px; }
+  .audit-page .pagination a { color: rgba(255,255,255,0.85); text-decoration: none; }
+  .audit-page .pagination a:hover { text-decoration: underline; }
+  .audit-page .empty { text-align: center; padding: 50px 20px; color: rgba(255,255,255,0.6); }
+</style>
+
+<div class="audit-page">
+  <form class="toolbar" method="get" action="{% url 'admin_portal:audit_logs_list' %}">
+    <select name="action">
+      <option value="">Action (toutes)</option>
+      {% for value,label in actions %}
+        <option value="{{ value }}" {% if filters.action == value %}selected{% endif %}>{{ value }}</option>
+      {% endfor %}
+    </select>
+
+    <input type="text" name="entity_type" placeholder="Entity type (ex: Ticket)" value="{{ filters.entity_type }}" />
+    <input type="text" name="entity_id" placeholder="Entity id" value="{{ filters.entity_id }}" />
+    <input type="text" name="actor" placeholder="Actor (username/agent)" value="{{ filters.actor }}" />
+
+    <input type="date" name="date_from" value="{{ filters.date_from }}" />
+    <input type="date" name="date_to" value="{{ filters.date_to }}" />
+
+    <button class="btn" type="submit">Filtrer</button>
+    <a class="btn btn-quiet" href="{% url 'admin_portal:audit_logs_list' %}">Reset</a>
+  </form>
+
+  <div class="table-wrap">
+    {% if page_obj.object_list %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Actor</th>
+            <th>Méta</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in page_obj.object_list %}
+          <tr>
+            <td class="mono">{{ log.created_at|date:"Y-m-d" }} {{ log.created_at|time:"H:i:s" }}</td>
+            <td>
+              {% if log.action == 'TICKET_VOID' or log.action == 'RESULTS_RESET' %}
+                <span class="badge badge--red">{{ log.action }}</span>
+              {% else %}
+                <span class="badge badge--blue">{{ log.action }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div><strong>{{ log.entity_type }}</strong></div>
+              <div class="mono muted">{{ log.entity_id }}</div>
+            </td>
+            <td>
+              {% if log.actor_user %}
+                <div><strong>{{ log.actor_user.username }}</strong></div>
+              {% else %}
+                <div class="muted">—</div>
+              {% endif %}
+              {% if log.actor_agent %}
+                <div class="muted">Agent: {{ log.actor_agent.nom }}</div>
+              {% endif %}
+            </td>
+            <td class="mono muted" style="max-width: 520px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              {{ log.meta|default:"{}" }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty">Aucun log d'audit pour ces filtres.</div>
+    {% endif %}
+  </div>
+
+  <div class="pagination">
+    <div class="muted">
+      Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+      ({{ page_obj.paginator.count }} logs)
+    </div>
+    <div class="pages">
+      {% if page_obj.has_previous %}
+        <a href="?{{ querystring_prefix }}page={{ page_obj.previous_page_number }}">Précédent</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?{{ querystring_prefix }}page={{ page_obj.next_page_number }}">Suivant</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

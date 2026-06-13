@@ -1,0 +1,175 @@
+{% extends "admin_portal/_dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Traiter un Retrait | Central Borlette{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Traiter une demande de retrait</div>
+      <div class="portal-page__meta">Affilié: {{ withdrawal.user.username }}</div>
+    </div>
+    <a href="{% url 'admin_portal:affiliate_withdrawals' %}" class="gaboom-btn-ghost">
+      ← Retour aux retraits
+    </a>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Withdrawal Details -->
+    <section class="gaboom-card p-4 border-l-4 border-indigo-500">
+      <div class="text-sm font-semibold mb-4">Détails de la demande</div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Montant demandé</div>
+          <div class="text-xl font-bold text-indigo-600 dark:text-indigo-400">{{ withdrawal.amount|floatformat:2 }} GDS</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Date de demande</div>
+          <div class="font-medium">{{ withdrawal.created_at|date:"d/m/Y à H:i" }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Méthode de paiement</div>
+          <div class="font-medium">
+            {% if withdrawal.payment_method == 'moncash' %}MonCash
+            {% elif withdrawal.payment_method == 'natcash' %}NatCash
+            {% elif withdrawal.payment_method == 'western_union' %}Western Union
+            {% else %}Non spécifié{% endif %}
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Date limite de traitement</div>
+          <div class="font-medium {% if withdrawal.expected_by < now %}text-rose-500{% else %}text-amber-500{% endif %}">
+            {{ withdrawal.expected_by|date:"d/m/Y à H:i" }}
+            {% if withdrawal.expected_by < now %}(EN RETARD){% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Affiliate Payment Info -->
+    <section class="gaboom-card p-4 border-l-4 border-emerald-500">
+      <div class="text-sm font-semibold mb-4">Informations de paiement de l'affilié</div>
+      
+      <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Nom d'utilisateur</div>
+            <div class="font-medium">{{ withdrawal.user.username }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Email</div>
+            <div class="font-medium">{{ withdrawal.user.email|default:"Non défini" }}</div>
+          </div>
+          
+          {% if withdrawal.payment_method == 'moncash' or withdrawal.payment_method == 'natcash' %}
+            <div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">Numéro de téléphone</div>
+              <div class="font-medium text-emerald-600 dark:text-emerald-400">{{ withdrawal.payment_phone|default:"Non configuré" }}</div>
+            </div>
+          {% elif withdrawal.payment_method == 'western_union' %}
+            <div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">Nom complet</div>
+              <div class="font-medium">{{ withdrawal.payment_full_name|default:"Non configuré" }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">Ville / Localisation</div>
+              <div class="font-medium">{{ withdrawal.payment_location|default:"Non configuré" }}</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <!-- Action Form -->
+    <section class="gaboom-card p-4 border-l-4 border-amber-500">
+      <div class="text-sm font-semibold mb-4">Action à effectuer</div>
+      
+      <form method="post" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        
+        <div>
+          <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">Action</label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="action" value="approve" checked class="text-emerald-500">
+              <span class="text-sm">Approuver et marquer comme payé</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="action" value="reject" class="text-rose-500">
+              <span class="text-sm">Refuser et rembourser</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="proof_upload_section">
+          <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+            Preuve de paiement (screenshot)
+          </label>
+          <input type="file" name="proof_screenshot" accept="image/*" class="gaboom-input w-full">
+          <p class="text-xs text-slate-400 mt-1">
+            Téléchargez une capture d'écran ou photo comme preuve de paiement. 
+            L'affilié pourra la consulter dans son historique.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+            Notes de l'administrateur (optionnel)
+          </label>
+          <textarea name="admin_notes" rows="3" class="gaboom-input w-full" placeholder="Ex: Transaction effectuée via MonCash à 14:30. ID de transaction: ABC123..."></textarea>
+        </div>
+
+        <div class="flex gap-3">
+          <button type="submit" class="gaboom-btn-primary">
+            Confirmer l'action
+          </button>
+          <a href="{% url 'admin_portal:affiliate_withdrawals' %}" class="gaboom-btn-ghost">
+            Annuler
+          </a>
+        </div>
+      </form>
+    </section>
+
+    {% if withdrawal.proof_screenshot %}
+    <!-- Existing Proof -->
+    <section class="gaboom-card p-4 border-l-4 border-emerald-500">
+      <div class="text-sm font-semibold mb-4">Preuve de paiement existante</div>
+      <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+        <img src="{{ withdrawal.proof_screenshot.url }}" alt="Preuve de paiement" class="max-w-md rounded-lg border border-slate-200">
+        <div class="mt-2 text-xs text-slate-500">
+          Payé le {{ withdrawal.processed_at|date:"d/m/Y à H:i" }} par {{ withdrawal.processed_by.username|default:"Admin" }}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if withdrawal.admin_notes %}
+    <!-- Admin Notes -->
+    <section class="gaboom-card p-4">
+      <div class="text-sm font-semibold mb-2">Notes de l'administrateur</div>
+      <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-sm">
+        {{ withdrawal.admin_notes|linebreaks }}
+      </div>
+    </section>
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+// Show/hide proof upload based on action selection
+document.querySelectorAll('input[name="action"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const proofSection = document.getElementById('proof_upload_section');
+    if (this.value === 'approve') {
+      proofSection.style.display = 'block';
+    } else {
+      proofSection.style.display = 'none';
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "accounts/_partner_base.html" %}
+{% load static %}
+
+{% block title %}Borlettes | Partner Portal{% endblock %}
+{% block page_title %}Gestion des Borlettes{% endblock %}
+{% block page_subtitle %}Toutes les borlettes du système{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-blue-500">
+      <div class="text-2xl font-bold text-blue-600">{{ total_borlettes|default:"0" }}</div>
+      <div class="text-sm text-slate-600">Total Borlettes</div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
+      <div class="text-2xl font-bold text-amber-600">{{ borlettes_with_subscriptions|default:"0" }}</div>
+      <div class="text-sm text-slate-600">Avec Abonnement</div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 border-l-4 border-purple-500">
+      <div class="text-2xl font-bold text-purple-600">{{ total_admins|default:"0" }}</div>
+      <div class="text-sm text-slate-600">Administrateurs</div>
+    </div>
+  </div>
+
+  <!-- Borlettes List -->
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+      <h3 class="font-semibold text-slate-800 dark:text-white">Liste des Borlettes</h3>
+      <div class="flex gap-2">
+        <input type="text" id="searchBorlette" placeholder="Rechercher..." 
+               class="px-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+      </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Borlette</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Admin</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Tirages</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Abonnement</th>
+            <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">Statut</th>
+            <th class="px-4 py-3 text-right font-medium text-slate-600 dark:text-slate-300">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700" id="borlettesTable">
+          {% for borlette in borlettes %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 borlette-row">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-bold">
+                  {{ borlette.nom_borlette|first|upper }}
+                </div>
+                <div>
+                  <div class="font-medium text-slate-800 dark:text-white">{{ borlette.nom_borlette }}</div>
+                  <div class="text-xs text-slate-500">{{ borlette.localite|default:"-" }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              {% if borlette.admin %}
+                <div class="font-medium text-slate-700 dark:text-slate-300">{{ borlette.admin.username }}</div>
+                <div class="text-xs text-slate-500">{{ borlette.admin.email|default:"-" }}</div>
+              {% else %}
+                <span class="text-slate-400 italic">Sans admin</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs">
+                {{ borlette.tirages.count }} tirage(s)
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              {% if borlette.active_subscription %}
+                <div class="text-xs">
+                  <span class="{% if borlette.active_subscription.days_remaining <= 7 %}text-red-600{% else %}text-emerald-600{% endif %}">
+                    {{ borlette.active_subscription.days_remaining }} jours
+                  </span>
+                </div>
+                <div class="text-xs text-slate-500">Jusqu'au {{ borlette.active_subscription.end_date|date:"d/m/Y" }}</div>
+              {% else %}
+                <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">Aucun</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {% if borlette.is_active %}
+                <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">Active</span>
+              {% else %}
+                <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-right">
+              {% if borlette.active_subscription %}
+                <a href="{% url 'partner:renew_subscription' borlette.active_subscription.id %}" 
+                   class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition">
+                  Renouveler
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+              <i data-lucide="store" class="h-10 w-10 mx-auto mb-2 text-slate-300"></i>
+              <p>Aucune borlette trouvée</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Search functionality
+  document.getElementById('searchBorlette').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('.borlette-row');
+    
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

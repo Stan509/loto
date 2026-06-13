@@ -1,0 +1,95 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: gaboom_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: centralborlette
+      POSTGRES_USER: gaboom
+      POSTGRES_PASSWORD: gaboom_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gaboom -d centralborlette"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: gaboom_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gaboom_django
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: centralborlette.settings
+      DATABASE_URL: postgres://gaboom:gaboom_secret@db:5432/centralborlette
+      REDIS_URL: redis://redis:6379/0
+      DEBUG: "1"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # --- Services haute performance ---
+  validator:
+    build:
+      context: ./services/validator_rust
+    container_name: gaboom_validator
+    restart: unless-stopped
+    ports:
+      - "50051:50051"
+    depends_on:
+      - redis
+
+  gateway:
+    build:
+      context: ./services/gateway_go
+    container_name: gaboom_gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      VALIDATOR_ADDR: validator:50051
+      DJANGO_API_URL: http://django:8000
+    depends_on:
+      - redis
+      - django
+      - validator
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  postgres_data:
+  redis_data:

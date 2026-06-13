@@ -1,0 +1,516 @@
+{% extends "accounts/_partner_base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Partenaire | Central Borlette{% endblock %}
+{% block page_title %}Centre de Contrôle Partenaire{% endblock %}
+{% block page_subtitle %}Gestion complète • {{ partner_profile.user.username }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Welcome Banner -->
+  <div id="welcome" class="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+          {{ partner_profile.user.username|first|upper }}
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-slate-800 dark:text-white">Bienvenue, {{ partner_profile.user.first_name|default:partner_profile.user.username }}</h3>
+          <p class="text-slate-500 dark:text-slate-400">Partenaire depuis le {{ partner_profile.created_at|date:"d/m/Y" }}</p>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="text-center px-4 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ total_admins|default:"0" }}</div>
+          <div class="text-xs text-blue-600/70">Admins</div>
+        </div>
+        <div class="text-center px-4 py-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ total_affiliates|default:"0" }}</div>
+          <div class="text-xs text-purple-600/70">Affiliés</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="gaboom-card p-4 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200">
+        <div class="text-2xl font-bold text-emerald-600">{{ active_subscriptions|length|default:"0" }}</div>
+        <div class="text-sm text-slate-600">Abonnements Actifs</div>
+      </div>
+      <div class="gaboom-card p-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200">
+        <div class="text-2xl font-bold text-amber-600">{{ urgent_count|default:"0" }}</div>
+        <div class="text-sm text-slate-600">Urgent (&lt;7j)</div>
+      </div>
+      <div class="gaboom-card p-4 bg-red-50 dark:bg-red-900/20 border-red-200">
+        <div class="text-2xl font-bold text-red-600">{{ expired_count|default:"0" }}</div>
+        <div class="text-sm text-slate-600">Expirés</div>
+      </div>
+      <div class="gaboom-card p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200">
+        <div class="text-2xl font-bold text-blue-600">{{ tirages_needing_results_count|default:"0" }}</div>
+        <div class="text-sm text-slate-600">Tirages sans résultats</div>
+      </div>
+    </div>
+
+    <!-- Preuves de Paiement -->
+    <div class="gaboom-card p-4 border-l-4 border-green-500">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm font-semibold">Preuves de Paiement</div>
+          <div class="text-xs text-slate-500">Screenshots des paiements de renouvellement</div>
+        </div>
+        <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs">
+          {{ subscriptions_with_proofs_count|default:"0" }} preuve(s)
+        </span>
+      </div>
+      
+      {% if subscriptions_with_proofs %}
+      <div class="space-y-2">
+        {% for sub in subscriptions_with_proofs %}
+        <div class="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border-l-4 border-green-500">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 font-bold">
+              {{ sub.borlette.nom_borlette|first|upper }}
+            </div>
+            <div>
+              <div class="font-medium">{{ sub.borlette.nom_borlette }}</div>
+              <div class="text-xs text-slate-500">{{ sub.user.username }} • {{ sub.created_at|date:"d/m/Y H:i" }}</div>
+            </div>
+          </div>
+          {% if sub.payment_proof and sub.payment_proof.name %}
+          <a href="{{ sub.payment_proof.url }}" target="_blank" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition">
+            Voir preuve
+          </a>
+          {% else %}
+          <span class="px-3 py-1.5 bg-slate-100 text-slate-500 text-xs rounded-lg">
+            Pas de fichier
+          </span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-6 text-slate-500">
+        <svg class="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <p class="text-sm">Aucune preuve de paiement</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Borlettes Inscrites avec Statut d'Abonnement -->
+    {% if partner_profile.can_renew_subscriptions %}
+    <div class="gaboom-card p-4 border-l-4 border-blue-500">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm font-semibold">Borlettes Inscrites</div>
+          <div class="text-xs text-slate-500">Gérer les abonnements et renouvellements</div>
+        </div>
+        <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
+          {{ all_subscriptions_count|default:"0" }} borlette(s)
+        </span>
+      </div>
+      
+      {% if all_subscriptions %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+              <th class="px-3 py-2 text-left">Borlette</th>
+              <th class="px-3 py-2 text-left">Admin</th>
+              <th class="px-3 py-2 text-left">Type</th>
+              <th class="px-3 py-2 text-left">Statut</th>
+              <th class="px-3 py-2 text-left">Expiration</th>
+              <th class="px-3 py-2 text-left">Preuve de paiement</th>
+              <th class="px-3 py-2 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            {% for sub in all_subscriptions %}
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+              <td class="px-3 py-3 font-medium">{{ sub.borlette.nom_borlette }}</td>
+              <td class="px-3 py-3 text-slate-500">{{ sub.user.username }}</td>
+              <td class="px-3 py-3">
+                {% if sub.subscription_type == "trial" %}
+                  <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">Essai Gratuit</span>
+                {% elif sub.subscription_type == "standard" %}
+                  <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Standard</span>
+                {% elif sub.subscription_type == "premium" %}
+                  <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Premium</span>
+                {% else %}
+                  <span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs">{{ sub.subscription_type }}</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3">
+                {% if sub.is_trial_active %}
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Essai Actif</span>
+                {% elif sub.is_trial_expired %}
+                  <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Essai Expiré</span>
+                {% elif sub.days_remaining > 0 %}
+                  <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">Actif</span>
+                {% else %}
+                  <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Expiré</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3">
+                <div class="text-xs">
+                  {{ sub.end_date|date:"d/m/Y" }}
+                </div>
+                <div class="text-xs mt-1">
+                  {% if sub.is_trial and sub.hours_remaining %}
+                    <span class="text-purple-600 font-semibold countdown-trial" 
+                          data-sub-id="{{ sub.id }}" 
+                          data-end-date="{{ sub.end_date|date:'c' }}">
+                      {{ sub.hours_remaining|floatformat:1 }}h restantes
+                    </span>
+                  {% elif sub.days_remaining > 0 %}
+                    <span class="{% if sub.days_remaining <= 7 %}text-red-600 font-semibold{% elif sub.days_remaining <= 30 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+                      {{ sub.days_remaining }} jour(s)
+                    </span>
+                  {% elif sub.days_remaining <= 0 %}
+                    <span class="text-red-600 font-semibold">Expiré</span>
+                  {% endif %}
+                </div>
+              </td>
+              <td class="px-3 py-3">
+                {% if sub.payment_proof %}
+                  <a href="{{ sub.payment_proof.url }}" target="_blank" class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200 transition">
+                    Voir
+                  </a>
+                {% else %}
+                  <span class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs">Aucune</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3 text-right">
+                {% if sub.payment_proof and sub.days_remaining <= 7 %}
+                {% if sub.subscription_type == "trial" %}
+                <a href="{% url 'partner:renew_subscription' sub.id %}" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition">
+                  Activation
+                </a>
+                {% else %}
+                <a href="{% url 'partner:renew_subscription' sub.id %}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition">
+                  Renouvellement 30 jours
+                </a>
+                {% endif %}
+                {% else %}
+                {% if not sub.payment_proof %}
+                <span class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs">En attente de preuve</span>
+                {% elif sub.days_remaining > 7 %}
+                <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Disponible dans {{ sub.days_remaining|add:"-7" }} jours</span>
+                {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-slate-500 text-sm text-center py-4">
+        Aucune borlette inscrite. Les administrateurs doivent s'abonner pour apparaître ici.
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Pending Withdrawals -->
+    {% if partner_profile.can_confirm_affiliate_payments %}
+    <div class="gaboom-card p-4 border-l-4 border-amber-500">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm font-semibold">Demandes de retrait en attente</div>
+          <div class="text-xs text-slate-500">{{ pending_withdrawals_count|default:"0" }} demande(s) • {{ total_pending_amount|default:"0" }} GDS</div>
+        </div>
+      </div>
+      
+      {% if pending_withdrawals %}
+      <div class="space-y-2">
+        {% for withdrawal in pending_withdrawals %}
+        <div class="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-l-4 border-amber-500">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold">
+              {{ withdrawal.user.username|first|upper }}
+            </div>
+            <div>
+              <div class="font-medium">{{ withdrawal.user.username }}</div>
+              <div class="text-xs text-slate-500">{{ withdrawal.amount }} GDS • {{ withdrawal.created_at|date:"d/m/Y H:i" }}</div>
+            </div>
+          </div>
+          <a href="{% url 'partner:confirm_withdrawal' withdrawal.id %}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg transition">
+            Confirmer
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-6 text-slate-500">
+        <svg class="h-10 w-10 mx-auto mb-2 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-sm">Aucune demande en attente</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Tous les Tirages -->
+    <div class="gaboom-card p-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-sm font-semibold">Tous les Tirages</div>
+        <span class="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded text-xs">
+          {{ recent_tirages|length|default:"0" }} tirage(s)
+        </span>
+      </div>
+      
+      {% if recent_tirages %}
+      <div class="space-y-2">
+        {% for tirage in recent_tirages %}
+        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+          <div>
+            <div class="font-medium">{{ tirage.nom }}</div>
+            <div class="text-xs text-slate-500">{{ tirage.borlette.nom_borlette }} • {{ tirage.heure_tirage|date:"d/m/Y H:i" }}</div>
+          </div>
+          <a href="{% url 'partner:submit_result' tirage.id %}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg transition">
+            Donner résultat
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-6 text-slate-500">
+        <svg class="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-sm">Aucun tirage disponible</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Historique des Résultats -->
+    <div class="gaboom-card p-4 border-l-4 border-emerald-500">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm font-semibold">Historique des Résultats</div>
+          <div class="text-xs text-slate-500">Tirages passés avec résultats</div>
+        </div>
+        <span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded text-xs">
+          {{ past_results|length|default:"0" }} résultat(s)
+        </span>
+      </div>
+      
+      {% if past_results %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+              <th class="px-3 py-2 text-left">Tirage</th>
+              <th class="px-3 py-2 text-left">Date</th>
+              <th class="px-3 py-2 text-center">Lot1</th>
+              <th class="px-3 py-2 text-center">Lot2</th>
+              <th class="px-3 py-2 text-center">Lot3</th>
+              <th class="px-3 py-2 text-center">Loto3</th>
+              <th class="px-3 py-2 text-center">Loto4 (3 opt)</th>
+              <th class="px-3 py-2 text-center">Loto5 (2 opt)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            {% for tirage in past_results %}
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+              <td class="px-3 py-3">
+                <div class="font-medium">{{ tirage.nom }}</div>
+                <div class="text-xs text-slate-500">{{ tirage.borlette.nom_borlette }}</div>
+              </td>
+              <td class="px-3 py-3 text-slate-500">
+                {{ tirage.heure_tirage|date:"d/m/Y" }}
+              </td>
+              {% with resultat=tirage.resultats.first %}
+              {% if resultat %}
+              <td class="px-3 py-3 text-center font-bold text-indigo-600">{{ resultat.lot1 }}</td>
+              <td class="px-3 py-3 text-center font-bold text-indigo-600">{{ resultat.lot2 }}</td>
+              <td class="px-3 py-3 text-center font-bold text-indigo-600">{{ resultat.lot3 }}</td>
+              <td class="px-3 py-3 text-center text-emerald-600">{{ resultat.chiffre_loto3|default:"-" }}</td>
+              <td class="px-3 py-3 text-center text-xs">
+                <span class="text-blue-600">{{ resultat.loto4_option1|default:"-" }}</span>
+                <span class="text-slate-400">/</span>
+                <span class="text-blue-600">{{ resultat.loto4_option2|default:"-" }}</span>
+                <span class="text-slate-400">/</span>
+                <span class="text-blue-600">{{ resultat.loto4_option3|default:"-" }}</span>
+              </td>
+              <td class="px-3 py-3 text-center text-xs">
+                <span class="text-amber-600">{{ resultat.loto5_option1|default:"-" }}</span>
+                <span class="text-slate-400">/</span>
+                <span class="text-amber-600">{{ resultat.loto5_option2|default:"-" }}</span>
+              </td>
+              {% else %}
+              <td class="px-3 py-3 text-center text-slate-400" colspan="6">Pas de résultat</td>
+              {% endif %}
+              {% endwith %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-6 text-slate-500">
+        <svg class="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <p class="text-sm">Aucun résultat historique disponible</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Toutes les Borlettes avec Abonnements -->
+    <div class="gaboom-card p-4 border-l-4 border-blue-500">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-sm font-semibold">Borlettes Inscrites - Compte à Rebours</div>
+        <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
+          {{ all_subscriptions_count|default:"0" }} borlette(s)
+        </span>
+      </div>
+      
+      {% if all_subscriptions %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+              <th class="px-3 py-2 text-left">Borlette</th>
+              <th class="px-3 py-2 text-left">Admin</th>
+              <th class="px-3 py-2 text-left">Expire le</th>
+              <th class="px-3 py-2 text-left">Temps restant</th>
+              <th class="px-3 py-2 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            {% for sub in all_subscriptions %}
+            <tr>
+              <td class="px-3 py-3 font-medium">{{ sub.borlette.nom_borlette }}</td>
+              <td class="px-3 py-3 text-slate-500">{{ sub.user.username }}</td>
+              <td class="px-3 py-3">{{ sub.end_date|date:"d/m/Y" }}</td>
+              <td class="px-3 py-3">
+                {% if sub.days_remaining > 0 %}
+                  <span class="px-2 py-1 rounded text-xs font-semibold
+                    {% if sub.days_remaining <= 7 %}bg-red-100 text-red-700
+                    {% elif sub.days_remaining <= 30 %}bg-amber-100 text-amber-700
+                    {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                    {{ sub.days_remaining }} jour(s)
+                  </span>
+                {% else %}
+                  <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">
+                    EXPIRÉ
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3 text-right">
+                {% if sub.payment_proof and sub.days_remaining <= 7 %}
+                {% if sub.subscription_type == "trial" %}
+                <a href="{% url 'partner:renew_subscription' sub.id %}" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition">
+                  Activation
+                </a>
+                {% else %}
+                <a href="{% url 'partner:renew_subscription' sub.id %}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition">
+                  Renouvellement 30 jours
+                </a>
+                {% endif %}
+                {% else %}
+                {% if not sub.payment_proof %}
+                <span class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs">En attente de preuve</span>
+                {% elif sub.days_remaining > 7 %}
+                <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Disponible dans {{ sub.days_remaining|add:"-7" }} jours</span>
+                {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-6 text-slate-500">
+        <svg class="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+        <p class="text-sm">Aucune borlette inscrite</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Affiliés -->
+    <div class="gaboom-card p-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-sm font-semibold">Gestion des Affiliés</div>
+        <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded text-xs">
+          {{ affiliate_users|length|default:"0" }} affilié(s)
+        </span>
+      </div>
+      
+      {% if affiliate_users %}
+      <div class="space-y-2">
+        {% for aff in affiliate_users %}
+        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold">
+              {{ aff.username|first|upper }}
+            </div>
+            <div>
+              <div class="font-medium">{{ aff.username }}</div>
+              <div class="text-xs text-slate-500">{{ aff.email|default:"-" }}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            {% if aff.is_active %}
+              <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">Actif</span>
+            {% else %}
+              <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">Suspendu</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-6 text-slate-500">
+        <svg class="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        <p class="text-sm">Aucun affilié trouvé</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  // Real-time countdown for trial subscriptions
+  function updateCountdowns() {
+    const countdownElements = document.querySelectorAll('.countdown-trial');
+    
+    countdownElements.forEach(function(el) {
+      const endDateStr = el.getAttribute('data-end-date');
+      if (!endDateStr) return;
+      
+      const endDate = new Date(endDateStr);
+      const now = new Date();
+      const diff = endDate - now;
+      
+      if (diff <= 0) {
+        el.textContent = 'Expiré';
+        el.style.color = '#ef4444';
+        return;
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      el.textContent = `${hours}h ${minutes}m ${seconds}s`;
+    });
+  }
+  
+  updateCountdowns();
+  setInterval(updateCountdowns, 1000);
+})();
+</script>
+{% endblock %}

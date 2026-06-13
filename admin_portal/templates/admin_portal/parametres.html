@@ -1,0 +1,674 @@
+﻿{% extends "admin_portal/_page_shell.html" %}
+{% load static %}
+
+{% block title %}Paramètres | Central Borlette{% endblock %}
+
+{% block page_body %}
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     VARIABLES & PAGE LAYOUT
+     ═══════════════════════════════════════════════════════════ */
+  .params-page {
+    --bg0: #070a12;
+    --bg1: #081426;
+    --card-bg: rgba(10, 18, 35, 0.58);
+    --card-bg2: rgba(12, 28, 55, 0.34);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-color: rgba(255, 255, 255, 0.92);
+    --muted-color: rgba(255, 255, 255, 0.62);
+    --accent-blue: #3aa0ff;
+    --accent-violet: #7c4dff;
+    --accent-danger: #ff4d6d;
+    --accent-success: #10b981;
+    --shadow-card: 0 18px 45px rgba(0, 0, 0, 0.45);
+
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 26px 20px 44px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════ */
+  .params-page .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 2px 2px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 24px;
+  }
+
+  .params-page .page-header h1 {
+    margin: 0;
+    font-size: 32px;
+    letter-spacing: 0.2px;
+    font-weight: 750;
+    line-height: 1.1;
+    color: var(--text-color);
+  }
+
+  .params-page .page-header p {
+    margin: 10px 0 0;
+    color: var(--muted-color);
+    font-size: 15px;
+  }
+
+  .params-page .page-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     BUTTONS
+     ═══════════════════════════════════════════════════════════ */
+  .params-page .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(58, 160, 255, 0.35);
+    background: rgba(58, 160, 255, 0.16);
+    color: var(--text-color);
+    padding: 12px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 650;
+    letter-spacing: 0.2px;
+    transition: 0.15s ease;
+    user-select: none;
+    font-size: 14px;
+  }
+
+  .params-page .btn:hover {
+    background: rgba(58, 160, 255, 0.24);
+    transform: translateY(-1px);
+  }
+
+  .params-page .btn--ghost {
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .params-page .btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .params-page .btn--primary {
+    border: 1px solid rgba(58, 160, 255, 0.55);
+    background: linear-gradient(180deg, rgba(58, 160, 255, 0.42), rgba(58, 160, 255, 0.18));
+  }
+
+  .params-page .btn--danger {
+    border: 1px solid rgba(255, 77, 109, 0.45);
+    background: rgba(255, 77, 109, 0.18);
+  }
+
+  .params-page .btn--danger:hover {
+    background: rgba(255, 77, 109, 0.28);
+  }
+
+  .params-page .btn--success {
+    border: 1px solid rgba(16, 185, 129, 0.55);
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.42), rgba(16, 185, 129, 0.18));
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     SUCCESS MESSAGE
+     ═══════════════════════════════════════════════════════════ */
+  .params-page .msg-success {
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05));
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     GRID 2x2
+     ═══════════════════════════════════════════════════════════ */
+  .params-page .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  @media (max-width: 980px) {
+    .params-page .grid {
+      grid-template-columns: 1fr;
+    }
+
+    .params-page .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .params-page .page-actions {
+      justify-content: flex-start;
+    }
+
+    .params-page .page-header h1 {
+      font-size: 26px;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CARDS (GLASSMORPHISM)
+     ═══════════════════════════════════════════════════════════ */
+  .params-page .card {
+    background: linear-gradient(180deg, var(--card-bg), var(--card-bg2));
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .params-page .card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    background:
+      radial-gradient(600px 260px at 20% 10%, rgba(58, 160, 255, 0.10), transparent 60%),
+      radial-gradient(600px 260px at 80% 20%, rgba(124, 77, 255, 0.10), transparent 60%);
+    pointer-events: none;
+  }
+
+  .params-page .card>* {
+    position: relative;
+  }
+
+  .params-page .card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 4px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 12px;
+  }
+
+  .params-page .card__header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: var(--text-color);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     BADGES
+     ═══════════════════════════════════════════════════════════ */
+  .params-page .badge {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    padding: 6px 11px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    letter-spacing: 0.3px;
+    font-weight: 650;
+    text-transform: uppercase;
+  }
+
+  .params-page .badge--blue {
+    border-color: rgba(58, 160, 255, 0.28);
+    background: rgba(58, 160, 255, 0.12);
+  }
+
+  .params-page .badge--violet {
+    border-color: rgba(124, 77, 255, 0.28);
+    background: rgba(124, 77, 255, 0.12);
+  }
+
+  .params-page .badge--danger {
+    border-color: rgba(255, 77, 109, 0.28);
+    background: rgba(255, 77, 109, 0.12);
+  }
+
+  .params-page .badge--success {
+    border-color: rgba(16, 185, 129, 0.28);
+    background: rgba(16, 185, 129, 0.12);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TABLE INSIDE CARDS
+     ═══════════════════════════════════════════════════════════ */
+  .params-page .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .params-page .data-table .col-label {
+    width: calc(100% - 200px);
+  }
+
+  .params-page .data-table .col-value {
+    width: 200px;
+  }
+
+  .params-page .data-table tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .params-page .data-table tr:last-child {
+    border-bottom: none;
+  }
+
+  .params-page .data-table td {
+    padding: 12px 6px;
+    vertical-align: middle;
+  }
+
+  .params-page .data-table td.label {
+    color: var(--muted-color);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .params-page .data-table td.value {
+    text-align: right;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     INPUT FIELDS (STYLED)
+     ═══════════════════════════════════════════════════════════ */
+  .params-page .field {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .params-page .field input[type="number"] {
+    width: 140px !important;
+    padding: 10px 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 10px !important;
+    background: rgba(0, 0, 0, 0.25) !important;
+    color: var(--text-color) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    text-align: right !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transition: border-color 0.15s, background 0.15s !important;
+  }
+
+  .params-page .field input[type="number"]:focus {
+    outline: none !important;
+    border-color: var(--accent-blue) !important;
+    background: rgba(58, 160, 255, 0.08) !important;
+  }
+
+  .params-page .field input[type="number"]:disabled {
+    background: rgba(30, 40, 60, 0.4) !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    cursor: not-allowed !important;
+  }
+
+  .params-page .field .suffix {
+    color: var(--muted-color);
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 20px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     SWITCH TOGGLE (for checkbox)
+     ═══════════════════════════════════════════════════════════ */
+  .params-page .switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+  }
+
+  .params-page .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  .params-page .switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 28px;
+    transition: 0.2s ease;
+  }
+
+  .params-page .switch .slider::before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    transition: 0.2s ease;
+  }
+
+  .params-page .switch input:checked+.slider {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+    border-color: rgba(58, 160, 255, 0.4);
+  }
+
+  .params-page .switch input:checked+.slider::before {
+    transform: translateX(24px);
+    background: #fff;
+  }
+
+  .params-page .switch input:disabled+.slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+</style>
+
+<div class="params-page">
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div>
+      <h1>Rapport • Paramètres & Règles</h1>
+      <p>Configuration des coefficients, plafonds et règles de jeu</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn--ghost">
+        <span>📊</span> Exporter
+      </button>
+      <button type="button" id="editToggle" class="btn btn--ghost">
+        <span>✏️</span> Modifier
+      </button>
+      <button type="submit" form="settingsForm" class="btn btn--success">
+        <span>💾</span> Enregistrer
+      </button>
+    </div>
+  </header>
+
+  {% if saved %}
+  <div class="msg-success">✓ Configuration enregistrée avec succès.</div>
+  {% endif %}
+
+  <form method="post" id="settingsForm">
+    {% csrf_token %}
+
+    <div class="grid">
+      <!-- CARD 1: Paramètres Généraux -->
+      <div class="card">
+        <div class="card__header">
+          <h2>Paramètres Généraux</h2>
+          <span class="badge badge--blue">Global</span>
+        </div>
+        <table class="data-table">
+          <colgroup>
+            <col class="col-label">
+            <col class="col-value">
+          </colgroup>
+          <tr>
+            <td class="label">Mariage Gratuit Actif</td>
+            <td class="value">
+              <label class="switch">
+                <input type="checkbox" name="mariage_gratuit_actif" {% if payment_form.mariage_gratuit_actif.value %}checked{% endif %} disabled>
+                <span class="slider"></span>
+              </label>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Montant Fixe Mariage</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="mariage_gratuit_montant_fixe"
+                  value="{{ payment_form.mariage_gratuit_montant_fixe.value|default:'2000' }}" disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Seuil 1 (tickets)</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="mariage_gratuit_seuil1"
+                  value="{{ payment_form.mariage_gratuit_seuil1.value|default:'4' }}" disabled>
+                <span class="suffix"></span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Quantité 1 (mariages)</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="mariage_gratuit_qty1"
+                  value="{{ payment_form.mariage_gratuit_qty1.value|default:'3' }}" disabled>
+                <span class="suffix"></span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Seuil 2 (tickets)</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="mariage_gratuit_seuil2"
+                  value="{{ payment_form.mariage_gratuit_seuil2.value|default:'10' }}" disabled>
+                <span class="suffix"></span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Quantité 2 (mariages)</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="mariage_gratuit_qty2"
+                  value="{{ payment_form.mariage_gratuit_qty2.value|default:'6' }}" disabled>
+                <span class="suffix"></span>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- CARD 2: Coefficients Boule & Mariage -->
+      <div class="card">
+        <div class="card__header">
+          <h2>Règles de Gains</h2>
+          <span class="badge badge--violet">Multiplicateurs</span>
+        </div>
+        <table class="data-table">
+          <colgroup>
+            <col class="col-label">
+            <col class="col-value">
+          </colgroup>
+          <tr>
+            <td class="label">Boule 1er Lot</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="boule_1er_lot_coeff"
+                  value="{{ payment_form.boule_1er_lot_coeff.value|default:'250' }}" disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Boule 2ème Lot</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="boule_2eme_lot_coeff"
+                  value="{{ payment_form.boule_2eme_lot_coeff.value|default:'100' }}" disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Boule 3ème Lot</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="boule_3eme_lot_coeff"
+                  value="{{ payment_form.boule_3eme_lot_coeff.value|default:'50' }}" disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Mariage Normal</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="mariage_normal_coeff"
+                  value="{{ payment_form.mariage_normal_coeff.value|default:'1000' }}" disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- CARD 3: LOTO 3/4/5 -->
+      <div class="card">
+        <div class="card__header">
+          <h2>LOTO 3 / 4 / 5</h2>
+          <span class="badge badge--success">Gains</span>
+        </div>
+        <table class="data-table">
+          <colgroup>
+            <col class="col-label">
+            <col class="col-value">
+          </colgroup>
+          <tr>
+            <td class="label">Loto 3 Chiffres</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="loto3_coeff" value="{{ payment_form.loto3_coeff.value|default:'500' }}"
+                  disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Loto 4 Chiffres</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="loto4_coeff" value="{{ payment_form.loto4_coeff.value|default:'5000' }}"
+                  disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Loto 5 Chiffres</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="loto5_coeff" value="{{ payment_form.loto5_coeff.value|default:'25000' }}"
+                  disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- CARD 4: Plafonds de Risque -->
+      <div class="card">
+        <div class="card__header">
+          <h2>Plafonds de Risque</h2>
+          <span class="badge badge--danger">Limites</span>
+        </div>
+        <table class="data-table">
+          <colgroup>
+            <col class="col-label">
+            <col class="col-value">
+          </colgroup>
+          <tr>
+            <td class="label">Max Boule</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="max_boule" value="{{ payment_form.max_boule.value|default:'5000' }}"
+                  disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Max Mariage</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="max_mariage" value="{{ payment_form.max_mariage.value|default:'500' }}"
+                  disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Max Loto 3</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="max_loto3" value="{{ payment_form.max_loto3.value|default:'500' }}" disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Max Loto 4</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="max_loto4" value="{{ payment_form.max_loto4.value|default:'250' }}" disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Max Loto 5</td>
+            <td class="value">
+              <div class="field">
+                <input type="number" name="max_loto5" value="{{ payment_form.max_loto5.value|default:'100' }}" disabled>
+                <span class="suffix">G</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    const editBtn = document.getElementById('editToggle');
+    const inputs = document.querySelectorAll('.params-page input[type="number"]');
+    const checkboxes = document.querySelectorAll('.params-page input[type="checkbox"]');
+    let editMode = false;
+
+    editBtn.addEventListener('click', function () {
+      editMode = !editMode;
+      inputs.forEach(function (inp) { inp.disabled = !editMode; });
+      checkboxes.forEach(function (cb) { cb.disabled = !editMode; });
+
+      if (editMode) {
+        editBtn.innerHTML = '<span>❌</span> Annuler';
+        editBtn.classList.remove('btn--ghost');
+        editBtn.classList.add('btn--danger');
+      } else {
+        editBtn.innerHTML = '<span>✏️</span> Modifier';
+        editBtn.classList.remove('btn--danger');
+        editBtn.classList.add('btn--ghost');
+      }
+    });
+  })();
+</script>
+{% endblock %}

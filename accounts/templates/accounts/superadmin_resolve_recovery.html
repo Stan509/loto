@@ -1,0 +1,60 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Central Borlette - Résoudre la demande</title>
+  <script src="{% static 'js/gaboom-theme.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'css/gaboom.css' %}">
+</head>
+<body>
+  <div class="gaboom-app-bg flex items-center justify-center p-6">
+    <div class="w-full max-w-lg">
+      <div class="gaboom-card mt-6 p-8">
+        <h1 class="text-2xl font-semibold tracking-tight">Résoudre la demande de récupération</h1>
+
+        <div class="mt-4 space-y-3 text-sm">
+          <div class="flex justify-between border-b border-slate-200 dark:border-slate-700 py-2">
+            <span class="text-slate-500">Utilisateur</span>
+            <span class="font-medium">{{ recovery.user.username }}</span>
+          </div>
+          <div class="flex justify-between border-b border-slate-200 dark:border-slate-700 py-2">
+            <span class="text-slate-500">Borlette</span>
+            <span class="font-medium">{{ recovery.borlette.nom_borlette|default:"—" }}</span>
+          </div>
+          <div class="flex justify-between border-b border-slate-200 dark:border-slate-700 py-2">
+            <span class="text-slate-500">Téléphone</span>
+            <span class="font-medium">{{ recovery.phone_number|default:"—" }}</span>
+          </div>
+          <div class="flex justify-between border-b border-slate-200 dark:border-slate-700 py-2">
+            <span class="text-slate-500">Message</span>
+            <span class="font-medium max-w-xs text-right">{{ recovery.message|default:"—" }}</span>
+          </div>
+          <div class="flex justify-between border-b border-slate-200 dark:border-slate-700 py-2">
+            <span class="text-slate-500">Date de la demande</span>
+            <span class="font-medium">{{ recovery.created_at|date:"d/m/Y H:i" }}</span>
+          </div>
+        </div>
+
+        <div class="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+          <p class="font-medium">Action à effectuer :</p>
+          <p class="mt-1">
+            En cliquant sur "Générer le mot de passe temporaire", un mot de passe aléatoire de 12 caractères sera créé.
+            L'utilisateur sera forcé de changer son mot de passe à la prochaine connexion. Le mot de passe temporaire
+            expire après 24 heures.
+          </p>
+        </div>
+
+        <form method="post" class="mt-6">
+          {% csrf_token %}
+          <div class="flex gap-3">
+            <a href="{% url 'superadmin_recovery_requests' %}" class="gaboom-btn-ghost w-full text-center">Annuler</a>
+            <button class="gaboom-btn-primary w-full" type="submit">Générer le mot de passe temporaire</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

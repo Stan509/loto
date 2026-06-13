@@ -1,0 +1,36 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Branding | Central Borlette{% endblock %}
+{% block page_title %}Branding{% endblock %}
+{% block page_meta %}Lecture seule{% endblock %}
+
+{% block page_body %}
+  <div class="portal-card">
+    <div class="portal-card__content">
+      {% if portal_borlette %}
+        <div class="ro-grid">
+          <div class="ro-item">
+            <div class="ro-label">Logo</div>
+            <div class="ro-value">
+              {% if portal_borlette.logo_borlette %}
+                <img class="ro-logo" src="{{ portal_borlette.logo_borlette.url }}" alt="Logo {{ portal_borlette.nom_borlette }}" />
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+          <div class="ro-item">
+            <div class="ro-label">Slogan</div>
+            <div class="ro-value">{{ portal_borlette.slogan }}</div>
+          </div>
+          <div class="ro-item">
+            <div class="ro-label">Couleurs</div>
+            <div class="ro-value">À venir</div>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty">Aucune borlette associée à ce compte.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

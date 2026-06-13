@@ -1,0 +1,224 @@
+{% extends "accounts/_partner_base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Partenaire | Central Borlette{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <!-- Header -->
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Centre de Contrôle Partenaire</div>
+      <div class="portal-page__meta">Gestion complète • {{ partner_profile.user.username }}</div>
+    </div>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Welcome Banner -->
+    <div class="gaboom-card p-4 border-l-4 border-indigo-500">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xl">
+            {{ partner_profile.user.username|first|upper }}
+          </div>
+          <div>
+            <div class="text-lg font-semibold">Bienvenue, {{ partner_profile.user.first_name|default:partner_profile.user.username }}</div>
+            <div class="text-sm text-slate-500 dark:text-slate-400">Partenaire depuis le {{ partner_profile.created_at|date:"d/m/Y" }}</div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+            {{ total_admins|default:"0" }} Admins
+          </span>
+          <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm">
+            {{ total_affiliates|default:"0" }} Affiliés
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="gaboom-card p-4 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200">
+        <div class="text-2xl font-bold text-emerald-600">{{ active_subscriptions|length|default:"0" }}</div>
+        <div class="text-sm text-slate-600">Abonnements Actifs</div>
+      </div>
+      <div class="gaboom-card p-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200">
+        <div class="text-2xl font-bold text-amber-600">{{ urgent_count|default:"0" }}</div>
+        <div class="text-sm text-slate-600">Urgent (&lt;7j)</div>
+      </div>
+      <div class="gaboom-card p-4 bg-red-50 dark:bg-red-900/20 border-red-200">
+        <div class="text-2xl font-bold text-red-600">{{ expired_count|default:"0" }}</div>
+        <div class="text-sm text-slate-600">Expirés</div>
+      </div>
+      <div class="gaboom-card p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200">
+        <div class="text-2xl font-bold text-blue-600">{{ tirages_needing_results_count|default:"0" }}</div>
+        <div class="text-sm text-slate-600">Tirages sans résultats</div>
+      </div>
+    </div>
+
+    <!-- Abonnements -->
+    {% if partner_profile.can_renew_subscriptions %}
+    <div class="gaboom-card p-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-sm font-semibold">Abonnements des Borlettes</div>
+        <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
+          {{ all_subscriptions_count|default:"0" }} abonnement(s)
+        </span>
+      </div>
+      
+      {% if all_subscriptions %}
+      <div class="space-y-3">
+        {% for sub in all_subscriptions %}
+        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border-l-4 
+          {% if sub.days_remaining <= 0 %}border-red-500{% elif sub.days_remaining <= 7 %}border-amber-500{% else %}border-emerald-500{% endif %}">
+          <div>
+            <div class="font-medium">{{ sub.borlette.nom_borlette }}</div>
+            <div class="text-xs text-slate-500">Admin: {{ sub.user.username }}</div>
+            <div class="text-xs 
+              {% if sub.days_remaining <= 0 %}text-red-600 font-semibold
+              {% elif sub.days_remaining <= 7 %}text-amber-600
+              {% else %}text-slate-400{% endif %}">
+              {% if sub.days_remaining > 0 %}
+                Expire dans {{ sub.days_remaining }} jour(s)
+              {% else %}
+                Expiré depuis {{ sub.days_remaining|stringformat:"d"|slice:"1:" }} jour(s)
+              {% endif %}
+              • {{ sub.end_date|date:"d/m/Y" }}
+            </div>
+          </div>
+          <a href="{% url 'partner:renew_subscription' sub.id %}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition">
+            +30 jours
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-slate-500 text-sm text-center py-4">
+        Aucune borlette inscrite. Les administrateurs doivent s'abonner pour apparaître ici.
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Pending Withdrawals -->
+    {% if partner_profile.can_confirm_affiliate_payments %}
+    <div class="gaboom-card p-4 border-l-4 border-amber-500">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm font-semibold">Demandes de retrait en attente</div>
+          <div class="text-xs text-slate-500">{{ pending_withdrawals_count|default:"0" }} demande(s) • {{ total_pending_amount|default:"0" }} GDS</div>
+        </div>
+      </div>
+      
+      {% if pending_withdrawals %}
+      <div class="space-y-2">
+        {% for withdrawal in pending_withdrawals %}
+        <div class="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-l-4 border-amber-500">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold">
+              {{ withdrawal.user.username|first|upper }}
+            </div>
+            <div>
+              <div class="font-medium">{{ withdrawal.user.username }}</div>
+              <div class="text-xs text-slate-500">{{ withdrawal.amount }} GDS • {{ withdrawal.created_at|date:"d/m/Y H:i" }}</div>
+            </div>
+          </div>
+          <a href="{% url 'partner:confirm_withdrawal' withdrawal.id %}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg transition">
+            Confirmer
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-6 text-slate-500">
+        <svg class="h-10 w-10 mx-auto mb-2 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-sm">Aucune demande en attente</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Tirages -->
+    {% if partner_profile.can_submit_results %}
+    <div class="gaboom-card p-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-sm font-semibold">Tirages récents</div>
+        <span class="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded text-xs">
+          {{ recent_tirages|length|default:"0" }} tirage(s)
+        </span>
+      </div>
+      
+      {% if recent_tirages %}
+      <div class="space-y-2">
+        {% for tirage in recent_tirages %}
+        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+          <div>
+            <div class="font-medium">{{ tirage.nom }}</div>
+            <div class="text-xs text-slate-500">{{ tirage.borlette.nom_borlette }} • {{ tirage.heure_tirage|date:"d/m/Y H:i" }}</div>
+          </div>
+          <a href="{% url 'partner:submit_result' tirage.id %}" class="gaboom-btn-ghost text-xs">
+            Donner résultat
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-6 text-slate-500">
+        <svg class="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-sm">Aucun tirage récent</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Affiliés -->
+    <div class="gaboom-card p-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-sm font-semibold">Gestion des Affiliés</div>
+        <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded text-xs">
+          {{ affiliate_users|length|default:"0" }} affilié(s)
+        </span>
+      </div>
+      
+      {% if affiliate_users %}
+      <div class="space-y-2">
+        {% for aff in affiliate_users %}
+        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold">
+              {{ aff.username|first|upper }}
+            </div>
+            <div>
+              <div class="font-medium">{{ aff.username }}</div>
+              <div class="text-xs text-slate-500">{{ aff.email|default:"-" }}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            {% if aff.is_active %}
+              <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs">Actif</span>
+            {% else %}
+              <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">Suspendu</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-6 text-slate-500">
+        <svg class="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        <p class="text-sm">Aucun affilié trouvé</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "accounts/_affiliate_base.html" %}
+{% load static %}
+
+{% block title %}Mes Filleuls | Affiliate Dashboard{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+  <div class="portal-page__header">
+    <div>
+      <div class="portal-page__title">Mes Filleuls</div>
+      <div class="portal-page__meta">Directeurs inscrits • Commissions • Statistiques</div>
+    </div>
+  </div>
+
+  <div class="portal-page__body space-y-4">
+
+    <!-- Stats -->
+    <section>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="gaboom-card p-4">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Total filleuls</div>
+          <div class="mt-2 text-xl font-semibold">{{ total_referrals }}</div>
+        </div>
+        <div class="gaboom-card p-4">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Actifs</div>
+          <div class="mt-2 text-xl font-semibold text-emerald-600 dark:text-emerald-300">{{ active_referrals }}</div>
+        </div>
+        <div class="gaboom-card p-4">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">En attente</div>
+          <div class="mt-2 text-xl font-semibold text-amber-600 dark:text-amber-300">{{ total_referrals|add:active_referrals|default:0 }}</div>
+        </div>
+        <div class="gaboom-card p-4">
+          <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Commissions totales</div>
+          <div class="mt-2 text-xl font-semibold text-indigo-600 dark:text-indigo-300">{{ total_commission|floatformat:2 }} GDS</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Commission Info -->
+    <section class="gaboom-card p-4 border-l-4 border-indigo-500">
+      <div class="flex items-center gap-2 mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="text-sm font-semibold">Comment fonctionnent les commissions</div>
+      </div>
+      <div class="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+        <p>Vous gagnez des commissions sur chaque directeur inscrit avec votre code promo :</p>
+        <ul class="list-disc list-inside space-y-1 ml-2">
+          <li><strong>2,000 GDS</strong> par directeur inscrit</li>
+          <li><strong>200 GDS</strong> par agent de chaque directeur</li>
+          <li>Les commissions sont valables pendant <strong>6 mois</strong> après l'inscription</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Referrals List -->
+    <section class="gaboom-card p-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-sm font-semibold">Liste des filleuls</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          {{ total_referrals }} total
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        {% if referrals %}
+          {% for ref in referrals %}
+            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold">
+                  {{ ref.username|first|upper }}
+                </div>
+                <div>
+                  <div class="font-medium">{{ ref.username }}</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400">
+                    Inscrit le {{ ref.created_at|date:"d/m/Y" }}
+                  </div>
+                  <div class="text-xs mt-1">
+                    {% if ref.has_borlette %}
+                      <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Actif
+                      </span>
+                      {% if ref.agents_count > 0 %}
+                        <span class="text-slate-500 dark:text-slate-400">• {{ ref.agents_count }} agent{{ ref.agents_count|pluralize }}</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="text-amber-500">En attente d'activation</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                  +{{ ref.commission|floatformat:2 }} GDS
+                </div>
+                <div class="text-xs">
+                  {% if ref.is_valid %}
+                    <span class="text-indigo-500">
+                      {{ ref.months_remaining }} mois restants
+                    </span>
+                  {% else %}
+                    <span class="text-slate-400">Bonus expiré</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <p class="text-sm">Aucun filleul pour le moment</p>
+            <p class="text-xs mt-1">Partagez votre code promo pour commencer à gagner !</p>
+            <a href="{% url 'affiliate:dashboard' %}" class="gaboom-btn-primary mt-4 text-sm inline-block">
+              Voir mon code promo
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+  </div>
+</div>
+{% endblock %}

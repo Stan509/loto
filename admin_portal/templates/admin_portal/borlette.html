@@ -1,0 +1,34 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Borlette | Central Borlette{% endblock %}
+{% block page_title %}Borlette{% endblock %}
+{% block page_meta %}Lecture seule{% endblock %}
+
+{% block page_body %}
+  <div class="portal-card">
+    <div class="portal-card__content">
+      {% if portal_borlette %}
+        <div class="ro-grid">
+          <div class="ro-item">
+            <div class="ro-label">Nom</div>
+            <div class="ro-value">{{ portal_borlette.nom_borlette }}</div>
+          </div>
+          <div class="ro-item">
+            <div class="ro-label">Téléphone</div>
+            <div class="ro-value">{{ portal_borlette.telephone }}</div>
+          </div>
+          <div class="ro-item">
+            <div class="ro-label">Adresse</div>
+            <div class="ro-value">{{ portal_borlette.adresse }}</div>
+          </div>
+          <div class="ro-item">
+            <div class="ro-label">Site web</div>
+            <div class="ro-value">{% if portal_borlette.site_web %}{{ portal_borlette.site_web }}{% else %}—{% endif %}</div>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty">Aucune borlette associée à ce compte.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

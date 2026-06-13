@@ -1,0 +1,36 @@
+{% extends 'agent_portal/base_agent.html' %}
+
+{% block content %}
+  <section class="card">
+    <div class="card-title">Score agent</div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Tickets vendus</div>
+        <div class="kpi-value">{{ summary.tickets_vendus }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Mises cumulées</div>
+        <div class="kpi-value">{{ summary.mises_cumulees }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Gains cumulés</div>
+        <div class="kpi-value">{{ summary.gains_cumules }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Pertes</div>
+        <div class="kpi-value">{{ summary.pertes }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Bénéfices</div>
+        <div class="kpi-value">{{ summary.benefices }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Commission agent</div>
+        <div class="kpi-value">{{ summary.commission_agent }}</div>
+      </div>
+    </div>
+
+    <div class="help">Commission = mises cumulées × % commission agent.</div>
+  </section>
+{% endblock %}

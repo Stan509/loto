@@ -1,0 +1,32 @@
+{% extends 'agent_portal/base_agent.html' %}
+
+{% block content %}
+  <section class="card">
+    <div class="card-title">Résultats des tirages</div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date tirage</th>
+            <th>Nom</th>
+            <th>Type</th>
+            <th>Résultat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tirages %}
+            <tr>
+              <td>{{ t.date_resultat|default:'—' }}</td>
+              <td>{{ t.nom }}</td>
+              <td>{{ t.type }}</td>
+              <td class="mono">{{ t.resultat }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="subtle">Aucun résultat publié</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}
