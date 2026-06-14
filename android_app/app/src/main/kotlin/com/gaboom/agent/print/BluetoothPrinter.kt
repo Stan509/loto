@@ -43,7 +43,11 @@ class BluetoothPrinter(private val context: Context) {
      * Vérifie si Bluetooth est disponible et activé
      */
     fun isBluetoothAvailable(): Boolean {
-        return bluetoothAdapter?.isEnabled == true
+        return try {
+            bluetoothAdapter?.isEnabled == true
+        } catch (e: Throwable) {
+            false
+        }
     }
 
     /**
@@ -66,7 +70,11 @@ class BluetoothPrinter(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun getPairedDevices(): List<BluetoothDevice> {
         if (!hasBluetoothPermission()) return emptyList()
-        return bluetoothAdapter?.bondedDevices?.toList() ?: emptyList()
+        return try {
+            bluetoothAdapter?.bondedDevices?.toList() ?: emptyList()
+        } catch (e: Throwable) {
+            emptyList()
+        }
     }
 
     /**
@@ -75,14 +83,18 @@ class BluetoothPrinter(private val context: Context) {
      */
     @SuppressLint("MissingPermission")
     fun getPairedPrinters(): List<BluetoothDevice> {
-        return getPairedDevices().filter { device ->
-            val name = try { device.name } catch (e: SecurityException) { null }?.lowercase() ?: ""
-            name.contains("printer") ||
-            name.contains("pos") ||
-            name.contains("thermal") ||
-            name.contains("print") ||
-            name.contains("58") ||
-            name.contains("80")
+        return try {
+            getPairedDevices().filter { device ->
+                val name = try { device.name } catch (e: Throwable) { null }?.lowercase() ?: ""
+                name.contains("printer") ||
+                name.contains("pos") ||
+                name.contains("thermal") ||
+                name.contains("print") ||
+                name.contains("58") ||
+                name.contains("80")
+            }
+        } catch (e: Throwable) {
+            emptyList()
         }
     }
 
@@ -91,7 +103,7 @@ class BluetoothPrinter(private val context: Context) {
      */
     @SuppressLint("MissingPermission")
     suspend fun connect(device: BluetoothDevice): Result<Unit> = withContext(Dispatchers.IO) {
-        val deviceName = try { device.name } catch (e: SecurityException) { null } ?: "Imprimante"
+        val deviceName = try { device.name } catch (e: Throwable) { null } ?: "Imprimante"
         try {
             // Fermer connexion existante
             disconnect()
@@ -103,7 +115,7 @@ class BluetoothPrinter(private val context: Context) {
             socket?.connect()
 
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Tentative de fallback par réflexion (port 1)
             try {
                 disconnect()
@@ -111,7 +123,7 @@ class BluetoothPrinter(private val context: Context) {
                 socket = method.invoke(device, 1) as? BluetoothSocket
                 socket?.connect()
                 Result.success(Unit)
-            } catch (fallbackEx: Exception) {
+            } catch (fallbackEx: Throwable) {
                 val errorMsg = fallbackEx.message ?: e.message ?: "Échec de connexion"
                 Result.failure(Exception("Impossible de se connecter à $deviceName: $errorMsg"))
             }
@@ -124,7 +136,7 @@ class BluetoothPrinter(private val context: Context) {
     fun disconnect() {
         try {
             socket?.close()
-        } catch (e: IOException) {
+        } catch (e: Throwable) {
             // Ignorer
         }
         socket = null
@@ -134,21 +146,25 @@ class BluetoothPrinter(private val context: Context) {
      * Vérifie si connecté
      */
     fun isConnected(): Boolean {
-        return socket?.isConnected == true
+        return try {
+            socket?.isConnected == true
+        } catch (e: Throwable) {
+            false
+        }
     }
 
     /**
      * Imprime des données brutes ESC/POS
      */
     suspend fun print(data: ByteArray): Result<Unit> = withContext(Dispatchers.IO) {
-        val outputStream = socket?.outputStream
+        val outputStream = try { socket?.outputStream } catch (e: Throwable) { null }
             ?: return@withContext Result.failure(Exception("Non connecté à une imprimante"))
 
         try {
             outputStream.write(data)
             outputStream.flush()
             Result.success(Unit)
-        } catch (e: IOException) {
+        } catch (e: Throwable) {
             Result.failure(Exception("Erreur d'impression: ${e.message}"))
         }
     }
@@ -167,7 +183,7 @@ class BluetoothPrinter(private val context: Context) {
             val bitmap = BitmapFactory.decodeStream(connection.inputStream)
             connection.disconnect()
             bitmap
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }

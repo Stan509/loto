@@ -236,21 +236,27 @@ class SettingsViewModel @Inject constructor(
 
     fun refreshPrinters() {
         viewModelScope.launch {
-            if (printer.hasBluetoothPermission()) {
-                val list = printer.getPairedPrinters()
-                val activeDevName = if (printer.isConnected()) {
-                    val dev = list.firstOrNull()
-                    try { dev?.name } catch (e: SecurityException) { null } ?: "Imprimante Bluetooth"
-                } else null
+            try {
+                if (printer.hasBluetoothPermission()) {
+                    val list = printer.getPairedPrinters()
+                    val activeDevName = if (printer.isConnected()) {
+                        val dev = list.firstOrNull()
+                        try { dev?.name } catch (e: Throwable) { null } ?: "Imprimante Bluetooth"
+                    } else null
+                    _uiState.value = _uiState.value.copy(
+                        printers = list,
+                        isConnected = printer.isConnected(),
+                        connectedDeviceName = activeDevName,
+                        printerError = null
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        printerError = "Permission Bluetooth requise pour scanner"
+                    )
+                }
+            } catch (e: Throwable) {
                 _uiState.value = _uiState.value.copy(
-                    printers = list,
-                    isConnected = printer.isConnected(),
-                    connectedDeviceName = activeDevName,
-                    printerError = null
-                )
-            } else {
-                _uiState.value = _uiState.value.copy(
-                    printerError = "Permission Bluetooth requise pour scanner"
+                    printerError = "Erreur de rafraîchissement: ${e.message}"
                 )
             }
         }
@@ -258,27 +264,39 @@ class SettingsViewModel @Inject constructor(
 
     fun connectPrinter(device: BluetoothDevice) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isConnecting = true, printerError = null)
-            val result = printer.connect(device)
-            if (result.isSuccess) {
-                val devName = try { device.name } catch (e: SecurityException) { null } ?: "Imprimante Bluetooth"
-                _uiState.value = _uiState.value.copy(
-                    isConnecting = false,
-                    isConnected = true,
-                    connectedDeviceName = devName
-                )
-            } else {
+            try {
+                _uiState.value = _uiState.value.copy(isConnecting = true, printerError = null)
+                val result = printer.connect(device)
+                if (result.isSuccess) {
+                    val devName = try { device.name } catch (e: Throwable) { null } ?: "Imprimante Bluetooth"
+                    _uiState.value = _uiState.value.copy(
+                        isConnecting = false,
+                        isConnected = true,
+                        connectedDeviceName = devName
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isConnecting = false,
+                        isConnected = false,
+                        printerError = result.exceptionOrNull()?.message ?: "Erreur de connexion"
+                    )
+                }
+            } catch (e: Throwable) {
                 _uiState.value = _uiState.value.copy(
                     isConnecting = false,
                     isConnected = false,
-                    printerError = result.exceptionOrNull()?.message ?: "Erreur de connexion"
+                    printerError = "Crash évité: ${e.message}"
                 )
             }
         }
     }
 
     fun disconnectPrinter() {
-        printer.disconnect()
+        try {
+            printer.disconnect()
+        } catch (e: Throwable) {
+            // Ignorer
+        }
         _uiState.value = _uiState.value.copy(
             isConnected = false,
             connectedDeviceName = null,
@@ -288,10 +306,16 @@ class SettingsViewModel @Inject constructor(
 
     fun printTest() {
         viewModelScope.launch {
-            val result = printer.printTest()
-            if (result.isFailure) {
+            try {
+                val result = printer.printTest()
+                if (result.isFailure) {
+                    _uiState.value = _uiState.value.copy(
+                        printerError = result.exceptionOrNull()?.message ?: "Échec de l'impression test"
+                    )
+                }
+            } catch (e: Throwable) {
                 _uiState.value = _uiState.value.copy(
-                    printerError = result.exceptionOrNull()?.message ?: "Échec de l'impression test"
+                    printerError = "Erreur d'impression test: ${e.message}"
                 )
             }
         }

@@ -355,7 +355,7 @@ fun SettingsScreen(
                     } else {
                         uiState.printers.forEach { device ->
                             @SuppressLint("MissingPermission")
-                            val name = device.name ?: "Appareil sans nom"
+                            val name = try { device.name } catch (e: Throwable) { null } ?: "Appareil sans nom"
                             val address = device.address
 
                             Row(
