@@ -238,10 +238,14 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             if (printer.hasBluetoothPermission()) {
                 val list = printer.getPairedPrinters()
+                val activeDevName = if (printer.isConnected()) {
+                    val dev = list.firstOrNull()
+                    try { dev?.name } catch (e: SecurityException) { null } ?: "Imprimante Bluetooth"
+                } else null
                 _uiState.value = _uiState.value.copy(
                     printers = list,
                     isConnected = printer.isConnected(),
-                    connectedDeviceName = if (printer.isConnected()) printer.getPairedPrinters().firstOrNull()?.name else null,
+                    connectedDeviceName = activeDevName,
                     printerError = null
                 )
             } else {
@@ -257,10 +261,11 @@ class SettingsViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isConnecting = true, printerError = null)
             val result = printer.connect(device)
             if (result.isSuccess) {
+                val devName = try { device.name } catch (e: SecurityException) { null } ?: "Imprimante Bluetooth"
                 _uiState.value = _uiState.value.copy(
                     isConnecting = false,
                     isConnected = true,
-                    connectedDeviceName = device.name
+                    connectedDeviceName = devName
                 )
             } else {
                 _uiState.value = _uiState.value.copy(

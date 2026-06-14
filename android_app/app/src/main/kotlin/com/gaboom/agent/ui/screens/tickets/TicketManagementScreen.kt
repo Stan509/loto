@@ -53,6 +53,7 @@ fun TicketManagementScreen(
     
     var showDatePicker by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf<TicketListItem?>(null) }
+    var isSharingLoading by remember { mutableStateOf(false) }
     var showTirageDropdown by remember { mutableStateOf(false) }
     var showStatusDropdown by remember { mutableStateOf(false) }
     var confirmPayTicket by remember { mutableStateOf<TicketListItem?>(null) }
@@ -463,52 +464,143 @@ fun TicketManagementScreen(
     // Share Dialog
     showShareDialog?.let { ticket ->
         AlertDialog(
-            onDismissRequest = { showShareDialog = null },
+            onDismissRequest = {
+                if (!isSharingLoading) {
+                    showShareDialog = null
+                }
+            },
             title = { Text("Partager le ticket") },
             text = {
-                Column {
-                    Text("Ticket: ${ticket.numero}")
-                    Text("Tirage: ${ticket.tirageNom}")
-                    Text("Mise: ${ticket.totalMise.toInt()} HTG")
-                    if (ticket.isWinner) {
-                        Text("Gain: ${ticket.totalGainDu.toInt()} HTG", color = Color(0xFF10B981))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isSharingLoading) {
+                        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                        Text("Récupération des détails...", fontSize = 14.sp, color = Color.Gray)
+                    } else {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text("Ticket: ${ticket.numero}")
+                            Text("Tirage: ${ticket.tirageNom}")
+                            Text("Mise: ${ticket.totalMise.toInt()} HTG")
+                            if (ticket.isWinner) {
+                                Text("Gain: ${ticket.totalGainDu.toInt()} HTG", color = Color(0xFF10B981))
+                            }
+                        }
                     }
                 }
             },
             confirmButton = {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = {
-                        val shareData = TicketShareUtil.TicketShareData(
-                            ticketNo = ticket.numero,
-                            tirageNom = ticket.tirageNom,
-                            date = ticket.createdAt.take(10),
-                            lines = emptyList(),
-                            totalMise = ticket.totalMise,
-                            totalGainDu = ticket.totalGainDu,
-                            isWinner = ticket.isWinner,
-                            qrCode = ticket.groupId
-                        )
-                        TicketShareUtil.shareAsText(context, shareData)
-                        showShareDialog = null
-                    }) {
+                    TextButton(
+                        enabled = !isSharingLoading,
+                        onClick = {
+                            scope.launch {
+                                isSharingLoading = true
+                                try {
+                                    val printData = viewModel.getTicketPrintData(ticket.id)
+                                    if (printData != null) {
+                                        val parsedLines = printData.lines.map { lineStr ->
+                                            val tokens = lineStr.split("\\s+".toRegex()).filter { it.isNotBlank() }
+                                            val jeuRaw = tokens.getOrElse(0) { "" }
+                                            val valeur = tokens.getOrElse(1) { "" }
+                                            val mise = tokens.getOrElse(2) { "0" }.replace("[^\\d\\.]".toRegex(), "").toDoubleOrNull() ?: 0.0
+                                            val optionParts = jeuRaw.split("-")
+                                            val opt = optionParts.getOrNull(1)
+                                            TicketShareUtil.TicketLineData(
+                                                jeu = optionParts.getOrElse(0) { jeuRaw },
+                                                valeur = valeur,
+                                                mise = mise,
+                                                option = opt
+                                            )
+                                        }
+                                        val shareData = TicketShareUtil.TicketShareData(
+                                            ticketNo = printData.ticketNumber,
+                                            tirageNom = printData.tirages.joinToString(", "),
+                                            date = "${printData.date}  ${printData.time}",
+                                            lines = parsedLines,
+                                            totalMise = printData.totalMise,
+                                            totalGainDu = ticket.totalGainDu,
+                                            isWinner = ticket.isWinner,
+                                            qrCode = printData.groupId ?: ticket.groupId,
+                                            ticketFooterText = printData.ticketFooterText,
+                                            mariageGratuitActif = printData.mariageGratuitActif,
+                                            mariageGratuitMontant = printData.mariageGratuitMontant
+                                        )
+                                        TicketShareUtil.shareAsText(context, shareData)
+                                        showShareDialog = null
+                                    } else {
+                                        snackbarHostState.showSnackbar("Erreur de récupération des données")
+                                    }
+                                } catch (e: Exception) {
+                                    snackbarHostState.showSnackbar("Erreur: ${e.message}")
+                                } finally {
+                                    isSharingLoading = false
+                                }
+                            }
+                        }
+                    ) {
                         Icon(Icons.Default.Message, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Texte")
                     }
-                    TextButton(onClick = {
-                        val shareData = TicketShareUtil.TicketShareData(
-                            ticketNo = ticket.numero,
-                            tirageNom = ticket.tirageNom,
-                            date = ticket.createdAt.take(10),
-                            lines = emptyList(),
-                            totalMise = ticket.totalMise,
-                            totalGainDu = ticket.totalGainDu,
-                            isWinner = ticket.isWinner,
-                            qrCode = ticket.groupId
-                        )
-                        TicketShareUtil.shareAsImage(context, shareData)
-                        showShareDialog = null
-                    }) {
+                    TextButton(
+                        enabled = !isSharingLoading,
+                        onClick = {
+                            scope.launch {
+                                isSharingLoading = true
+                                try {
+                                    val printData = viewModel.getTicketPrintData(ticket.id)
+                                    if (printData != null) {
+                                        val logoBitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            if (printData.borletteLogoUrl.isNotBlank())
+                                                TicketShareUtil.downloadLogo(context, printData.borletteLogoUrl)
+                                            else null
+                                        }
+                                        val parsedLines = printData.lines.map { lineStr ->
+                                            val tokens = lineStr.split("\\s+".toRegex()).filter { it.isNotBlank() }
+                                            val jeuRaw = tokens.getOrElse(0) { "" }
+                                            val valeur = tokens.getOrElse(1) { "" }
+                                            val mise = tokens.getOrElse(2) { "0" }.replace("[^\\d\\.]".toRegex(), "").toDoubleOrNull() ?: 0.0
+                                            val optionParts = jeuRaw.split("-")
+                                            val opt = optionParts.getOrNull(1)
+                                            TicketShareUtil.TicketLineData(
+                                                jeu = optionParts.getOrElse(0) { jeuRaw },
+                                                valeur = valeur,
+                                                mise = mise,
+                                                option = opt
+                                            )
+                                        }
+                                        val shareData = TicketShareUtil.TicketShareData(
+                                            ticketNo = printData.ticketNumber,
+                                            tirageNom = printData.tirages.joinToString(", "),
+                                            date = "${printData.date}  ${printData.time}",
+                                            lines = parsedLines,
+                                            totalMise = printData.totalMise,
+                                            totalGainDu = ticket.totalGainDu,
+                                            isWinner = ticket.isWinner,
+                                            qrCode = printData.groupId ?: ticket.groupId,
+                                            logoBitmap = logoBitmap,
+                                            ticketFooterText = printData.ticketFooterText,
+                                            mariageGratuitActif = printData.mariageGratuitActif,
+                                            mariageGratuitMontant = printData.mariageGratuitMontant
+                                        )
+                                        val bitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            TicketShareUtil.generateTicketImage(context, shareData)
+                                        }
+                                        TicketShareUtil.shareBitmapAsImage(context, bitmap, printData.ticketNumber)
+                                        showShareDialog = null
+                                    } else {
+                                        snackbarHostState.showSnackbar("Erreur de récupération des données")
+                                    }
+                                } catch (e: Exception) {
+                                    snackbarHostState.showSnackbar("Erreur: ${e.message}")
+                                } finally {
+                                    isSharingLoading = false
+                                }
+                            }
+                        }
+                    ) {
                         Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Image")
@@ -516,7 +608,10 @@ fun TicketManagementScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showShareDialog = null }) {
+                TextButton(
+                    enabled = !isSharingLoading,
+                    onClick = { showShareDialog = null }
+                ) {
                     Text("Annuler")
                 }
             }

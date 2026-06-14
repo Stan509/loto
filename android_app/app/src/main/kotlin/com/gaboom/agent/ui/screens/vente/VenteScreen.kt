@@ -1058,11 +1058,7 @@ fun VenteScreen(
             // Row 2: Create/Print Button
             Button(
                 onClick = {
-                    if (uiState.multiTirageMode) {
-                        viewModel.createMultiTickets()
-                    } else if (tirageId != null) {
-                        viewModel.createTicket(tirageId)
-                    }
+                    showPrintPreview = true
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 enabled = uiState.lines.isNotEmpty() 
@@ -1299,8 +1295,22 @@ fun VenteScreen(
                 }
             },
             confirmButton = {
-                Button(onClick = { showPrintPreview = false }) {
-                    Text("Fermer")
+                Button(
+                    onClick = {
+                        if (uiState.multiTirageMode) {
+                            viewModel.createMultiTickets()
+                        } else if (tirageId != null) {
+                            viewModel.createTicket(tirageId)
+                        }
+                        showPrintPreview = false
+                    }
+                ) {
+                    Text("Confirmer & Imprimer")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPrintPreview = false }) {
+                    Text("Annuler")
                 }
             }
         )

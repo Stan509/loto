@@ -365,6 +365,10 @@
             <div class="tile__label">Slogan</div>
             <div class="tile__value">{% if portal_borlette.slogan %}{{ portal_borlette.slogan }}{% else %}<span class="tile__value--muted">—</span>{% endif %}</div>
           </div>
+          <div class="tile tile--full" style="margin-top: 15px;">
+            <div class="tile__label">Texte de pied de page</div>
+            <div class="tile__value" style="font-size: 0.9em; line-height: 1.4; white-space: pre-line;">{% if portal_borlette.ticket_footer_text %}{{ portal_borlette.ticket_footer_text }}{% else %}<span class="tile__value--muted">—</span>{% endif %}</div>
+          </div>
         </div>
       </div>
     </article>

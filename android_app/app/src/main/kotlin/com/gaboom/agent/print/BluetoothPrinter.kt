@@ -76,7 +76,7 @@ class BluetoothPrinter(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun getPairedPrinters(): List<BluetoothDevice> {
         return getPairedDevices().filter { device ->
-            val name = device.name?.lowercase() ?: ""
+            val name = try { device.name } catch (e: SecurityException) { null }?.lowercase() ?: ""
             name.contains("printer") ||
             name.contains("pos") ||
             name.contains("thermal") ||
@@ -91,21 +91,30 @@ class BluetoothPrinter(private val context: Context) {
      */
     @SuppressLint("MissingPermission")
     suspend fun connect(device: BluetoothDevice): Result<Unit> = withContext(Dispatchers.IO) {
+        val deviceName = try { device.name } catch (e: SecurityException) { null } ?: "Imprimante"
         try {
             // Fermer connexion existante
             disconnect()
 
-            // Créer socket
+            // Créer socket standard
             socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
 
             // Connecter
             socket?.connect()
 
             Result.success(Unit)
-        } catch (e: IOException) {
-            Result.failure(Exception("Impossible de se connecter à ${device.name}: ${e.message}"))
-        } catch (e: SecurityException) {
-            Result.failure(Exception("Permission Bluetooth refusée"))
+        } catch (e: Exception) {
+            // Tentative de fallback par réflexion (port 1)
+            try {
+                disconnect()
+                val method = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+                socket = method.invoke(device, 1) as? BluetoothSocket
+                socket?.connect()
+                Result.success(Unit)
+            } catch (fallbackEx: Exception) {
+                val errorMsg = fallbackEx.message ?: e.message ?: "Échec de connexion"
+                Result.failure(Exception("Impossible de se connecter à $deviceName: $errorMsg"))
+            }
         }
     }
 

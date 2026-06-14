@@ -363,4 +363,17 @@ class TicketManagementViewModel @Inject constructor(
     fun clearGroupResults() {
         _uiState.value = _uiState.value.copy(groupTickets = emptyList())
     }
+
+    suspend fun getTicketPrintData(ticketId: String): com.gaboom.agent.data.model.PrintData? {
+        return try {
+            val response = apiService.getTicketPrint(ticketId)
+            if (response.isSuccessful && response.body()?.success == true) {
+                response.body()?.printData
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
