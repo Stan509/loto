@@ -412,7 +412,7 @@ object TicketShareUtil {
                 .build()
             val result = loader.execute(request)
             (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }
@@ -421,101 +421,121 @@ object TicketShareUtil {
      * Partage un bitmap existant (ne le regénère pas)
      */
     fun shareBitmapAsImage(context: Context, bitmap: Bitmap, ticketNo: String) {
-        val cachePath = File(context.cacheDir, "shared_tickets")
-        cachePath.mkdirs()
-        val file = File(cachePath, "ticket_${ticketNo.replace("-", "_")}.png")
+        try {
+            val cachePath = File(context.cacheDir, "shared_tickets")
+            cachePath.mkdirs()
+            val file = File(cachePath, "ticket_${ticketNo.replace("-", "_")}.png")
 
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(intent, "Partager le ticket").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Throwable) {
+            // Silently fail to avoid crashing the app
         }
-
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/png"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        context.startActivity(Intent.createChooser(intent, "Partager le ticket"))
     }
 
     /**
      * Partage le ticket en texte via Intent
      */
     fun shareAsText(context: Context, data: TicketShareData) {
-        val text = generateTicketText(data)
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, text)
-            putExtra(Intent.EXTRA_SUBJECT, "Ticket ${data.ticketNo}")
+        try {
+            val text = generateTicketText(data)
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, text)
+                putExtra(Intent.EXTRA_SUBJECT, "Ticket ${data.ticketNo}")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(intent, "Partager le ticket").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Throwable) {
+            // Silently fail to avoid crashing the app
         }
-        context.startActivity(Intent.createChooser(intent, "Partager le ticket"))
     }
 
     /**
      * Partage le ticket en image via Intent
      */
     fun shareAsImage(context: Context, data: TicketShareData) {
-        val bitmap = generateTicketImage(context, data)
-        
-        // Save bitmap to cache
-        val cachePath = File(context.cacheDir, "shared_tickets")
-        cachePath.mkdirs()
-        val file = File(cachePath, "ticket_${data.ticketNo.replace("-", "_")}.png")
-        
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        try {
+            val bitmap = generateTicketImage(context, data)
+            
+            // Save bitmap to cache
+            val cachePath = File(context.cacheDir, "shared_tickets")
+            cachePath.mkdirs()
+            val file = File(cachePath, "ticket_${data.ticketNo.replace("-", "_")}.png")
+            
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+            
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(intent, "Partager le ticket").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Throwable) {
+            // Silently fail
         }
-        
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-        
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "image/png"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        context.startActivity(Intent.createChooser(intent, "Partager le ticket"))
     }
 
     /**
      * Sauvegarde le ticket en PDF et lance le partage
      */
     fun saveAsPdf(context: Context, bitmap: Bitmap, ticketNo: String) {
-        val pdfDocument = android.graphics.pdf.PdfDocument()
-        val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
-        val page = pdfDocument.startPage(pageInfo)
-        page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-        pdfDocument.finishPage(page)
+        try {
+            val pdfDocument = android.graphics.pdf.PdfDocument()
+            val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+            val page = pdfDocument.startPage(pageInfo)
+            page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+            pdfDocument.finishPage(page)
 
-        val cachePath = File(context.cacheDir, "shared_tickets")
-        cachePath.mkdirs()
-        val file = File(cachePath, "ticket_${ticketNo.replace("-", "_")}.pdf")
+            val cachePath = File(context.cacheDir, "shared_tickets")
+            cachePath.mkdirs()
+            val file = File(cachePath, "ticket_${ticketNo.replace("-", "_")}.pdf")
 
-        FileOutputStream(file).use { out ->
-            pdfDocument.writeTo(out)
+            FileOutputStream(file).use { out ->
+                pdfDocument.writeTo(out)
+            }
+            pdfDocument.close()
+
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(intent, "Partager le ticket PDF").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Throwable) {
+            // Silently fail
         }
-        pdfDocument.close()
-
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        context.startActivity(Intent.createChooser(intent, "Partager le ticket PDF"))
     }
 
     /**

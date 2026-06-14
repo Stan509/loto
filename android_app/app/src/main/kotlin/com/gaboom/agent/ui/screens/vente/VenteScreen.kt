@@ -1503,7 +1503,9 @@ fun VenteScreen(
                         // Share as Text (immediate, no bitmap)
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             IconButton(onClick = {
-                                TicketShareUtil.shareAsText(context, buildShareData())
+                                try {
+                                    TicketShareUtil.shareAsText(context, buildShareData())
+                                } catch (_: Throwable) {}
                             }) {
                                 Icon(Icons.Default.Message, contentDescription = "Partager Texte", tint = Color(0xFFF57C00))
                             }

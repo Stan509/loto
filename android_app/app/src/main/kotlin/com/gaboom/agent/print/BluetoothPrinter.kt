@@ -30,11 +30,19 @@ class BluetoothPrinter(private val context: Context) {
     }
 
     private val bluetoothManager: BluetoothManager? by lazy {
-        context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        try {
+            context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        } catch (e: Throwable) {
+            null
+        }
     }
 
     private val bluetoothAdapter: BluetoothAdapter? by lazy {
-        bluetoothManager?.adapter
+        try {
+            bluetoothManager?.adapter
+        } catch (e: Throwable) {
+            null
+        }
     }
 
     private var socket: BluetoothSocket? = null
@@ -54,13 +62,17 @@ class BluetoothPrinter(private val context: Context) {
      * Vérifie les permissions Bluetooth
      */
     fun hasBluetoothPermission(): Boolean {
-        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.BLUETOOTH_CONNECT
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true
+        return try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+        } catch (e: Throwable) {
+            false
         }
     }
 
@@ -79,20 +91,40 @@ class BluetoothPrinter(private val context: Context) {
 
     /**
      * Filtre les imprimantes parmi les appareils appairés
-     * (heuristique basée sur le nom)
+     * (heuristique basée sur le nom, mais retourne TOUS les appareils si le filtre est vide)
      */
     @SuppressLint("MissingPermission")
     fun getPairedPrinters(): List<BluetoothDevice> {
         return try {
-            getPairedDevices().filter { device ->
+            val allDevices = getPairedDevices()
+            val filtered = allDevices.filter { device ->
                 val name = try { device.name } catch (e: Throwable) { null }?.lowercase() ?: ""
                 name.contains("printer") ||
                 name.contains("pos") ||
                 name.contains("thermal") ||
                 name.contains("print") ||
                 name.contains("58") ||
-                name.contains("80")
+                name.contains("80") ||
+                name.contains("sunmi") ||
+                name.contains("telpo") ||
+                name.contains("imin") ||
+                name.contains("bt") ||
+                name.contains("receipt") ||
+                name.contains("label") ||
+                name.contains("ts-") ||
+                name.contains("mtp-") ||
+                name.contains("rpp") ||
+                name.contains("spp") ||
+                name.contains("zj-") ||
+                name.contains("inner") ||
+                name.contains("gprinter") ||
+                name.contains("xprinter") ||
+                name.contains("star") ||
+                name.contains("epson")
             }
+            // Si le filtre ne trouve rien, retourner tous les appareils pour permettre à
+            // l'utilisateur de choisir manuellement
+            filtered.ifEmpty { allDevices }
         } catch (e: Throwable) {
             emptyList()
         }
@@ -108,6 +140,11 @@ class BluetoothPrinter(private val context: Context) {
             // Fermer connexion existante
             disconnect()
 
+            // Annuler la découverte Bluetooth en cours (obligatoire avant connect())
+            try {
+                bluetoothAdapter?.cancelDiscovery()
+            } catch (_: Throwable) {}
+
             // Créer socket standard
             socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
 
@@ -119,13 +156,25 @@ class BluetoothPrinter(private val context: Context) {
             // Tentative de fallback par réflexion (port 1)
             try {
                 disconnect()
+                try {
+                    bluetoothAdapter?.cancelDiscovery()
+                } catch (_: Throwable) {}
                 val method = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
                 socket = method.invoke(device, 1) as? BluetoothSocket
                 socket?.connect()
                 Result.success(Unit)
             } catch (fallbackEx: Throwable) {
-                val errorMsg = fallbackEx.message ?: e.message ?: "Échec de connexion"
-                Result.failure(Exception("Impossible de se connecter à $deviceName: $errorMsg"))
+                // Tentative fallback port 2
+                try {
+                    disconnect()
+                    val method2 = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+                    socket = method2.invoke(device, 2) as? BluetoothSocket
+                    socket?.connect()
+                    Result.success(Unit)
+                } catch (ex3: Throwable) {
+                    val errorMsg = ex3.message ?: fallbackEx.message ?: e.message ?: "Échec de connexion"
+                    Result.failure(Exception("Impossible de se connecter à $deviceName: $errorMsg"))
+                }
             }
         }
     }
@@ -193,49 +242,61 @@ class BluetoothPrinter(private val context: Context) {
      */
     @SuppressLint("MissingPermission")
     suspend fun connectToFirstPrinter(): Result<Unit> {
-        val printers = getPairedPrinters()
-        if (printers.isEmpty()) {
-            return Result.failure(Exception("Aucune imprimante Bluetooth appairée trouvée dans l'appareil"))
-        }
-        var lastError: Exception? = null
-        for (device in printers) {
-            val result = connect(device)
-            if (result.isSuccess) {
-                return Result.success(Unit)
-            } else {
-                lastError = result.exceptionOrNull() as? Exception
+        return try {
+            val printers = getPairedPrinters()
+            if (printers.isEmpty()) {
+                return Result.failure(Exception("Aucune imprimante Bluetooth appairée trouvée dans l'appareil"))
             }
+            var lastError: Exception? = null
+            for (device in printers) {
+                val result = connect(device)
+                if (result.isSuccess) {
+                    return Result.success(Unit)
+                } else {
+                    lastError = result.exceptionOrNull() as? Exception
+                }
+            }
+            Result.failure(lastError ?: Exception("Échec de la connexion à l'imprimante"))
+        } catch (e: Throwable) {
+            Result.failure(Exception("Erreur lors de la connexion automatique: ${e.message}"))
         }
-        return Result.failure(lastError ?: Exception("Échec de la connexion à l'imprimante"))
     }
 
     /**
      * Imprime un ticket complet (télécharge le logo si disponible)
      */
     suspend fun printTicket(printData: com.gaboom.agent.data.model.PrintData): Result<Unit> {
-        if (!isConnected()) {
-            val connResult = connectToFirstPrinter()
-            if (connResult.isFailure) {
-                return connResult
+        return try {
+            if (!isConnected()) {
+                val connResult = connectToFirstPrinter()
+                if (connResult.isFailure) {
+                    return connResult
+                }
             }
+            val logoBitmap = downloadLogoBitmap(printData.borletteLogoUrl)
+            val escPosData = EscPosBuilder.buildTicket(printData, logoBitmap)
+            print(escPosData)
+        } catch (e: Throwable) {
+            Result.failure(Exception("Erreur d'impression: ${e.message}"))
         }
-        val logoBitmap = downloadLogoBitmap(printData.borletteLogoUrl)
-        val escPosData = EscPosBuilder.buildTicket(printData, logoBitmap)
-        return print(escPosData)
     }
 
     /**
      * Imprime un ticket de test
      */
     suspend fun printTest(): Result<Unit> {
-        if (!isConnected()) {
-            val connResult = connectToFirstPrinter()
-            if (connResult.isFailure) {
-                return connResult
+        return try {
+            if (!isConnected()) {
+                val connResult = connectToFirstPrinter()
+                if (connResult.isFailure) {
+                    return connResult
+                }
             }
+            val testData = EscPosBuilder.buildTestTicket()
+            print(testData)
+        } catch (e: Throwable) {
+            Result.failure(Exception("Erreur d'impression test: ${e.message}"))
         }
-        val testData = EscPosBuilder.buildTestTicket()
-        return print(testData)
     }
 }
 

@@ -530,10 +530,10 @@ fun TicketManagementScreen(
                                         TicketShareUtil.shareAsText(context, shareData)
                                         showShareDialog = null
                                     } else {
-                                        snackbarHostState.showSnackbar("Erreur de récupération des données")
+                                        scope.launch { snackbarHostState.showSnackbar("Erreur de récupération des données") }
                                     }
-                                } catch (e: Exception) {
-                                    snackbarHostState.showSnackbar("Erreur: ${e.message}")
+                                } catch (e: Throwable) {
+                                    scope.launch { snackbarHostState.showSnackbar("Erreur partage texte: ${e.message}") }
                                 } finally {
                                     isSharingLoading = false
                                 }
@@ -553,9 +553,11 @@ fun TicketManagementScreen(
                                     val printData = viewModel.getTicketPrintData(ticket.id)
                                     if (printData != null) {
                                         val logoBitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                            if (printData.borletteLogoUrl.isNotBlank())
-                                                TicketShareUtil.downloadLogo(context, printData.borletteLogoUrl)
-                                            else null
+                                            try {
+                                                if (printData.borletteLogoUrl.isNotBlank())
+                                                    TicketShareUtil.downloadLogo(context, printData.borletteLogoUrl)
+                                                else null
+                                            } catch (_: Throwable) { null }
                                         }
                                         val parsedLines = printData.lines.map { lineStr ->
                                             val tokens = lineStr.split("\\s+".toRegex()).filter { it.isNotBlank() }
@@ -591,10 +593,10 @@ fun TicketManagementScreen(
                                         TicketShareUtil.shareBitmapAsImage(context, bitmap, printData.ticketNumber)
                                         showShareDialog = null
                                     } else {
-                                        snackbarHostState.showSnackbar("Erreur de récupération des données")
+                                        scope.launch { snackbarHostState.showSnackbar("Erreur de récupération des données") }
                                     }
-                                } catch (e: Exception) {
-                                    snackbarHostState.showSnackbar("Erreur: ${e.message}")
+                                } catch (e: Throwable) {
+                                    scope.launch { snackbarHostState.showSnackbar("Erreur partage image: ${e.message}") }
                                 } finally {
                                     isSharingLoading = false
                                 }
