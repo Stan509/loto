@@ -1104,165 +1104,198 @@ fun VenteScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFFFFBE6), RoundedCornerShape(8.dp))
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .navigationBarsPadding()
                 ) {
-                    // Logo
-                    if (uiState.borletteLogoUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = uiState.borletteLogoUrl,
-                            contentDescription = "Logo",
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
-                    
-                    // Header - Borlette Info
-                    Text(
-                        uiState.borletteName.ifEmpty { "GABOOM BORLETTE" },
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                    if (uiState.borletteSlogan.isNotBlank()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 350.dp)
+                            .background(Color(0xFFFFFBE6), RoundedCornerShape(8.dp))
+                            .verticalScroll(rememberScrollState())
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Logo
+                        if (uiState.borletteLogoUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = uiState.borletteLogoUrl,
+                                contentDescription = "Logo",
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        
+                        // Header - Borlette Info
                         Text(
-                            uiState.borletteSlogan,
-                            fontSize = 11.sp,
+                            uiState.borletteName.ifEmpty { "GABOOM BORLETTE" },
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
                             modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
+                            textAlign = TextAlign.Center
+                        )
+                        if (uiState.borletteSlogan.isNotBlank()) {
+                            Text(
+                                uiState.borletteSlogan,
+                                fontSize = 11.sp,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                color = Color.Gray
+                            )
+                        }
+                        if (uiState.borletteAdresse.isNotBlank()) {
+                            Text(
+                                uiState.borletteAdresse,
+                                fontSize = 10.sp,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        if (uiState.borletteTel.isNotBlank()) {
+                            Text(
+                                "Tel: ${uiState.borletteTel}",
+                                fontSize = 11.sp,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // QR Code placeholder (group_id sera généré à la création)
+                        val previewQrContent = remember { "GABOOM-PREVIEW-${System.currentTimeMillis()}" }
+                        QrCodeImage(
+                            content = previewQrContent,
+                            size = 80.dp
+                        )
+                        Text(
+                            "QR Code Groupe",
+                            fontSize = 9.sp,
                             color = Color.Gray
                         )
-                    }
-                    if (uiState.borletteAdresse.isNotBlank()) {
-                        Text(
-                            uiState.borletteAdresse,
-                            fontSize = 10.sp,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    if (uiState.borletteTel.isNotBlank()) {
-                        Text(
-                            "Tel: ${uiState.borletteTel}",
-                            fontSize = 11.sp,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // QR Code placeholder (group_id sera généré à la création)
-                    val previewQrContent = remember { "GABOOM-PREVIEW-${System.currentTimeMillis()}" }
-                    QrCodeImage(
-                        content = previewQrContent,
-                        size = 80.dp
-                    )
-                    Text(
-                        "QR Code Groupe",
-                        fontSize = 9.sp,
-                        color = Color.Gray
-                    )
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text(
-                        "--------------------------------",
-                        fontSize = 10.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    // Ticket info
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("Ticket: #PREVIEW", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text("Date: ${java.time.LocalDate.now()}  ${java.time.LocalTime.now().toString().take(5)}", fontSize = 11.sp)
-                        if (uiState.agentName.isNotBlank()) {
-                            Text("Agent: ${uiState.agentName}", fontSize = 11.sp)
-                        }
-                        Text("Tirage(s): ${tiragesNames.joinToString(", ")}", fontSize = 11.sp)
-                    }
-                    
-                    Text(
-                        "--------------------------------",
-                        fontSize = 10.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
-                    
-                    // Lines header
-                    Text(
-                        "JEU      NUMERO    MISE",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
-                    
-                    // Lines
-                    uiState.lines.forEach { line ->
-                        val isLoto = line.jeu.lowercase() in listOf("loto4", "loto5")
-                        val optNum = if (isLoto && line.options.isNotEmpty()) line.options.first() else null
-                        val jeuDisplay = if (optNum != null) "${line.jeu.uppercase()}-$optNum" else line.jeu.uppercase()
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
                         
                         Text(
-                            String.format("%-8s %-9s %6.0f", jeuDisplay, line.valeur, line.miseBase),
+                            "--------------------------------",
+                            fontSize = 10.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        
+                        // Ticket info
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text("Ticket: #PREVIEW", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("Date: ${java.time.LocalDate.now()}  ${java.time.LocalTime.now().toString().take(5)}", fontSize = 11.sp)
+                            if (uiState.agentName.isNotBlank()) {
+                                Text("Agent: ${uiState.agentName}", fontSize = 11.sp)
+                            }
+                            Text("Tirage(s): ${tiragesNames.joinToString(", ")}", fontSize = 11.sp)
+                        }
+                        
+                        Text(
+                            "--------------------------------",
+                            fontSize = 10.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                        
+                        // Lines header
+                        Text(
+                            "JEU      NUMERO    MISE",
+                            fontWeight = FontWeight.Bold,
                             fontSize = 11.sp,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                         )
-                    }
-                    
-                    Text(
-                        "--------------------------------",
-                        fontSize = 10.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
-                    
-                    // Total (mise × nombre de tirages)
-                    val miseParTicket = uiState.lines.sumOf { it.miseBase }
-                    val nbTirages = if (uiState.multiTirageMode) uiState.selectedTirageIds.size.coerceAtLeast(1) else 1
-                    val totalGlobal = miseParTicket * nbTirages
-                    
-                    if (nbTirages > 1) {
+                        
+                        // Lines
+                        uiState.lines.forEach { line ->
+                            val isLoto = line.jeu.lowercase() in listOf("loto4", "loto5")
+                            val optNum = if (isLoto && line.options.isNotEmpty()) line.options.first() else null
+                            val jeuDisplay = if (optNum != null) "${line.jeu.uppercase()}-$optNum" else line.jeu.uppercase()
+                            
+                            Text(
+                                String.format("%-8s %-9s %6.0f", jeuDisplay, line.valeur, line.miseBase),
+                                fontSize = 11.sp,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                        }
+                        
                         Text(
-                            "Mise/ticket: ${String.format("%.0f", miseParTicket)} HTG",
-                            fontSize = 11.sp
+                            "--------------------------------",
+                            fontSize = 10.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                        
+                        // Total (mise × nombre de tirages)
+                        val miseParTicket = uiState.lines.sumOf { it.miseBase }
+                        val nbTirages = if (uiState.multiTirageMode) uiState.selectedTirageIds.size.coerceAtLeast(1) else 1
+                        val totalGlobal = miseParTicket * nbTirages
+                        
+                        if (nbTirages > 1) {
+                            Text(
+                                "Mise/ticket: ${String.format("%.0f", miseParTicket)} HTG",
+                                fontSize = 11.sp
+                            )
+                            Text(
+                                "× $nbTirages tirages",
+                                fontSize = 11.sp
+                            )
+                        }
+                        Text(
+                            "TOTAL: ${String.format("%.0f", totalGlobal)} HTG",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        
+                        Text(
+                            "--------------------------------",
+                            fontSize = 10.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                        
+                        // Footer
+                        if (uiState.ticketFooterText.isNotBlank()) {
+                            Text(
+                                uiState.ticketFooterText,
+                                fontSize = 9.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                lineHeight = 12.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        Text(
+                            "Gaboom Borlette OS  www.gaboombos.com",
+                            fontSize = 10.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
                         )
                         Text(
-                            "× $nbTirages tirages",
-                            fontSize = 11.sp
+                            "--------------------------------",
+                            fontSize = 10.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            "Bonne chance",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            "Merci pour votre confiance",
+                            fontSize = 11.sp,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
                         )
                     }
-                    Text(
-                        "TOTAL: ${String.format("%.0f", totalGlobal)} HTG",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
-                    
-                    Text(
-                        "--------------------------------",
-                        fontSize = 10.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
-                    
-                    // Footer
-                    Text(
-                        "Merci et bonne chance!",
-                        fontSize = 11.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        "Conservez ce ticket",
-                        fontSize = 10.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
                 }
             },
             confirmButton = {
@@ -1326,16 +1359,17 @@ fun VenteScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 460.dp)
-                        .verticalScroll(androidx.compose.foundation.rememberScrollState()),
+                        .navigationBarsPadding(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Ticket Preview Card (Compose text, impossible to crash)
+                    // Ticket Preview Card (Compose text, scrollable, max height restricted)
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(max = 280.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color(0xFFFFFBE6))
+                            .verticalScroll(androidx.compose.foundation.rememberScrollState())
                             .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -1402,14 +1436,17 @@ fun VenteScreen(
                         Divider(modifier = Modifier.padding(vertical = 6.dp), color = Color.LightGray)
                         if (ticketInfo.ticketFooterText.isNotBlank()) {
                             Text(ticketInfo.ticketFooterText, fontSize = 9.sp, color = Color.Gray, textAlign = TextAlign.Center, lineHeight = 12.sp, modifier = Modifier.fillMaxWidth())
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
-                        Text("Conservez ce ticket", fontSize = 9.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                        Text("Gaboom Borlette OS  www.gaboombos.com", fontSize = 9.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                        Divider(modifier = Modifier.padding(vertical = 4.dp), color = Color.LightGray)
+                        Text("Bonne chance", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                        Text("Merci pour votre confiance", fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                     }
                     
                     Spacer(modifier = Modifier.height(12.dp))
                     
-                    // Action buttons row
+                    // Action buttons row (outside the scrollable card, always visible)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly

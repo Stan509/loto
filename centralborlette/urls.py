@@ -16,9 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic import RedirectView
 from django.contrib.staticfiles.storage import staticfiles_storage
+from django.views.static import serve
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -45,6 +46,7 @@ urlpatterns = [
     path('api/', include('accounts.api_urls')),
     path('api/agent/', include('agent_portal.api_urls')),
     path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / 'static')

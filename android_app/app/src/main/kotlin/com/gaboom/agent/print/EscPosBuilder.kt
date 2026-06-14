@@ -289,13 +289,20 @@ object EscPosBuilder {
             buffer.add(LF)
         }
 
-        // ─── Texte de pied de page (configuré par l'admin dans la page Information) ───
+        // ─── Texte de pied de page ─────────────────────────────────────────
         buffer.addAll(ALIGN_CENTER.toList())
         if (data.ticketFooterText.isNotBlank()) {
             buffer.addAll(data.ticketFooterText.toByteArray(Charsets.UTF_8).toList())
             buffer.add(LF)
+            buffer.add(LF)
         }
-        buffer.addAll("Conservez ce ticket".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("Gaboom Borlette OS  www.gaboombos.com".toByteArray(Charsets.UTF_8).toList())
+        buffer.add(LF)
+        buffer.addAll("--------------------------------".toByteArray(Charsets.UTF_8).toList())
+        buffer.add(LF)
+        buffer.addAll("Bonne chance".toByteArray(Charsets.UTF_8).toList())
+        buffer.add(LF)
+        buffer.addAll("Merci pour votre confiance".toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
 
         // Feed et coupe

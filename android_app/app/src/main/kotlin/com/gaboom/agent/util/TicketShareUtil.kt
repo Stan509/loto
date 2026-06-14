@@ -107,8 +107,12 @@ object TicketShareUtil {
         }
         if (data.ticketFooterText.isNotBlank()) {
             sb.appendLine(data.ticketFooterText)
+            sb.appendLine()
         }
-        sb.appendLine("   Conservez ce ticket")
+        sb.appendLine("Gaboom Borlette OS  www.gaboombos.com")
+        sb.appendLine("--------------------------------")
+        sb.appendLine("Bonne chance")
+        sb.appendLine("Merci pour votre confiance")
         sb.appendLine("================================")
         
         return sb.toString()
@@ -213,7 +217,7 @@ object TicketShareUtil {
             val estimatedLines = (data.ticketFooterText.length / 35) + 1
             calcHeight += estimatedLines * 18
         }
-        calcHeight += 30 // "Conservez ce ticket"
+        calcHeight += 76 // brand info + separator + bonne chance + merci
         
         val height = calcHeight
         val centerX = width / 2f
@@ -382,8 +386,16 @@ object TicketShareUtil {
                 canvas.drawText(fl, centerX, y + 14, paintSmall)
                 y += 18
             }
+            y += 8
         }
-        canvas.drawText("Conservez ce ticket", centerX, y + 14, paintSmall)
+        
+        canvas.drawText("Gaboom Borlette OS  www.gaboombos.com", centerX, y + 14, paintSmall)
+        y += 18
+        canvas.drawText("--------------------------------", centerX, y + 14, paintSeparator)
+        y += 18
+        canvas.drawText("Bonne chance", centerX, y + 14, paintNormalCenter)
+        y += 18
+        canvas.drawText("Merci pour votre confiance", centerX, y + 14, paintNormalCenter)
         
         return bitmap
     }

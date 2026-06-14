@@ -932,17 +932,22 @@ class VenteViewModel @Inject constructor(
         val timeFormat = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
 
         return PrintData(
-            borletteName = "Gaboom",
-            borletteSlogan = "",
-            borletteTel = "",
-            agentName = "Agent",
+            borletteName = _uiState.value.borletteName.ifEmpty { "Gaboom" },
+            borletteSlogan = _uiState.value.borletteSlogan,
+            borletteTel = _uiState.value.borletteTel,
+            borletteAdresse = _uiState.value.borletteAdresse,
+            borletteLogoUrl = _uiState.value.borletteLogoUrl,
+            agentName = _uiState.value.agentName.ifEmpty { "Agent" },
             ticketNumber = ticket.ticketNo,
             date = dateFormat.format(now),
             time = timeFormat.format(now),
             tirages = listOf(ticket.tirageNom),
             lines = lines,
             totalMise = ticket.totalMise,
-            isOffline = true
+            isOffline = true,
+            ticketFooterText = _uiState.value.ticketFooterText,
+            mariageGratuitActif = _uiState.value.mariageGratuitActif,
+            mariageGratuitMontant = _uiState.value.mariageGratuitMontant
         )
     }
 

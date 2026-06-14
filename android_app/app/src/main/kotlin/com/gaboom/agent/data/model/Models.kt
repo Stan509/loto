@@ -618,7 +618,8 @@ data class AgentConfigResponse(
     val error: String? = null,
     @SerializedName("allow_offline_print") val allowOfflinePrint: Boolean = false,
     @SerializedName("server_time") val serverTime: String?,
-    val version: String?
+    val version: String?,
+    val borlette: BorletteInfo? = null
 )
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -92,6 +92,21 @@ class AuthRepository @Inject constructor(
             if (configResponse.isSuccessful && configResponse.body()?.success == true) {
                 val configBody = configResponse.body()!!
                 agentConfigDataStore.setAllowOfflinePrint(configBody.allowOfflinePrint)
+                
+                // Update cached borlette configuration dynamically
+                configBody.borlette?.let { borlette ->
+                    dataStore.edit { prefs ->
+                        prefs[KEY_BORLETTE_ID] = borlette.id.toString()
+                        prefs[KEY_BORLETTE_NOM] = borlette.nom
+                        prefs[KEY_BORLETTE_SLOGAN] = borlette.slogan
+                        prefs[KEY_BORLETTE_TEL] = borlette.telephone
+                        prefs[KEY_BORLETTE_ADRESSE] = borlette.adresse
+                        prefs[KEY_BORLETTE_LOGO] = borlette.logoUrl
+                        prefs[KEY_TICKET_FOOTER_TEXT] = borlette.ticketFooterText
+                        prefs[KEY_MARIAGE_GRATUIT_ACTIF] = if (borlette.mariageGratuitActif) "true" else "false"
+                        prefs[KEY_MARIAGE_GRATUIT_MONTANT] = borlette.mariageGratuitMontant
+                    }
+                }
             }
         } catch (e: Exception) {
             // Non-blocking: device registration failure shouldn't prevent login

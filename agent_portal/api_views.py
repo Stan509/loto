@@ -2032,4 +2032,15 @@ def api_agent_config(request: HttpRequest) -> JsonResponse:
         "allow_offline_print": borlette.allow_offline_print,
         "server_time": timezone.now().isoformat(),
         "version": "gaboom-central-1.1-offline",
+        "borlette": {
+            "id": borlette.id,
+            "nom": borlette.nom_borlette,
+            "telephone": borlette.telephone,
+            "slogan": borlette.slogan or "",
+            "adresse": borlette.adresse or "",
+            "logo_url": request.build_absolute_uri(borlette.logo_borlette.url) if borlette.logo_borlette else "",
+            "ticket_footer_text": borlette.ticket_footer_text or "La fiche est payable une seule fois au porteur. Le montant gagné devra être réclamé avant 90 jours",
+            "mariage_gratuit_actif": _get_mariage_actif(borlette),
+            "mariage_gratuit_montant": str(_get_mariage_montant(borlette)),
+        }
     })
