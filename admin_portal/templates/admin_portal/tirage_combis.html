@@ -5,6 +5,64 @@
 {% block page_meta %}{{ tirage.nom }}{% endblock %}
 
 {% block page_body %}
+<style>
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 20px;
+    border-radius: 12px;
+  }
+  .table-wrap::-webkit-scrollbar {
+    height: 8px;
+  }
+  .table-wrap::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 9px;
+  }
+  .table-wrap::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9px;
+  }
+  .table-wrap::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* ─── Circular Icon Buttons ───────────────────────────────── */
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.15s;
+    text-decoration: none;
+    border: none;
+    padding: 0;
+  }
+  .icon-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+  .icon-btn--success {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #10b981;
+  }
+  .icon-btn--success:hover {
+    background: rgba(16, 185, 129, 0.20);
+  }
+  .icon-btn--warning {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: #f59e0b;
+  }
+  .icon-btn--warning:hover {
+    background: rgba(245, 158, 11, 0.20);
+  }
+</style>
+
   <div class="portal-card">
     <div class="portal-card__header">
       <div>
@@ -42,7 +100,7 @@
                     <input type="hidden" name="action" value="update_plafond" />
                     <input type="hidden" name="valeur" value="{{ row.valeur|escape }}" />
                     <input name="plafond_admin" value="{{ row.plafond_admin }}" style="width: 140px; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.2); color: #fff;" />
-                    <button class="link" type="submit">OK</button>
+                    <button class="icon-btn icon-btn--success" type="submit" title="Enregistrer"><i data-lucide="check"></i></button>
                   </form>
                 </td>
                 <td>
@@ -67,7 +125,11 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="toggle_bloque" />
                     <input type="hidden" name="valeur" value="{{ row.valeur|escape }}" />
-                    <button class="link" type="submit">{% if row.bloque_admin %}Débloquer{% else %}Bloquer{% endif %}</button>
+                    {% if row.bloque_admin %}
+                      <button class="icon-btn icon-btn--success" type="submit" title="Débloquer"><i data-lucide="unlock"></i></button>
+                    {% else %}
+                      <button class="icon-btn icon-btn--warning" type="submit" title="Bloquer"><i data-lucide="lock"></i></button>
+                    {% endif %}
                   </form>
                 </td>
               </tr>

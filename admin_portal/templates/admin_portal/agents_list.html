@@ -133,7 +133,22 @@
     border-radius: 18px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(12px);
-    overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .agents-page .table-wrap::-webkit-scrollbar {
+    height: 8px;
+  }
+  .agents-page .table-wrap::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 9px;
+  }
+  .agents-page .table-wrap::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9px;
+  }
+  .agents-page .table-wrap::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
   }
   .agents-page .data-table {
     width: 100%;
@@ -283,6 +298,66 @@
     background: rgba(255, 77, 109, 0.2);
   }
 
+  /* ─── Circular Icon Buttons ───────────────────────────────── */
+  .agents-page .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.15s;
+    text-decoration: none;
+    border: none;
+    padding: 0;
+  }
+  .agents-page .icon-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+  .agents-page .icon-btn--ghost {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+  }
+  .agents-page .icon-btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+  .agents-page .icon-btn--blue {
+    background: rgba(58, 160, 255, 0.12);
+    border: 1px solid rgba(58, 160, 255, 0.25);
+    color: var(--accent-blue);
+  }
+  .agents-page .icon-btn--blue:hover {
+    background: rgba(58, 160, 255, 0.2);
+  }
+  .agents-page .icon-btn--success {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: var(--accent-success);
+  }
+  .agents-page .icon-btn--success:hover {
+    background: rgba(16, 185, 129, 0.2);
+  }
+  .agents-page .icon-btn--warning {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: var(--accent-warning);
+  }
+  .agents-page .icon-btn--warning:hover {
+    background: rgba(245, 158, 11, 0.2);
+  }
+  .agents-page .icon-btn--danger {
+    background: rgba(255, 77, 109, 0.12);
+    border: 1px solid rgba(255, 77, 109, 0.25);
+    color: var(--accent-danger);
+  }
+  .agents-page .icon-btn--danger:hover {
+    background: rgba(255, 77, 109, 0.2);
+  }
+
   /* ─── Empty State ─────────────────────────────────────────── */
   .agents-page .empty-state {
     text-align: center;
@@ -401,15 +476,19 @@
           </td>
           <td class="col-actions">
             <div class="action-group">
-              <a class="action-btn action-btn--ghost" href="{% url 'admin_portal:agent_detail' a.id %}">Voir</a>
-              <a class="action-btn action-btn--blue" href="{% url 'admin_portal:agent_edit' a.id %}">Modifier</a>
-              <a class="action-btn action-btn--success" href="{% url 'admin_portal:agent_cashbox_replenish' a.id %}">Réapprovisionner</a>
-              <a class="action-btn action-btn--warning" href="{% url 'admin_portal:agent_cashbox_withdraw' a.id %}">Retrait</a>
+              <a class="icon-btn icon-btn--ghost" href="{% url 'admin_portal:agent_detail' a.id %}" title="Voir"><i data-lucide="eye"></i></a>
+              <a class="icon-btn icon-btn--blue" href="{% url 'admin_portal:agent_edit' a.id %}" title="Modifier"><i data-lucide="edit-3"></i></a>
+              <a class="icon-btn icon-btn--success" href="{% url 'admin_portal:agent_cashbox_replenish' a.id %}" title="Réapprovisionner (Dépôt)"><i data-lucide="arrow-up-right"></i></a>
+              <a class="icon-btn icon-btn--warning" href="{% url 'admin_portal:agent_cashbox_withdraw' a.id %}" title="Retrait"><i data-lucide="arrow-down-left"></i></a>
               <form method="post" action="{% url 'admin_portal:agent_suspend' a.id %}" style="display:inline;">
                 {% csrf_token %}
-                <button class="action-btn action-btn--warning" type="submit">{% if a.statut == 'ACTIF' %}Suspendre{% else %}Réactiver{% endif %}</button>
+                {% if a.statut == 'ACTIF' %}
+                  <button class="icon-btn icon-btn--warning" type="submit" title="Suspendre"><i data-lucide="user-x"></i></button>
+                {% else %}
+                  <button class="icon-btn icon-btn--success" type="submit" title="Réactiver"><i data-lucide="user-check"></i></button>
+                {% endif %}
               </form>
-              <a class="action-btn action-btn--danger" href="{% url 'admin_portal:agent_delete' a.id %}">Suppr.</a>
+              <a class="icon-btn icon-btn--danger" href="{% url 'admin_portal:agent_delete' a.id %}" title="Supprimer"><i data-lucide="trash-2"></i></a>
             </div>
           </td>
         </tr>

@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import android.bluetooth.BluetoothDevice
+import com.gaboom.agent.print.BluetoothPrinter
+
 data class SettingsUiState(
     val baseUrl: String = "",
     val isLoading: Boolean = false,
@@ -24,7 +27,14 @@ data class SettingsUiState(
     val appVersion: String = "",
     val appVersionCode: Int = 0,
     val isCustomUrl: Boolean = false,
-    val themeMode: String = AppConfigDataStore.THEME_DEFAULT
+    val themeMode: String = AppConfigDataStore.THEME_DEFAULT,
+    
+    // Printer State
+    val printers: List<BluetoothDevice> = emptyList(),
+    val isConnected: Boolean = false,
+    val connectedDeviceName: String? = null,
+    val isConnecting: Boolean = false,
+    val printerError: String? = null
 )
 
 sealed class TestResult {
@@ -35,7 +45,8 @@ sealed class TestResult {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val appConfigDataStore: AppConfigDataStore,
-    private val dynamicRetrofitProvider: DynamicRetrofitProvider
+    private val dynamicRetrofitProvider: DynamicRetrofitProvider,
+    private val printer: BluetoothPrinter
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -43,6 +54,7 @@ class SettingsViewModel @Inject constructor(
 
     init {
         loadSettings()
+        refreshPrinters()
     }
 
     private fun loadSettings() {
@@ -218,6 +230,66 @@ class SettingsViewModel @Inject constructor(
             saveSuccess = false,
             errorMessage = null
         )
+    }
+
+    // ─── Printer Management ──────────────────────────────────────────────────
+
+    fun refreshPrinters() {
+        viewModelScope.launch {
+            if (printer.hasBluetoothPermission()) {
+                val list = printer.getPairedPrinters()
+                _uiState.value = _uiState.value.copy(
+                    printers = list,
+                    isConnected = printer.isConnected(),
+                    connectedDeviceName = if (printer.isConnected()) printer.getPairedPrinters().firstOrNull()?.name else null,
+                    printerError = null
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    printerError = "Permission Bluetooth requise pour scanner"
+                )
+            }
+        }
+    }
+
+    fun connectPrinter(device: BluetoothDevice) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isConnecting = true, printerError = null)
+            val result = printer.connect(device)
+            if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(
+                    isConnecting = false,
+                    isConnected = true,
+                    connectedDeviceName = device.name
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isConnecting = false,
+                    isConnected = false,
+                    printerError = result.exceptionOrNull()?.message ?: "Erreur de connexion"
+                )
+            }
+        }
+    }
+
+    fun disconnectPrinter() {
+        printer.disconnect()
+        _uiState.value = _uiState.value.copy(
+            isConnected = false,
+            connectedDeviceName = null,
+            printerError = null
+        )
+    }
+
+    fun printTest() {
+        viewModelScope.launch {
+            val result = printer.printTest()
+            if (result.isFailure) {
+                _uiState.value = _uiState.value.copy(
+                    printerError = result.exceptionOrNull()?.message ?: "Échec de l'impression test"
+                )
+            }
+        }
     }
 
     private fun isValidUrl(url: String): Boolean {

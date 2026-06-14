@@ -50,10 +50,14 @@ class BluetoothPrinter(private val context: Context) {
      * Vérifie les permissions Bluetooth
      */
     fun hasBluetoothPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.BLUETOOTH_CONNECT
-        ) == PackageManager.PERMISSION_GRANTED
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
     }
 
     /**
@@ -160,9 +164,36 @@ class BluetoothPrinter(private val context: Context) {
     }
 
     /**
+     * Tente de se connecter automatiquement à la première imprimante Bluetooth appairée
+     */
+    @SuppressLint("MissingPermission")
+    suspend fun connectToFirstPrinter(): Result<Unit> {
+        val printers = getPairedPrinters()
+        if (printers.isEmpty()) {
+            return Result.failure(Exception("Aucune imprimante Bluetooth appairée trouvée dans l'appareil"))
+        }
+        var lastError: Exception? = null
+        for (device in printers) {
+            val result = connect(device)
+            if (result.isSuccess) {
+                return Result.success(Unit)
+            } else {
+                lastError = result.exceptionOrNull() as? Exception
+            }
+        }
+        return Result.failure(lastError ?: Exception("Échec de la connexion à l'imprimante"))
+    }
+
+    /**
      * Imprime un ticket complet (télécharge le logo si disponible)
      */
     suspend fun printTicket(printData: com.gaboom.agent.data.model.PrintData): Result<Unit> {
+        if (!isConnected()) {
+            val connResult = connectToFirstPrinter()
+            if (connResult.isFailure) {
+                return connResult
+            }
+        }
         val logoBitmap = downloadLogoBitmap(printData.borletteLogoUrl)
         val escPosData = EscPosBuilder.buildTicket(printData, logoBitmap)
         return print(escPosData)
@@ -172,6 +203,12 @@ class BluetoothPrinter(private val context: Context) {
      * Imprime un ticket de test
      */
     suspend fun printTest(): Result<Unit> {
+        if (!isConnected()) {
+            val connResult = connectToFirstPrinter()
+            if (connResult.isFailure) {
+                return connResult
+            }
+        }
         val testData = EscPosBuilder.buildTestTicket()
         return print(testData)
     }
