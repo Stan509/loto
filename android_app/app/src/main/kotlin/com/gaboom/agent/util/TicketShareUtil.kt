@@ -441,6 +441,20 @@ object TicketShareUtil {
     }
 
     /**
+     * Helper to retrieve the underlying Activity from a Context wrapper.
+     */
+    fun findActivity(context: Context): android.app.Activity? {
+        var ctx = context
+        while (ctx is android.content.ContextWrapper) {
+            if (ctx is android.app.Activity) {
+                return ctx
+            }
+            ctx = ctx.baseContext
+        }
+        return null
+    }
+
+    /**
      * Télécharge le logo de la borlette depuis une URL
      */
     suspend fun downloadLogo(context: Context, logoUrl: String): Bitmap? = withContext(Dispatchers.IO) {
@@ -474,7 +488,7 @@ object TicketShareUtil {
             }
 
             val uri = FileProvider.getUriForFile(
-                context,
+                context.applicationContext,
                 "${context.packageName}.fileprovider",
                 file
             )
@@ -482,25 +496,36 @@ object TicketShareUtil {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
+                clipData = android.content.ClipData.newRawUri(null, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
 
             withContext(Dispatchers.Main) {
                 val chooser = Intent.createChooser(intent, "Partager le ticket")
-                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                try {
-                    context.startActivity(chooser)
-                } catch (e: Throwable) {
-                    android.util.Log.e("TicketShare", "Erreur startActivity Chooser Image", e)
-                    Toast.makeText(context, "Impossible de lancer le partage d'image", Toast.LENGTH_SHORT).show()
+                val activity = findActivity(context)
+                if (activity != null) {
+                    try {
+                        activity.startActivity(chooser)
+                    } catch (e: Throwable) {
+                        android.util.Log.e("TicketShare", "Erreur startActivity Chooser Image", e)
+                        Toast.makeText(context.applicationContext, "Impossible de lancer le partage d'image", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    try {
+                        context.applicationContext.startActivity(chooser)
+                    } catch (e: Throwable) {
+                        android.util.Log.e("TicketShare", "Erreur startActivity Chooser Image AppContext", e)
+                        Toast.makeText(context.applicationContext, "Impossible de lancer le partage d'image", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         } catch (e: Throwable) {
             android.util.Log.e("TicketShare", "Erreur shareBitmapAsImage: ${e.message}", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Erreur de partage d'image: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context.applicationContext, "Erreur de partage d'image: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -520,18 +545,28 @@ object TicketShareUtil {
 
             withContext(Dispatchers.Main) {
                 val chooser = Intent.createChooser(intent, "Partager le ticket")
-                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                try {
-                    context.startActivity(chooser)
-                } catch (e: Throwable) {
-                    android.util.Log.e("TicketShare", "Erreur startActivity Chooser Texte", e)
-                    Toast.makeText(context, "Impossible de lancer le partage de texte", Toast.LENGTH_SHORT).show()
+                val activity = findActivity(context)
+                if (activity != null) {
+                    try {
+                        activity.startActivity(chooser)
+                    } catch (e: Throwable) {
+                        android.util.Log.e("TicketShare", "Erreur startActivity Chooser Texte", e)
+                        Toast.makeText(context.applicationContext, "Impossible de lancer le partage de texte", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    try {
+                        context.applicationContext.startActivity(chooser)
+                    } catch (e: Throwable) {
+                        android.util.Log.e("TicketShare", "Erreur startActivity Chooser Texte AppContext", e)
+                        Toast.makeText(context.applicationContext, "Impossible de lancer le partage de texte", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         } catch (e: Throwable) {
             android.util.Log.e("TicketShare", "Erreur shareAsText: ${e.message}", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Erreur de partage texte: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context.applicationContext, "Erreur de partage texte: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -546,7 +581,7 @@ object TicketShareUtil {
         } catch (e: Throwable) {
             android.util.Log.e("TicketShare", "Erreur shareAsImage: ${e.message}", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Erreur de partage d'image: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context.applicationContext, "Erreur de partage d'image: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -573,7 +608,7 @@ object TicketShareUtil {
             pdfDocument.close()
 
             val uri = FileProvider.getUriForFile(
-                context,
+                context.applicationContext,
                 "${context.packageName}.fileprovider",
                 file
             )
@@ -581,25 +616,36 @@ object TicketShareUtil {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "application/pdf"
                 putExtra(Intent.EXTRA_STREAM, uri)
+                clipData = android.content.ClipData.newRawUri(null, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
 
             withContext(Dispatchers.Main) {
                 val chooser = Intent.createChooser(intent, "Partager le ticket PDF")
-                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                try {
-                    context.startActivity(chooser)
-                } catch (e: Throwable) {
-                    android.util.Log.e("TicketShare", "Erreur startActivity Chooser PDF", e)
-                    Toast.makeText(context, "Impossible de lancer le partage PDF", Toast.LENGTH_SHORT).show()
+                val activity = findActivity(context)
+                if (activity != null) {
+                    try {
+                        activity.startActivity(chooser)
+                    } catch (e: Throwable) {
+                        android.util.Log.e("TicketShare", "Erreur startActivity Chooser PDF", e)
+                        Toast.makeText(context.applicationContext, "Impossible de lancer le partage PDF", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    try {
+                        context.applicationContext.startActivity(chooser)
+                    } catch (e: Throwable) {
+                        android.util.Log.e("TicketShare", "Erreur startActivity Chooser PDF AppContext", e)
+                        Toast.makeText(context.applicationContext, "Impossible de lancer le partage PDF", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         } catch (e: Throwable) {
             android.util.Log.e("TicketShare", "Erreur saveAsPdf: ${e.message}", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Erreur de génération PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context.applicationContext, "Erreur de génération PDF: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
