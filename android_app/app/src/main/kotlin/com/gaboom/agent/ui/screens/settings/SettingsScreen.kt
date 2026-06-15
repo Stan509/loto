@@ -353,11 +353,7 @@ fun SettingsScreen(
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
                     } else {
-                        uiState.printers.forEach { device ->
-                            @SuppressLint("MissingPermission")
-                            val name = try { device.name } catch (e: Throwable) { null } ?: "Appareil sans nom"
-                            val address = try { device.address } catch (e: Throwable) { "Adresse inconnue" } ?: "Adresse inconnue"
-
+                        uiState.printers.forEach { printerInfo ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -366,11 +362,11 @@ fun SettingsScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(name, fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                                    Text(address, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(printerInfo.name, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                                    Text(printerInfo.address, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Button(
-                                    onClick = { viewModel.connectPrinter(device) },
+                                    onClick = { viewModel.connectPrinter(printerInfo.address) },
                                     enabled = !uiState.isConnecting,
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                     modifier = Modifier.height(32.dp)

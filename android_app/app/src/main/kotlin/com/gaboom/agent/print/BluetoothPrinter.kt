@@ -154,6 +154,26 @@ class BluetoothPrinter(private val context: Context) {
     }
 
     /**
+     * Connecte à une imprimante Bluetooth par son adresse MAC
+     */
+    suspend fun connect(address: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            if (address.isBlank()) {
+                return@withContext Result.failure(Exception("Adresse MAC invalide ou vide"))
+            }
+            val adapter = bluetoothAdapter ?: return@withContext Result.failure(Exception("Bluetooth non disponible"))
+            val device = try {
+                adapter.getRemoteDevice(address)
+            } catch (e: Throwable) {
+                return@withContext Result.failure(Exception("Impossible d'obtenir l'appareil pour l'adresse $address: ${e.message}"))
+            }
+            connect(device)
+        } catch (e: Throwable) {
+            Result.failure(Exception("Erreur de connexion Bluetooth: ${e.message}"))
+        }
+    }
+
+    /**
      * Connecte à une imprimante Bluetooth
      */
     @SuppressLint("MissingPermission")
@@ -162,11 +182,6 @@ class BluetoothPrinter(private val context: Context) {
         try {
             // Fermer connexion existante
             disconnect()
-
-            // Annuler la découverte Bluetooth en cours (obligatoire avant connect())
-            try {
-                bluetoothAdapter?.cancelDiscovery()
-            } catch (_: Throwable) {}
 
             // Créer socket standard
             socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
@@ -179,9 +194,6 @@ class BluetoothPrinter(private val context: Context) {
             // Tentative de fallback par réflexion (port 1)
             try {
                 disconnect()
-                try {
-                    bluetoothAdapter?.cancelDiscovery()
-                } catch (_: Throwable) {}
                 val method = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
                 socket = method.invoke(device, 1) as? BluetoothSocket
                 socket?.connect()

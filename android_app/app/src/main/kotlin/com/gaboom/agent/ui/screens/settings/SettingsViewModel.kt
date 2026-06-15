@@ -14,8 +14,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-import android.bluetooth.BluetoothDevice
 import com.gaboom.agent.print.BluetoothPrinter
+
+data class PairedPrinterInfo(
+    val name: String,
+    val address: String
+)
 
 data class SettingsUiState(
     val baseUrl: String = "",
@@ -30,7 +34,7 @@ data class SettingsUiState(
     val themeMode: String = AppConfigDataStore.THEME_DEFAULT,
     
     // Printer State
-    val printers: List<BluetoothDevice> = emptyList(),
+    val printers: List<PairedPrinterInfo> = emptyList(),
     val isConnected: Boolean = false,
     val connectedDeviceName: String? = null,
     val isConnecting: Boolean = false,
@@ -238,10 +242,15 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (printer.hasBluetoothPermission()) {
-                    val list = printer.getPairedPrinters()
+                    val rawList = printer.getPairedPrinters()
+                    val list = rawList.map { dev ->
+                        val name = try { dev.name } catch (e: Throwable) { null } ?: "Appareil sans nom"
+                        val address = try { dev.address } catch (e: Throwable) { "Adresse inconnue" } ?: "Adresse inconnue"
+                        PairedPrinterInfo(name, address)
+                    }
                     val activeDevName = if (printer.isConnected()) {
-                        val dev = list.firstOrNull()
-                        try { dev?.name } catch (e: Throwable) { null } ?: "Imprimante Bluetooth"
+                        val firstDev = rawList.firstOrNull()
+                        try { firstDev?.name } catch (e: Throwable) { null } ?: "Imprimante Bluetooth"
                     } else null
                     _uiState.value = _uiState.value.copy(
                         printers = list,
@@ -262,13 +271,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun connectPrinter(device: BluetoothDevice) {
+    fun connectPrinter(address: String) {
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isConnecting = true, printerError = null)
-                val result = printer.connect(device)
+                val result = printer.connect(address)
                 if (result.isSuccess) {
-                    val devName = try { device.name } catch (e: Throwable) { null } ?: "Imprimante Bluetooth"
+                    val devName = _uiState.value.printers.find { it.address == address }?.name ?: "Imprimante Bluetooth"
                     _uiState.value = _uiState.value.copy(
                         isConnecting = false,
                         isConnected = true,
