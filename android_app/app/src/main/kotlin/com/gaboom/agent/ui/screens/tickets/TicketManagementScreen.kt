@@ -31,6 +31,8 @@ import com.gaboom.agent.util.TicketShareUtil
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import android.Manifest
+import android.content.Intent
+import android.widget.Toast
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,6 +52,10 @@ fun TicketManagementScreen(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     val context = LocalContext.current
+    
+    val shareLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { _ -> }
     
     var showDatePicker by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf<TicketListItem?>(null) }
@@ -527,7 +533,9 @@ fun TicketManagementScreen(
                                             mariageGratuitActif = printData.mariageGratuitActif,
                                             mariageGratuitMontant = printData.mariageGratuitMontant
                                         )
-                                        TicketShareUtil.shareAsText(context, shareData)
+                                        val intent = TicketShareUtil.getShareTextIntent(shareData)
+                                        val chooser = Intent.createChooser(intent, "Partager le ticket")
+                                        shareLauncher.launch(chooser)
                                         showShareDialog = null
                                     } else {
                                         scope.launch { snackbarHostState.showSnackbar("Erreur de récupération des données") }
@@ -590,7 +598,15 @@ fun TicketManagementScreen(
                                         val bitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                                             TicketShareUtil.generateTicketImage(context, shareData)
                                         }
-                                        TicketShareUtil.shareBitmapAsImage(context, bitmap, printData.ticketNumber)
+                                        val intent = TicketShareUtil.getShareImageIntent(context, shareData)
+                                        if (intent != null) {
+                                            val chooser = Intent.createChooser(intent, "Partager le ticket")
+                                            chooser.clipData = intent.clipData
+                                            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            shareLauncher.launch(chooser)
+                                        } else {
+                                            Toast.makeText(context, "Erreur de génération d'image", Toast.LENGTH_SHORT).show()
+                                        }
                                         showShareDialog = null
                                     } else {
                                         scope.launch { snackbarHostState.showSnackbar("Erreur de récupération des données") }

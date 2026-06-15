@@ -474,7 +474,91 @@ object TicketShareUtil {
     }
 
     /**
-     * Partage un bitmap existant (ne le regénère pas)
+     * Génère l'intent pour le partage texte
+     */
+    fun getShareTextIntent(data: TicketShareData): Intent {
+        val text = generateTicketText(data)
+        return Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+            putExtra(Intent.EXTRA_SUBJECT, "Ticket ${data.ticketNo}")
+        }
+    }
+
+    /**
+     * Génère l'intent pour le partage d'image
+     */
+    suspend fun getShareImageIntent(context: Context, data: TicketShareData): Intent? = withContext(Dispatchers.IO) {
+        try {
+            val bitmap = generateTicketImage(context, data)
+            val safeTicketNo = data.ticketNo.replace("[^a-zA-Z0-9]".toRegex(), "_")
+            val cachePath = File(context.cacheDir, "shared_tickets")
+            cachePath.mkdirs()
+            val file = File(cachePath, "ticket_$safeTicketNo.png")
+
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+
+            val uri = FileProvider.getUriForFile(
+                context.applicationContext,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                clipData = android.content.ClipData.newUri(context.contentResolver, "ticket", uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("TicketShare", "Erreur getShareImageIntent: ${e.message}", e)
+            null
+        }
+    }
+
+    /**
+     * Génère l'intent pour le partage PDF
+     */
+    suspend fun getSharePdfIntent(context: Context, bitmap: Bitmap, ticketNo: String): Intent? = withContext(Dispatchers.IO) {
+        try {
+            val pdfDocument = android.graphics.pdf.PdfDocument()
+            val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+            val page = pdfDocument.startPage(pageInfo)
+            page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+            pdfDocument.finishPage(page)
+
+            val safeTicketNo = ticketNo.replace("[^a-zA-Z0-9]".toRegex(), "_")
+            val cachePath = File(context.cacheDir, "shared_tickets")
+            cachePath.mkdirs()
+            val file = File(cachePath, "ticket_$safeTicketNo.pdf")
+
+            FileOutputStream(file).use { out ->
+                pdfDocument.writeTo(out)
+            }
+            pdfDocument.close()
+
+            val uri = FileProvider.getUriForFile(
+                context.applicationContext,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                clipData = android.content.ClipData.newUri(context.contentResolver, "ticket", uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("TicketShare", "Erreur getSharePdfIntent: ${e.message}", e)
+            null
+        }
+    }
+
+    /**
+     * Partage un bitmap existant (ne le regénère pas) - Méthode fallback
      */
     suspend fun shareBitmapAsImage(context: Context, bitmap: Bitmap, ticketNo: String) = withContext(Dispatchers.IO) {
         try {
@@ -496,7 +580,7 @@ object TicketShareUtil {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
-                clipData = android.content.ClipData.newRawUri(null, uri)
+                clipData = android.content.ClipData.newUri(context.contentResolver, "ticket", uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
@@ -504,6 +588,7 @@ object TicketShareUtil {
             withContext(Dispatchers.Main) {
                 try {
                     val chooser = Intent.createChooser(intent, "Partager le ticket")
+                    chooser.clipData = intent.clipData
                     chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     context.startActivity(chooser)
@@ -511,6 +596,7 @@ object TicketShareUtil {
                     android.util.Log.e("TicketShare", "Erreur direct sharing Image, tentative application context", e)
                     try {
                         val chooser = Intent.createChooser(intent, "Partager le ticket")
+                        chooser.clipData = intent.clipData
                         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         context.applicationContext.startActivity(chooser)
@@ -529,17 +615,12 @@ object TicketShareUtil {
     }
 
     /**
-     * Partage le ticket en texte via Intent
+     * Partage le ticket en texte via Intent - Méthode fallback
      */
     suspend fun shareAsText(context: Context, data: TicketShareData) = withContext(Dispatchers.IO) {
         try {
-            val text = generateTicketText(data)
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, text)
-                putExtra(Intent.EXTRA_SUBJECT, "Ticket ${data.ticketNo}")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
+            val intent = getShareTextIntent(data)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
             withContext(Dispatchers.Main) {
                 try {
@@ -567,7 +648,7 @@ object TicketShareUtil {
     }
 
     /**
-     * Partage le ticket en image via Intent
+     * Partage le ticket en image via Intent - Méthode fallback
      */
     suspend fun shareAsImage(context: Context, data: TicketShareData) = withContext(Dispatchers.IO) {
         try {
@@ -582,7 +663,7 @@ object TicketShareUtil {
     }
 
     /**
-     * Sauvegarde le ticket en PDF et lance le partage
+     * Sauvegarde le ticket en PDF et lance le partage - Méthode fallback
      */
     suspend fun saveAsPdf(context: Context, bitmap: Bitmap, ticketNo: String) = withContext(Dispatchers.IO) {
         try {
@@ -611,7 +692,7 @@ object TicketShareUtil {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "application/pdf"
                 putExtra(Intent.EXTRA_STREAM, uri)
-                clipData = android.content.ClipData.newRawUri(null, uri)
+                clipData = android.content.ClipData.newUri(context.contentResolver, "ticket", uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
@@ -619,6 +700,7 @@ object TicketShareUtil {
             withContext(Dispatchers.Main) {
                 try {
                     val chooser = Intent.createChooser(intent, "Partager le ticket PDF")
+                    chooser.clipData = intent.clipData
                     chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     context.startActivity(chooser)
@@ -626,6 +708,7 @@ object TicketShareUtil {
                     android.util.Log.e("TicketShare", "Erreur direct sharing PDF, tentative application context", e)
                     try {
                         val chooser = Intent.createChooser(intent, "Partager le ticket PDF")
+                        chooser.clipData = intent.clipData
                         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         context.applicationContext.startActivity(chooser)

@@ -29,7 +29,11 @@ import coil.compose.AsyncImage
 import com.gaboom.agent.util.QrCodeImage
 import com.gaboom.agent.util.TicketShareUtil
 import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -1322,6 +1326,10 @@ fun VenteScreen(
         var isSharingImage by remember { mutableStateOf(false) }
         var isSharingPdf by remember { mutableStateOf(false) }
         
+        val shareLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { _ -> }
+        
         fun buildShareLines() = ticketInfo.lines.map {
             val parts = it.first.split(":")
             val jeu = parts.getOrElse(0) { "" }
@@ -1483,12 +1491,18 @@ fun VenteScreen(
                                                 else null
                                             }
                                             val shareData = buildShareData(logoBitmap)
-                                            val bitmap = withContext(Dispatchers.IO) {
-                                                TicketShareUtil.generateTicketImage(context, shareData)
+                                            val intent = TicketShareUtil.getShareImageIntent(context, shareData)
+                                            if (intent != null) {
+                                                val chooser = Intent.createChooser(intent, "Partager le ticket")
+                                                chooser.clipData = intent.clipData
+                                                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                shareLauncher.launch(chooser)
+                                            } else {
+                                                Toast.makeText(context, "Erreur de génération d'image", Toast.LENGTH_SHORT).show()
                                             }
-                                            TicketShareUtil.shareBitmapAsImage(context, bitmap, ticketInfo.ticketNo)
-                                        } catch (_: Throwable) {
-                                            // Silently fail
+                                        } catch (e: Throwable) {
+                                            android.util.Log.e("VenteScreen", "Erreur partage image: ${e.message}", e)
+                                            Toast.makeText(context, "Erreur: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                                         } finally {
                                             isSharingImage = false
                                         }
@@ -1503,10 +1517,13 @@ fun VenteScreen(
                         // Share as Text (immediate, no bitmap)
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             IconButton(onClick = {
-                                previewScope.launch {
-                                    try {
-                                        TicketShareUtil.shareAsText(context, buildShareData())
-                                    } catch (_: Throwable) {}
+                                try {
+                                    val intent = TicketShareUtil.getShareTextIntent(buildShareData())
+                                    val chooser = Intent.createChooser(intent, "Partager le ticket")
+                                    shareLauncher.launch(chooser)
+                                } catch (e: Throwable) {
+                                    android.util.Log.e("VenteScreen", "Erreur partage texte: ${e.message}", e)
+                                    Toast.makeText(context, "Erreur: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                                 }
                             }) {
                                 Icon(Icons.Default.Message, contentDescription = "Partager Texte", tint = Color(0xFFF57C00))
@@ -1532,9 +1549,18 @@ fun VenteScreen(
                                             val bitmap = withContext(Dispatchers.IO) {
                                                 TicketShareUtil.generateTicketImage(context, shareData)
                                             }
-                                            TicketShareUtil.saveAsPdf(context, bitmap, ticketInfo.ticketNo)
-                                        } catch (_: Throwable) {
-                                            // Silently fail
+                                            val intent = TicketShareUtil.getSharePdfIntent(context, bitmap, ticketInfo.ticketNo)
+                                            if (intent != null) {
+                                                val chooser = Intent.createChooser(intent, "Partager le ticket PDF")
+                                                chooser.clipData = intent.clipData
+                                                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                shareLauncher.launch(chooser)
+                                            } else {
+                                                Toast.makeText(context, "Erreur de génération de PDF", Toast.LENGTH_SHORT).show()
+                                            }
+                                        } catch (e: Throwable) {
+                                            android.util.Log.e("VenteScreen", "Erreur partage PDF: ${e.message}", e)
+                                            Toast.makeText(context, "Erreur: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                                         } finally {
                                             isSharingPdf = false
                                         }
