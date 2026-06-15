@@ -13,9 +13,12 @@ import coil.ImageLoader
 import coil.request.ImageRequest
 import java.io.File
 import java.io.FileOutputStream
+import android.widget.Toast
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Utilitaire pour partager des tickets via différents formats (texte, image, PDF)
@@ -401,10 +404,48 @@ object TicketShareUtil {
     }
 
     /**
+     * Convertit PrintData en TicketShareData
+     */
+    fun fromPrintData(printData: com.gaboom.agent.data.model.PrintData, logoBitmap: Bitmap? = null): TicketShareData {
+        val parsedLines = printData.lines.map { lineStr ->
+            val tokens = lineStr.split("\\s+".toRegex()).filter { it.isNotBlank() }
+            val jeuRaw = tokens.getOrElse(0) { "" }
+            val valeur = tokens.getOrElse(1) { "" }
+            val mise = tokens.getOrElse(2) { "0" }.replace("[^\\d\\.]".toRegex(), "").toDoubleOrNull() ?: 0.0
+            val optionParts = jeuRaw.split("-")
+            val opt = optionParts.getOrNull(1)
+            TicketLineData(
+                jeu = optionParts.getOrElse(0) { jeuRaw },
+                valeur = valeur,
+                mise = mise,
+                option = opt
+            )
+        }
+        return TicketShareData(
+            ticketNo = printData.ticketNumber,
+            tirageNom = printData.tirages.joinToString(", "),
+            date = "${printData.date}  ${printData.time}",
+            lines = parsedLines,
+            totalMise = printData.totalMise,
+            qrCode = printData.groupId,
+            logoBitmap = logoBitmap,
+            ticketFooterText = printData.ticketFooterText,
+            mariageGratuitActif = printData.mariageGratuitActif,
+            mariageGratuitMontant = printData.mariageGratuitMontant,
+            borletteName = printData.borletteName,
+            borletteSlogan = printData.borletteSlogan,
+            borletteTel = printData.borletteTel,
+            borletteAdresse = printData.borletteAdresse,
+            agentName = printData.agentName
+        )
+    }
+
+    /**
      * Télécharge le logo de la borlette depuis une URL
      */
-    suspend fun downloadLogo(context: Context, logoUrl: String): Bitmap? {
-        return try {
+    suspend fun downloadLogo(context: Context, logoUrl: String): Bitmap? = withContext(Dispatchers.IO) {
+        if (logoUrl.isBlank()) return@withContext null
+        try {
             val loader = ImageLoader(context)
             val request = ImageRequest.Builder(context)
                 .data(logoUrl)
@@ -412,7 +453,8 @@ object TicketShareUtil {
                 .build()
             val result = loader.execute(request)
             (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
+            android.util.Log.e("TicketShare", "Erreur downloadLogo: ${e.message}", e)
             null
         }
     }
@@ -420,11 +462,12 @@ object TicketShareUtil {
     /**
      * Partage un bitmap existant (ne le regénère pas)
      */
-    fun shareBitmapAsImage(context: Context, bitmap: Bitmap, ticketNo: String) {
+    suspend fun shareBitmapAsImage(context: Context, bitmap: Bitmap, ticketNo: String) = withContext(Dispatchers.IO) {
         try {
+            val safeTicketNo = ticketNo.replace("[^a-zA-Z0-9]".toRegex(), "_")
             val cachePath = File(context.cacheDir, "shared_tickets")
             cachePath.mkdirs()
-            val file = File(cachePath, "ticket_${ticketNo.replace("-", "_")}.png")
+            val file = File(cachePath, "ticket_$safeTicketNo.png")
 
             FileOutputStream(file).use { out ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
@@ -442,16 +485,30 @@ object TicketShareUtil {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(Intent.createChooser(intent, "Partager le ticket").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        } catch (_: Throwable) {
-            // Silently fail to avoid crashing the app
+
+            withContext(Dispatchers.Main) {
+                val chooser = Intent.createChooser(intent, "Partager le ticket")
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                try {
+                    context.startActivity(chooser)
+                } catch (e: Throwable) {
+                    android.util.Log.e("TicketShare", "Erreur startActivity Chooser Image", e)
+                    Toast.makeText(context, "Impossible de lancer le partage d'image", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("TicketShare", "Erreur shareBitmapAsImage: ${e.message}", e)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Erreur de partage d'image: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     /**
      * Partage le ticket en texte via Intent
      */
-    fun shareAsText(context: Context, data: TicketShareData) {
+    suspend fun shareAsText(context: Context, data: TicketShareData) = withContext(Dispatchers.IO) {
         try {
             val text = generateTicketText(data)
             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -460,50 +517,44 @@ object TicketShareUtil {
                 putExtra(Intent.EXTRA_SUBJECT, "Ticket ${data.ticketNo}")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(Intent.createChooser(intent, "Partager le ticket").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        } catch (_: Throwable) {
-            // Silently fail to avoid crashing the app
+
+            withContext(Dispatchers.Main) {
+                val chooser = Intent.createChooser(intent, "Partager le ticket")
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                try {
+                    context.startActivity(chooser)
+                } catch (e: Throwable) {
+                    android.util.Log.e("TicketShare", "Erreur startActivity Chooser Texte", e)
+                    Toast.makeText(context, "Impossible de lancer le partage de texte", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("TicketShare", "Erreur shareAsText: ${e.message}", e)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Erreur de partage texte: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     /**
      * Partage le ticket en image via Intent
      */
-    fun shareAsImage(context: Context, data: TicketShareData) {
+    suspend fun shareAsImage(context: Context, data: TicketShareData) = withContext(Dispatchers.IO) {
         try {
             val bitmap = generateTicketImage(context, data)
-            
-            // Save bitmap to cache
-            val cachePath = File(context.cacheDir, "shared_tickets")
-            cachePath.mkdirs()
-            val file = File(cachePath, "ticket_${data.ticketNo.replace("-", "_")}.png")
-            
-            FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            shareBitmapAsImage(context, bitmap, data.ticketNo)
+        } catch (e: Throwable) {
+            android.util.Log.e("TicketShare", "Erreur shareAsImage: ${e.message}", e)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Erreur de partage d'image: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-            
-            val uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
-            
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(Intent.createChooser(intent, "Partager le ticket").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        } catch (_: Throwable) {
-            // Silently fail
         }
     }
 
     /**
      * Sauvegarde le ticket en PDF et lance le partage
      */
-    fun saveAsPdf(context: Context, bitmap: Bitmap, ticketNo: String) {
+    suspend fun saveAsPdf(context: Context, bitmap: Bitmap, ticketNo: String) = withContext(Dispatchers.IO) {
         try {
             val pdfDocument = android.graphics.pdf.PdfDocument()
             val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
@@ -511,9 +562,10 @@ object TicketShareUtil {
             page.canvas.drawBitmap(bitmap, 0f, 0f, null)
             pdfDocument.finishPage(page)
 
+            val safeTicketNo = ticketNo.replace("[^a-zA-Z0-9]".toRegex(), "_")
             val cachePath = File(context.cacheDir, "shared_tickets")
             cachePath.mkdirs()
-            val file = File(cachePath, "ticket_${ticketNo.replace("-", "_")}.pdf")
+            val file = File(cachePath, "ticket_$safeTicketNo.pdf")
 
             FileOutputStream(file).use { out ->
                 pdfDocument.writeTo(out)
@@ -532,9 +584,23 @@ object TicketShareUtil {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            context.startActivity(Intent.createChooser(intent, "Partager le ticket PDF").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        } catch (_: Throwable) {
-            // Silently fail
+
+            withContext(Dispatchers.Main) {
+                val chooser = Intent.createChooser(intent, "Partager le ticket PDF")
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                try {
+                    context.startActivity(chooser)
+                } catch (e: Throwable) {
+                    android.util.Log.e("TicketShare", "Erreur startActivity Chooser PDF", e)
+                    Toast.makeText(context, "Impossible de lancer le partage PDF", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("TicketShare", "Erreur saveAsPdf: ${e.message}", e)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Erreur de génération PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
