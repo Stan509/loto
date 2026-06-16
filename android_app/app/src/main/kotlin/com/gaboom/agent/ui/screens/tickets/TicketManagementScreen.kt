@@ -498,60 +498,7 @@ fun TicketManagementScreen(
             },
             confirmButton = {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(
-                        enabled = !isSharingLoading,
-                        onClick = {
-                            scope.launch {
-                                isSharingLoading = true
-                                try {
-                                    val printData = viewModel.getTicketPrintData(ticket.id)
-                                    if (printData != null) {
-                                        val parsedLines = printData.lines.map { lineStr ->
-                                            val tokens = lineStr.split("\\s+".toRegex()).filter { it.isNotBlank() }
-                                            val jeuRaw = tokens.getOrElse(0) { "" }
-                                            val valeur = tokens.getOrElse(1) { "" }
-                                            val mise = tokens.getOrElse(2) { "0" }.replace("[^\\d\\.]".toRegex(), "").toDoubleOrNull() ?: 0.0
-                                            val optionParts = jeuRaw.split("-")
-                                            val opt = optionParts.getOrNull(1)
-                                            TicketShareUtil.TicketLineData(
-                                                jeu = optionParts.getOrElse(0) { jeuRaw },
-                                                valeur = valeur,
-                                                mise = mise,
-                                                option = opt
-                                            )
-                                        }
-                                        val shareData = TicketShareUtil.TicketShareData(
-                                            ticketNo = printData.ticketNumber,
-                                            tirageNom = printData.tirages.joinToString(", "),
-                                            date = "${printData.date}  ${printData.time}",
-                                            lines = parsedLines,
-                                            totalMise = printData.totalMise,
-                                            totalGainDu = ticket.totalGainDu,
-                                            isWinner = ticket.isWinner,
-                                            qrCode = printData.groupId ?: ticket.groupId,
-                                            ticketFooterText = printData.ticketFooterText,
-                                            mariageGratuitActif = printData.mariageGratuitActif,
-                                            mariageGratuitMontant = printData.mariageGratuitMontant
-                                        )
-                                        val intent = TicketShareUtil.getShareTextIntent(shareData)
-                                        val chooser = Intent.createChooser(intent, "Partager le ticket")
-                                        shareLauncher.launch(chooser)
-                                        showShareDialog = null
-                                    } else {
-                                        scope.launch { snackbarHostState.showSnackbar("Erreur de récupération des données") }
-                                    }
-                                } catch (e: Throwable) {
-                                    scope.launch { snackbarHostState.showSnackbar("Erreur partage texte: ${e.message}") }
-                                } finally {
-                                    isSharingLoading = false
-                                }
-                            }
-                        }
-                    ) {
-                        Icon(Icons.Default.Message, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Texte")
-                    }
+
                     TextButton(
                         enabled = !isSharingLoading,
                         onClick = {

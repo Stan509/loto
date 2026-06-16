@@ -1513,23 +1513,7 @@ fun VenteScreen(
                             }
                             Text("Image", fontSize = 10.sp, color = Color(0xFF388E3C))
                         }
-                        
-                        // Share as Text (immediate, no bitmap)
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            IconButton(onClick = {
-                                try {
-                                    val intent = TicketShareUtil.getShareTextIntent(buildShareData())
-                                    val chooser = Intent.createChooser(intent, "Partager le ticket")
-                                    shareLauncher.launch(chooser)
-                                } catch (e: Throwable) {
-                                    android.util.Log.e("VenteScreen", "Erreur partage texte: ${e.message}", e)
-                                    Toast.makeText(context, "Erreur: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                                }
-                            }) {
-                                Icon(Icons.Default.Message, contentDescription = "Partager Texte", tint = Color(0xFFF57C00))
-                            }
-                            Text("Texte", fontSize = 10.sp, color = Color(0xFFF57C00))
-                        }
+
                         
                         // Download as PDF (generate on demand)
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
