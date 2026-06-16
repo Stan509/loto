@@ -162,10 +162,16 @@ class BluetoothPrinter(private val context: Context) {
                 return@withContext Result.failure(Exception("Adresse MAC invalide ou vide"))
             }
             val adapter = bluetoothAdapter ?: return@withContext Result.failure(Exception("Bluetooth non disponible"))
+            if (!adapter.isEnabled) {
+                return@withContext Result.failure(Exception("Bluetooth désactivé"))
+            }
             val device = try {
                 adapter.getRemoteDevice(address)
             } catch (e: Throwable) {
                 return@withContext Result.failure(Exception("Impossible d'obtenir l'appareil pour l'adresse $address: ${e.message}"))
+            }
+            if (device == null) {
+                return@withContext Result.failure(Exception("Appareil null pour l'adresse $address"))
             }
             connect(device)
         } catch (e: Throwable) {
@@ -186,6 +192,13 @@ class BluetoothPrinter(private val context: Context) {
             // Créer socket standard
             socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
 
+            // Annuler la découverte avant la connexion pour éviter les crashs natifs et les timeouts sur les terminaux POS
+            try {
+                bluetoothAdapter?.cancelDiscovery()
+            } catch (e: Throwable) {
+                // Ignorer
+            }
+
             // Connecter
             socket?.connect()
 
@@ -196,6 +209,7 @@ class BluetoothPrinter(private val context: Context) {
                 disconnect()
                 val method = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
                 socket = method.invoke(device, 1) as? BluetoothSocket
+                try { bluetoothAdapter?.cancelDiscovery() } catch (e: Throwable) {}
                 socket?.connect()
                 Result.success(Unit)
             } catch (fallbackEx: Throwable) {
@@ -204,6 +218,7 @@ class BluetoothPrinter(private val context: Context) {
                     disconnect()
                     val method2 = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
                     socket = method2.invoke(device, 2) as? BluetoothSocket
+                    try { bluetoothAdapter?.cancelDiscovery() } catch (e: Throwable) {}
                     socket?.connect()
                     Result.success(Unit)
                 } catch (ex3: Throwable) {

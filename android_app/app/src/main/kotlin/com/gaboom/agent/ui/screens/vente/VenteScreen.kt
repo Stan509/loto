@@ -53,6 +53,11 @@ fun VenteScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     
+    // ActivityResultLauncher for sharing intents
+    val shareLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { }
+    
     // State for bottom sheet and dropdowns
     var showTirageSheet by remember { mutableStateOf(false) }
     var showSettingsMenu by remember { mutableStateOf(false) }
@@ -1325,10 +1330,6 @@ fun VenteScreen(
         val previewScope = rememberCoroutineScope()
         var isSharingImage by remember { mutableStateOf(false) }
         var isSharingPdf by remember { mutableStateOf(false) }
-        
-        val shareLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) { _ -> }
         
         fun buildShareLines() = ticketInfo.lines.map {
             val parts = it.first.split(":")
