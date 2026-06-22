@@ -182,9 +182,30 @@ class BluetoothPrinter(private val context: Context) {
     /**
      * Connecte à une imprimante Bluetooth
      */
+    fun checkBluetoothPermission(): Boolean {
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            try {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) == PackageManager.PERMISSION_GRANTED
+            } catch (e: Throwable) {
+                false
+            }
+        } else {
+            true
+        }
+    }
+
     @SuppressLint("MissingPermission")
     suspend fun connect(device: BluetoothDevice): Result<Unit> = withContext(Dispatchers.IO) {
         val deviceName = try { device.name } catch (e: Throwable) { null } ?: "Imprimante"
+        
+        // Vérifier la permission BLUETOOTH_CONNECT sur Android 12+
+        if (!checkBluetoothPermission()) {
+            return@withContext Result.failure(Exception("Permission Bluetooth requise (BLUETOOTH_CONNECT)"))
+        }
+        
         try {
             // Fermer connexion existante
             disconnect()
@@ -400,13 +421,34 @@ class BluetoothPrinter(private val context: Context) {
 
     /**
      * Méthode A : Envoi du Bitmap au gestionnaire d'impression système
+     * Note: Cette méthode retourne FALSE car le Print Spooler Android n'est pas
+     * disponible sur la plupart des terminaux POS (Sunmi, Telpo, etc.).
+     * Elle est conservée pour compatibilité avec des imprimantes Wi-Fi/Cloud
+     * mais ne doit PAS bloquer le fallback ESC/POS.
      */
     private suspend fun printViaSystem(bitmap: Bitmap, ticketNo: String): Boolean = withContext(Dispatchers.Main) {
         try {
             val printManager = context.getSystemService(Context.PRINT_SERVICE) as? PrintManager ?: return@withContext false
             val jobName = "Ticket_$ticketNo"
+            // Vérifier si le service d'impression est réellement disponible
+            // Sur les terminaux POS sans Print Spooler, cette méthode lance une Activity
+            // qui n'aboutit pas - on retourne false pour laisser le fallback ESC/POS s'exécuter
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                // Sur Android 13+, on vérifie si des services d'impression sont installés
+                // via PackageManager pour éviter un faux succès
+                try {
+                    val pm = context.packageManager
+                    val intent = Intent(android.print.PrintManager.ACTION_PRINT_DIALOG)
+                    if (pm.resolveActivity(intent, 0) == null) {
+                        android.util.Log.d("UniversalPrinter", "Aucun service d'impression système trouvé, fallback ESC/POS direct")
+                        return@withContext false
+                    }
+                } catch (_: Throwable) {}
+            }
             printManager.print(jobName, TicketPrintAdapter(context, bitmap, jobName), null)
-            true
+            // Toujours retourner false pour permettre au fallback ESC/POS de s'exécuer
+            // sur les terminaux POS où le Print Spooler n'est pas le mécanisme d'impression souhaité
+            false
         } catch (e: Throwable) {
             android.util.Log.e("UniversalPrinter", "Erreur printViaSystem: ${e.message}", e)
             false

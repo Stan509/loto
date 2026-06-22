@@ -53,9 +53,6 @@ fun TicketManagementScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
     
-    val shareLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { _ -> }
     
     var showDatePicker by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf<TicketListItem?>(null) }
@@ -514,46 +511,18 @@ fun TicketManagementScreen(
                                                 else null
                                             } catch (_: Throwable) { null }
                                         }
-                                        val parsedLines = printData.lines.map { lineStr ->
-                                            val tokens = lineStr.split("\\s+".toRegex()).filter { it.isNotBlank() }
-                                            val jeuRaw = tokens.getOrElse(0) { "" }
-                                            val valeur = tokens.getOrElse(1) { "" }
-                                            val mise = tokens.getOrElse(2) { "0" }.replace("[^\\d\\.]".toRegex(), "").toDoubleOrNull() ?: 0.0
-                                            val optionParts = jeuRaw.split("-")
-                                            val opt = optionParts.getOrNull(1)
-                                            TicketShareUtil.TicketLineData(
-                                                jeu = optionParts.getOrElse(0) { jeuRaw },
-                                                valeur = valeur,
-                                                mise = mise,
-                                                option = opt
-                                            )
-                                        }
-                                        val shareData = TicketShareUtil.TicketShareData(
-                                            ticketNo = printData.ticketNumber,
-                                            tirageNom = printData.tirages.joinToString(", "),
-                                            date = "${printData.date}  ${printData.time}",
-                                            lines = parsedLines,
-                                            totalMise = printData.totalMise,
-                                            totalGainDu = ticket.totalGainDu,
-                                            isWinner = ticket.isWinner,
-                                            qrCode = printData.groupId ?: ticket.groupId,
+                                        // Use the utility's fromPrintData helper to avoid manual field construction and missing fields
+                                        val shareData = TicketShareUtil.fromPrintData(
+                                            printData = printData,
                                             logoBitmap = logoBitmap,
-                                            ticketFooterText = printData.ticketFooterText,
-                                            mariageGratuitActif = printData.mariageGratuitActif,
-                                            mariageGratuitMontant = printData.mariageGratuitMontant
+                                            totalGainDu = ticket.totalGainDu,
+                                            isWinner = ticket.isWinner
                                         )
+                                        // Generate bitmap once, then share it via shareBitmapAsImage (no double generation)
                                         val bitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                                             TicketShareUtil.generateTicketImage(context, shareData)
                                         }
-                                        val intent = TicketShareUtil.getShareImageIntent(context, shareData)
-                                        if (intent != null) {
-                                            val chooser = Intent.createChooser(intent, "Partager le ticket")
-                                            chooser.clipData = intent.clipData
-                                            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                            shareLauncher.launch(chooser)
-                                        } else {
-                                            Toast.makeText(context, "Erreur de génération d'image", Toast.LENGTH_SHORT).show()
-                                        }
+                                        TicketShareUtil.shareBitmapAsImage(context, bitmap, shareData.ticketNo)
                                         showShareDialog = null
                                     } else {
                                         scope.launch { snackbarHostState.showSnackbar("Erreur de récupération des données") }

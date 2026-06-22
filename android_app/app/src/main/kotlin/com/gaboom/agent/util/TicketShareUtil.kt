@@ -406,7 +406,12 @@ object TicketShareUtil {
     /**
      * Convertit PrintData en TicketShareData
      */
-    fun fromPrintData(printData: com.gaboom.agent.data.model.PrintData, logoBitmap: Bitmap? = null): TicketShareData {
+    fun fromPrintData(
+        printData: com.gaboom.agent.data.model.PrintData,
+        logoBitmap: Bitmap? = null,
+        totalGainDu: Double = 0.0,
+        isWinner: Boolean = false
+    ): TicketShareData {
         val parsedLines = printData.lines.map { lineStr ->
             val tokens = lineStr.split("\\s+".toRegex()).filter { it.isNotBlank() }
             val jeuRaw = tokens.getOrElse(0) { "" }
@@ -427,6 +432,8 @@ object TicketShareUtil {
             date = "${printData.date}  ${printData.time}",
             lines = parsedLines,
             totalMise = printData.totalMise,
+            totalGainDu = totalGainDu,
+            isWinner = isWinner,
             qrCode = printData.groupId,
             logoBitmap = logoBitmap,
             ticketFooterText = printData.ticketFooterText,
