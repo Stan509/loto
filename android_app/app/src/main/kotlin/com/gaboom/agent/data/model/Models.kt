@@ -136,7 +136,8 @@ data class TicketLineWithOptions(
                     valeur = valeur,
                     mise = miseBase,
                     potentielGain = potentielGain,
-                    gratuit = gratuit
+                    gratuit = gratuit,
+                    option = opt
                 )
             }
         } else {

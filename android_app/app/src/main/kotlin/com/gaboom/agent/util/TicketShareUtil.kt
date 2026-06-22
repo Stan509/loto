@@ -412,38 +412,62 @@ object TicketShareUtil {
         totalGainDu: Double = 0.0,
         isWinner: Boolean = false
     ): TicketShareData {
-        val parsedLines = printData.lines.map { lineStr ->
+        val parsedLines = (printData.lines ?: emptyList()).map { lineStr ->
             val tokens = lineStr.split("\\s+".toRegex()).filter { it.isNotBlank() }
             val jeuRaw = tokens.getOrElse(0) { "" }
             val valeur = tokens.getOrElse(1) { "" }
-            val mise = tokens.getOrElse(2) { "0" }.replace("[^\\d\\.]".toRegex(), "").toDoubleOrNull() ?: 0.0
+            
+            var mise = 0.0
+            var opt: String? = null
+            
+            if (tokens.size >= 4) {
+                // Format: JEU VALEUR OPTX MISE (e.g. LOTO4 1234 OPT2 10.0)
+                val optToken = tokens[2]
+                val miseToken = tokens[3]
+                opt = if (optToken.startsWith("OPT", ignoreCase = true)) optToken else null
+                mise = if (miseToken.equals("GRATUIT", ignoreCase = true)) 0.0 
+                       else (miseToken.replace("[^\\d\\.]".toRegex(), "").toDoubleOrNull() ?: 0.0)
+            } else {
+                // Format: JEU VALEUR MISE (e.g. BOULE 12 10.0)
+                val miseToken = tokens.getOrElse(2) { "0" }
+                mise = if (miseToken.equals("GRATUIT", ignoreCase = true)) 0.0 
+                       else (miseToken.replace("[^\\d\\.]".toRegex(), "").toDoubleOrNull() ?: 0.0)
+                
+                // fallback to check if option is in jeuRaw (e.g. LOTO4-2)
+                val optionParts = jeuRaw.split("-")
+                if (optionParts.size > 1) {
+                    opt = "OPT${optionParts[1]}"
+                }
+            }
+            
             val optionParts = jeuRaw.split("-")
-            val opt = optionParts.getOrNull(1)
+            val baseJeu = optionParts.getOrElse(0) { jeuRaw }
+
             TicketLineData(
-                jeu = optionParts.getOrElse(0) { jeuRaw },
+                jeu = baseJeu,
                 valeur = valeur,
                 mise = mise,
                 option = opt
             )
         }
         return TicketShareData(
-            ticketNo = printData.ticketNumber,
-            tirageNom = printData.tirages.joinToString(", "),
-            date = "${printData.date}  ${printData.time}",
+            ticketNo = printData.ticketNumber ?: "",
+            tirageNom = printData.tirages?.joinToString(", ") ?: "",
+            date = "${printData.date ?: ""}  ${printData.time ?: ""}",
             lines = parsedLines,
-            totalMise = printData.totalMise,
+            totalMise = printData.totalMise ?: 0.0,
             totalGainDu = totalGainDu,
             isWinner = isWinner,
             qrCode = printData.groupId,
             logoBitmap = logoBitmap,
-            ticketFooterText = printData.ticketFooterText,
-            mariageGratuitActif = printData.mariageGratuitActif,
-            mariageGratuitMontant = printData.mariageGratuitMontant,
-            borletteName = printData.borletteName,
-            borletteSlogan = printData.borletteSlogan,
-            borletteTel = printData.borletteTel,
-            borletteAdresse = printData.borletteAdresse,
-            agentName = printData.agentName
+            ticketFooterText = printData.ticketFooterText ?: "",
+            mariageGratuitActif = printData.mariageGratuitActif ?: false,
+            mariageGratuitMontant = printData.mariageGratuitMontant ?: "0",
+            borletteName = printData.borletteName ?: "",
+            borletteSlogan = printData.borletteSlogan ?: "",
+            borletteTel = printData.borletteTel ?: "",
+            borletteAdresse = printData.borletteAdresse ?: "",
+            agentName = printData.agentName ?: ""
         )
     }
 
