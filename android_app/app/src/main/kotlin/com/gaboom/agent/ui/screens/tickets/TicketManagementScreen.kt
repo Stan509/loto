@@ -53,6 +53,9 @@ fun TicketManagementScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
     
+    val shareLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { }
     
     var showDatePicker by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf<TicketListItem?>(null) }
@@ -494,8 +497,46 @@ fun TicketManagementScreen(
                 }
             },
             confirmButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // Option 1: Share as Text
+                    TextButton(
+                        enabled = !isSharingLoading,
+                        onClick = {
+                            scope.launch {
+                                isSharingLoading = true
+                                try {
+                                    val printData = viewModel.getTicketPrintData(ticket.id)
+                                    if (printData != null) {
+                                        val shareData = TicketShareUtil.fromPrintData(
+                                            printData = printData,
+                                            logoBitmap = null,
+                                            totalGainDu = ticket.totalGainDu,
+                                            isWinner = ticket.isWinner
+                                        )
+                                        val intent = TicketShareUtil.getShareTextIntent(shareData)
+                                        val chooser = Intent.createChooser(intent, "Partager le ticket")
+                                        shareLauncher.launch(chooser)
+                                        showShareDialog = null
+                                    } else {
+                                        snackbarHostState.showSnackbar("Erreur de récupération des données")
+                                    }
+                                } catch (e: Throwable) {
+                                    snackbarHostState.showSnackbar("Erreur partage texte: ${e.message}")
+                                } finally {
+                                    isSharingLoading = false
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Texte")
+                    }
 
+                    // Option 2: Share as Image
                     TextButton(
                         enabled = !isSharingLoading,
                         onClick = {
@@ -511,24 +552,27 @@ fun TicketManagementScreen(
                                                 else null
                                             } catch (_: Throwable) { null }
                                         }
-                                        // Use the utility's fromPrintData helper to avoid manual field construction and missing fields
                                         val shareData = TicketShareUtil.fromPrintData(
                                             printData = printData,
                                             logoBitmap = logoBitmap,
                                             totalGainDu = ticket.totalGainDu,
                                             isWinner = ticket.isWinner
                                         )
-                                        // Generate bitmap once, then share it via shareBitmapAsImage (no double generation)
-                                        val bitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                            TicketShareUtil.generateTicketImage(context, shareData)
+                                        val intent = TicketShareUtil.getShareImageIntent(context, shareData)
+                                        if (intent != null) {
+                                            val chooser = Intent.createChooser(intent, "Partager le ticket")
+                                            chooser.clipData = intent.clipData
+                                            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            shareLauncher.launch(chooser)
+                                            showShareDialog = null
+                                        } else {
+                                            snackbarHostState.showSnackbar("Erreur de génération d'image")
                                         }
-                                        TicketShareUtil.shareBitmapAsImage(context, bitmap, shareData.ticketNo)
-                                        showShareDialog = null
                                     } else {
-                                        scope.launch { snackbarHostState.showSnackbar("Erreur de récupération des données") }
+                                        snackbarHostState.showSnackbar("Erreur de récupération des données")
                                     }
                                 } catch (e: Throwable) {
-                                    scope.launch { snackbarHostState.showSnackbar("Erreur partage image: ${e.message}") }
+                                    snackbarHostState.showSnackbar("Erreur partage image: ${e.message}")
                                 } finally {
                                     isSharingLoading = false
                                 }
@@ -538,6 +582,57 @@ fun TicketManagementScreen(
                         Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Image")
+                    }
+
+                    // Option 3: Share as PDF
+                    TextButton(
+                        enabled = !isSharingLoading,
+                        onClick = {
+                            scope.launch {
+                                isSharingLoading = true
+                                try {
+                                    val printData = viewModel.getTicketPrintData(ticket.id)
+                                    if (printData != null) {
+                                        val logoBitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            try {
+                                                if (printData.borletteLogoUrl.isNotBlank())
+                                                    TicketShareUtil.downloadLogo(context, printData.borletteLogoUrl)
+                                                else null
+                                            } catch (_: Throwable) { null }
+                                        }
+                                        val shareData = TicketShareUtil.fromPrintData(
+                                            printData = printData,
+                                            logoBitmap = logoBitmap,
+                                            totalGainDu = ticket.totalGainDu,
+                                            isWinner = ticket.isWinner
+                                        )
+                                        val bitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            TicketShareUtil.generateTicketImage(context, shareData)
+                                        }
+                                        val intent = TicketShareUtil.getSharePdfIntent(context, bitmap, ticket.numero)
+                                        if (intent != null) {
+                                            val chooser = Intent.createChooser(intent, "Partager le ticket PDF")
+                                            chooser.clipData = intent.clipData
+                                            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            shareLauncher.launch(chooser)
+                                            showShareDialog = null
+                                        } else {
+                                            snackbarHostState.showSnackbar("Erreur de génération PDF")
+                                        }
+                                    } else {
+                                        snackbarHostState.showSnackbar("Erreur de récupération des données")
+                                    }
+                                } catch (e: Throwable) {
+                                    snackbarHostState.showSnackbar("Erreur partage PDF: ${e.message}")
+                                } finally {
+                                    isSharingLoading = false
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("PDF")
                     }
                 }
             },

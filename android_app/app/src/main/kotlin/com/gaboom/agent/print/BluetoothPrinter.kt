@@ -430,24 +430,11 @@ class BluetoothPrinter(private val context: Context) {
         try {
             val printManager = context.getSystemService(Context.PRINT_SERVICE) as? PrintManager ?: return@withContext false
             val jobName = "Ticket_$ticketNo"
-            // Vérifier si le service d'impression est réellement disponible
-            // Sur les terminaux POS sans Print Spooler, cette méthode lance une Activity
-            // qui n'aboutit pas - on retourne false pour laisser le fallback ESC/POS s'exécuter
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                // Sur Android 13+, on vérifie si des services d'impression sont installés
-                // via PackageManager pour éviter un faux succès
-                try {
-                    val pm = context.packageManager
-                    val intent = Intent(android.print.PrintManager.ACTION_PRINT_DIALOG)
-                    if (pm.resolveActivity(intent, 0) == null) {
-                        android.util.Log.d("UniversalPrinter", "Aucun service d'impression système trouvé, fallback ESC/POS direct")
-                        return@withContext false
-                    }
-                } catch (_: Throwable) {}
-            }
+            // Sur les terminaux POS sans Print Spooler, on retourne false
+            // pour laisser le fallback ESC/POS (Bluetooth/USB/Serial) s'exécuter
             printManager.print(jobName, TicketPrintAdapter(context, bitmap, jobName), null)
-            // Toujours retourner false pour permettre au fallback ESC/POS de s'exécuer
-            // sur les terminaux POS où le Print Spooler n'est pas le mécanisme d'impression souhaité
+            // Retourne false pour toujours passer au fallback ESC/POS sur les terminaux POS
+            // Le Print Spooler Android n'est pas le mécanisme d'impression souhaité sur Sunmi/Telpo
             false
         } catch (e: Throwable) {
             android.util.Log.e("UniversalPrinter", "Erreur printViaSystem: ${e.message}", e)
