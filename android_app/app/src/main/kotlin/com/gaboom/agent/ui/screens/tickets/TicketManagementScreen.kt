@@ -53,10 +53,6 @@ fun TicketManagementScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
     
-    val shareLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { }
-    
     var showDatePicker by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf<TicketListItem?>(null) }
     var isSharingLoading by remember { mutableStateOf(false) }
@@ -516,9 +512,7 @@ fun TicketManagementScreen(
                                             totalGainDu = ticket.totalGainDu,
                                             isWinner = ticket.isWinner
                                         )
-                                        val intent = TicketShareUtil.getShareTextIntent(shareData)
-                                        val chooser = Intent.createChooser(intent, "Partager le ticket")
-                                        shareLauncher.launch(chooser)
+                                        TicketShareUtil.shareAsText(context, shareData)
                                         showShareDialog = null
                                     } else {
                                         snackbarHostState.showSnackbar("Erreur de récupération des données")
@@ -558,16 +552,8 @@ fun TicketManagementScreen(
                                             totalGainDu = ticket.totalGainDu,
                                             isWinner = ticket.isWinner
                                         )
-                                        val intent = TicketShareUtil.getShareImageIntent(context, shareData)
-                                        if (intent != null) {
-                                            val chooser = Intent.createChooser(intent, "Partager le ticket")
-                                            chooser.clipData = intent.clipData
-                                            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                            shareLauncher.launch(chooser)
-                                            showShareDialog = null
-                                        } else {
-                                            snackbarHostState.showSnackbar("Erreur de génération d'image")
-                                        }
+                                        TicketShareUtil.shareAsImage(context, shareData)
+                                        showShareDialog = null
                                     } else {
                                         snackbarHostState.showSnackbar("Erreur de récupération des données")
                                     }
@@ -609,16 +595,8 @@ fun TicketManagementScreen(
                                         val bitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                                             TicketShareUtil.generateTicketImage(context, shareData)
                                         }
-                                        val intent = TicketShareUtil.getSharePdfIntent(context, bitmap, ticket.numero)
-                                        if (intent != null) {
-                                            val chooser = Intent.createChooser(intent, "Partager le ticket PDF")
-                                            chooser.clipData = intent.clipData
-                                            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                            shareLauncher.launch(chooser)
-                                            showShareDialog = null
-                                        } else {
-                                            snackbarHostState.showSnackbar("Erreur de génération PDF")
-                                        }
+                                        TicketShareUtil.saveAsPdf(context, bitmap, ticket.numero)
+                                        showShareDialog = null
                                     } else {
                                         snackbarHostState.showSnackbar("Erreur de récupération des données")
                                     }

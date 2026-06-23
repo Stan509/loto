@@ -53,11 +53,6 @@ fun VenteScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     
-    // ActivityResultLauncher for sharing intents
-    val shareLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
-    ) { }
-    
     // State for bottom sheet and dropdowns
     var showTirageSheet by remember { mutableStateOf(false) }
     var showSettingsMenu by remember { mutableStateOf(false) }
@@ -1492,15 +1487,7 @@ fun VenteScreen(
                                                 else null
                                             }
                                             val shareData = buildShareData(logoBitmap)
-                                            val intent = TicketShareUtil.getShareImageIntent(context, shareData)
-                                            if (intent != null) {
-                                                val chooser = Intent.createChooser(intent, "Partager le ticket")
-                                                chooser.clipData = intent.clipData
-                                                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                shareLauncher.launch(chooser)
-                                            } else {
-                                                Toast.makeText(context, "Erreur de génération d'image", Toast.LENGTH_SHORT).show()
-                                            }
+                                            TicketShareUtil.shareAsImage(context, shareData)
                                         } catch (e: Throwable) {
                                             android.util.Log.e("VenteScreen", "Erreur partage image: ${e.message}", e)
                                             Toast.makeText(context, "Erreur: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
@@ -1534,15 +1521,7 @@ fun VenteScreen(
                                             val bitmap = withContext(Dispatchers.IO) {
                                                 TicketShareUtil.generateTicketImage(context, shareData)
                                             }
-                                            val intent = TicketShareUtil.getSharePdfIntent(context, bitmap, ticketInfo.ticketNo)
-                                            if (intent != null) {
-                                                val chooser = Intent.createChooser(intent, "Partager le ticket PDF")
-                                                chooser.clipData = intent.clipData
-                                                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                shareLauncher.launch(chooser)
-                                            } else {
-                                                Toast.makeText(context, "Erreur de génération de PDF", Toast.LENGTH_SHORT).show()
-                                            }
+                                            TicketShareUtil.saveAsPdf(context, bitmap, ticketInfo.ticketNo)
                                         } catch (e: Throwable) {
                                             android.util.Log.e("VenteScreen", "Erreur partage PDF: ${e.message}", e)
                                             Toast.makeText(context, "Erreur: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
