@@ -159,6 +159,10 @@
     </div>
   </div>
 
+  <!-- Leaflet Map library -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
   <!-- Infos agent -->
   <div class="info-grid">
     <div class="info-item">
@@ -172,6 +176,19 @@
     <div class="info-item">
       <div class="label">Créé le</div>
       <div class="value">{{ agent.created_at|date:"d/m/Y" }}</div>
+    </div>
+  </div>
+
+  <!-- Localisation Map Section -->
+  <div class="section" style="margin-bottom: 24px;">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h3>📍 Localisation de l'appareil</h3>
+      <span id="lastLocationTime" style="font-size: 12px; color: rgba(255,255,255,0.5);">Mise à jour: {{ agent.last_location_updated_at|default:"Jamais" }}</span>
+    </div>
+    <div id="map" style="height: 280px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); width: 100%;">
+      <div class="map-placeholder" style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,0.4);font-size:14px;">
+        Aucune coordonnée reçue pour le moment.
+      </div>
     </div>
   </div>
 
@@ -208,6 +225,37 @@
 
   function fmt(n) { return (n || 0).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' G'; }
 
+  let map;
+  let marker;
+
+  function updateMap(lat, lng, lastTime) {
+    if (!lat || !lng) return;
+    
+    const mapEl = document.getElementById('map');
+    if (mapEl.querySelector('.map-placeholder')) {
+      mapEl.innerHTML = '';
+    }
+    
+    if (lastTime) {
+      const formattedTime = new Date(lastTime).toLocaleString('fr-FR');
+      document.getElementById('lastLocationTime').textContent = `Mise à jour: ${formattedTime}`;
+    }
+
+    if (!map) {
+      map = L.map('map').setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+      marker = L.marker([lat, lng]).addTo(map)
+        .bindPopup("{{ agent.nom }} est ici")
+        .openPopup();
+    } else {
+      const newLatLng = new L.LatLng(lat, lng);
+      marker.setLatLng(newLatLng);
+      map.panTo(newLatLng);
+    }
+  }
+
   function loadStats() {
     fetch(`/portal/api/agents/${agentId}/stats/`)
       .then(r => r.json())
@@ -221,6 +269,11 @@
         document.getElementById('statPayouts').textContent = fmt(s.commission_payout);
         document.getElementById('statBalance').textContent = fmt(s.balance);
         document.getElementById('modalBalance').textContent = fmt(s.balance);
+        
+        // Update map coordinates
+        if (data.agent && data.agent.latitude !== null && data.agent.longitude !== null) {
+          updateMap(data.agent.latitude, data.agent.longitude, data.agent.last_location_updated_at);
+        }
       });
   }
 
@@ -285,6 +338,10 @@
   loadStats();
   loadLedger();
   loadPerformance('7d');
+  
+  // Poll stats and location every 30 seconds
+  setInterval(loadStats, 30000);
+  
   document.querySelectorAll('#performanceToggle button').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#performanceToggle button').forEach(b => b.classList.remove('active'));

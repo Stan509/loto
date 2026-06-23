@@ -18,6 +18,7 @@ from accounts.models import (
     UserRole,
     Agent,
     FinancialTransaction,
+    GlobalPaymentSettings,
 )
 
 
@@ -259,5 +260,43 @@ def admin_index_redirect(request: HttpRequest):
         return redirect('superadmin_dashboard')
     from django.contrib import admin
     return admin.site.index(request)
+
+
+@login_required
+def superadmin_payment_config(request: HttpRequest):
+    if not request.user.is_superuser:
+        messages.error(request, "Accès réservé au superadmin")
+        return redirect("/admin/")
+
+    from decimal import Decimal
+    config, _ = GlobalPaymentSettings.objects.get_or_create(id=1)
+
+    if request.method == "POST":
+        config.stripe_public_key = (request.POST.get("stripe_public_key") or "").strip()
+        config.stripe_secret_key = (request.POST.get("stripe_secret_key") or "").strip()
+        config.moncash_client_id = (request.POST.get("moncash_client_id") or "").strip()
+        config.moncash_secret_key = (request.POST.get("moncash_secret_key") or "").strip()
+        config.moncash_sandbox = (request.POST.get("moncash_sandbox") or "") == "on"
+        config.automatic_payments_active = (request.POST.get("automatic_payments_active") or "") == "on"
+        
+        try:
+            config.stripe_fee_percent = Decimal(request.POST.get("stripe_fee_percent", "3.5"))
+            config.stripe_fee_fixed = Decimal(request.POST.get("stripe_fee_fixed", "0.30"))
+            config.moncash_fee_percent = Decimal(request.POST.get("moncash_fee_percent", "1.0"))
+            config.moncash_fee_fixed = Decimal(request.POST.get("moncash_fee_fixed", "0.0"))
+        except Exception:
+            pass
+
+        config.save()
+        messages.success(request, "Configuration de paiement mise à jour avec succès.")
+        return redirect("superadmin_payment_config")
+
+    return render(
+        request,
+        "accounts/superadmin_payment_config.html",
+        {
+            "config": config,
+        },
+    )
 
 

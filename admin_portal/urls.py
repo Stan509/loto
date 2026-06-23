@@ -101,4 +101,13 @@ urlpatterns = [
     path("partners/<int:partner_id>/edit/", partner_admin.admin_edit_partner, name="edit_partner"),
     path("partners/<int:partner_id>/toggle/", partner_admin.admin_toggle_partner, name="toggle_partner"),
     path("partners/<int:partner_id>/delete/", partner_admin.admin_delete_partner, name="delete_partner"),
+    # Subscription Billing (Stripe / MonCash)
+    path("payment/", views.payment_view, name="payment"),
+    path("payment/stripe/checkout/", views.stripe_checkout, name="stripe_checkout"),
+    path("payment/moncash/checkout/", views.moncash_checkout, name="moncash_checkout"),
+    path("payment/callback/stripe/", views.stripe_callback, name="stripe_callback"),
+    path("payment/callback/moncash/", views.moncash_callback, name="moncash_callback"),
+    path("payment/success/", views.payment_success, name="payment_success"),
+    path("payment/cancel/", views.payment_cancel, name="payment_cancel"),
 ]
+

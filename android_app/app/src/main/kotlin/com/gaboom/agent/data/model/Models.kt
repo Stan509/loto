@@ -582,6 +582,11 @@ data class BlueprintLine(
 // HEARTBEAT
 // ═══════════════════════════════════════════════════════════════════════════
 
+data class HeartbeatRequest(
+    val latitude: Double? = null,
+    val longitude: Double? = null
+)
+
 data class HeartbeatResponse(
     val success: Boolean = true,
     val status: String?,

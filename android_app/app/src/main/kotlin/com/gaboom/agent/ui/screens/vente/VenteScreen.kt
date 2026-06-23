@@ -1033,7 +1033,11 @@ fun VenteScreen(
             // Row 2: Create/Print Button
             Button(
                 onClick = {
-                    showPrintPreview = true
+                    if (uiState.multiTirageMode) {
+                        viewModel.createMultiTickets()
+                    } else if (tirageId != null) {
+                        viewModel.createTicket(tirageId)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 enabled = uiState.lines.isNotEmpty() 

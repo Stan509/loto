@@ -10,11 +10,13 @@ from unittest.mock import patch, MagicMock
 
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from accounts.models import (
-    Borlette, Agent, Tirage, Ticket, TicketStatus,
-    Device, AuditLog, AuditAction
+    Borlette, Agent, Tirage,
+    AgentDevice, AuditLog, AuditAction
 )
+from agent_portal.models import Ticket, TicketStatus, TicketLine
 
 User = get_user_model()
 
@@ -25,10 +27,18 @@ class CreateMultiEndpointTests(TestCase):
     def setUp(self):
         self.client = Client()
         
+        # Create borlette admin user
+        self.admin_user = User.objects.create_user(
+            username="borlette_admin_1",
+            password="adminpassword",
+            role="ADMIN"
+        )
         # Create borlette
         self.borlette = Borlette.objects.create(
-            nom="Test Borlette",
-            code="TEST",
+            user=self.admin_user,
+            nom_borlette="Test Borlette 1",
+            adresse="Test Address",
+            telephone="555-5555"
         )
         
         # Create user and agent
@@ -40,11 +50,12 @@ class CreateMultiEndpointTests(TestCase):
             user=self.user,
             borlette=self.borlette,
             nom="Test Agent",
-            code="AGT001",
+            telephone="555-1111",
+            zone="Test Zone"
         )
         
         # Create device for HMAC tests
-        self.device = Device.objects.create(
+        self.device = AgentDevice.objects.create(
             agent=self.agent,
             device_id="test-device-123",
             device_secret="test-secret-xyz",
@@ -57,35 +68,48 @@ class CreateMultiEndpointTests(TestCase):
         self.tirage1 = Tirage.objects.create(
             borlette=self.borlette,
             nom="Midi",
+            code="MIDI",
             session_key=self.session_key,
-            is_open=True,
-            etat_ouverture="OUVERT",
         )
         self.tirage2 = Tirage.objects.create(
             borlette=self.borlette,
             nom="Soir",
+            code="SOIR",
             session_key=self.session_key,
-            is_open=True,
-            etat_ouverture="OUVERT",
         )
         
         # Create closed tirage for failure test
+        now = timezone.localtime(timezone.now())
+        closed_day = (now.weekday() + 1) % 7
         self.tirage_closed = Tirage.objects.create(
             borlette=self.borlette,
             nom="Ferme",
+            code="FERME",
             session_key=self.session_key,
-            is_open=False,
-            etat_ouverture="FERME",
+            jours_actifs=[closed_day],
+            statut="ACTIF",
         )
 
     def _get_auth_headers(self, agent):
         """Helper to get JWT auth headers for an agent"""
-        return {"HTTP_AUTHORIZATION": f"Bearer mock-token-{agent.id}"}
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(agent.user)
+        session_id = agent.user.active_session_id
+        if not session_id:
+            session_id = uuid.uuid4().hex
+            agent.user.active_session_id = session_id
+            agent.user.save(update_fields=["active_session_id"])
+        
+        refresh["session_id"] = session_id
+        refresh.access_token["session_id"] = session_id
+        
+        token = str(refresh.access_token)
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
     
     def _calculate_hmac(self, payload_dict, session_key, device_secret):
         """Calculate HMAC signature for offline sync"""
         payload_json = json.dumps(payload_dict, sort_keys=True, separators=(',', ':'))
-        message = f"{payload_json}:{session_key}"
+        message = f"{payload_json}{session_key}"
         signature = hmac.new(
             device_secret.encode('utf-8'),
             message.encode('utf-8'),
@@ -186,7 +210,7 @@ class CreateMultiEndpointTests(TestCase):
         data = response.json()
         
         self.assertFalse(data["success"])
-        self.assertIn("hmac", data["error"].lower())
+        self.assertIn("signature", data["error"].lower())
 
     @patch('agent_portal.api_views._get_agent_from_request')
     def test_create_multi_offline_device_inactive(self, mock_get_agent):
@@ -259,16 +283,21 @@ class CreateMultiEndpointTests(TestCase):
         """create-multi should reject offline sync with wrong session_key"""
         mock_get_agent.return_value = self.agent
         
+        # Temporarily change self.tirage2 session_key to match the wrong one
+        wrong_session_key = str(uuid.uuid4())
+        self.tirage2.session_key = wrong_session_key
+        self.tirage2.save()
+        
         payload = {
-            "tirage_ids": [self.tirage1.id],
+            "tirage_ids": [self.tirage1.id, self.tirage2.id],
             "entries": [
                 {"game": "boule", "number": "34", "stake": 50.0}
             ],
-            "session_key": "wrong-session-key"
+            "session_key": wrong_session_key
         }
         
         signature, _ = self._calculate_hmac(
-            payload, "wrong-session-key", self.device.device_secret
+            payload, wrong_session_key, self.device.device_secret
         )
         
         response = self.client.post(
@@ -352,10 +381,18 @@ class BlueprintEndpointTests(TestCase):
     def setUp(self):
         self.client = Client()
         
+        # Create borlette admin user
+        self.admin_user = User.objects.create_user(
+            username="borlette_admin_2",
+            password="adminpassword",
+            role="ADMIN"
+        )
         # Create borlette
         self.borlette = Borlette.objects.create(
-            nom="Test Borlette",
-            code="TEST",
+            user=self.admin_user,
+            nom_borlette="Test Borlette 2",
+            adresse="Test Address",
+            telephone="555-5555"
         )
         
         # Create user and agent
@@ -367,7 +404,8 @@ class BlueprintEndpointTests(TestCase):
             user=self.user,
             borlette=self.borlette,
             nom="Test Agent",
-            code="AGT001",
+            telephone="555-2222",
+            zone="Test Zone"
         )
         
         # Create another agent for permission tests
@@ -379,15 +417,17 @@ class BlueprintEndpointTests(TestCase):
             user=self.other_user,
             borlette=self.borlette,
             nom="Other Agent",
-            code="AGT002",
+            telephone="555-3333",
+            zone="Test Zone"
         )
         
         # Create tirage
+        self.session_key = str(uuid.uuid4())
         self.tirage = Tirage.objects.create(
             borlette=self.borlette,
             nom="Midi",
-            session_key="test-session-123",
-            is_open=True,
+            code="MIDI",
+            session_key=self.session_key,
         )
         
         # Create ticket
@@ -395,45 +435,51 @@ class BlueprintEndpointTests(TestCase):
             borlette=self.borlette,
             agent=self.agent,
             tirage=self.tirage,
-            boules=["34", "67"],
-            mises_boules=[Decimal("50"), Decimal("50")],
-            mariages=["34x67"],
-            mises_mariages=[Decimal("25")],
-            loto3=["789"],
-            mises_loto3=[Decimal("10")],
-            loto4=["1234"],
-            mises_loto4=[Decimal("20")],
-            options_loto4=[2],
-            loto5=["12345"],
-            mises_loto5=[Decimal("15")],
-            options_loto5=[3],
-            status=TicketStatus.PENDING,
+            numero_ticket="TK-123456",
+            statut=TicketStatus.VALIDE,
         )
+        TicketLine.objects.create(ticket=self.ticket, jeu="boule", valeur="34", mise=Decimal("50"))
+        TicketLine.objects.create(ticket=self.ticket, jeu="boule", valeur="67", mise=Decimal("50"))
+        TicketLine.objects.create(ticket=self.ticket, jeu="mariage", valeur="34x67", mise=Decimal("25"))
+        TicketLine.objects.create(ticket=self.ticket, jeu="loto3", valeur="789", mise=Decimal("10"))
+        TicketLine.objects.create(ticket=self.ticket, jeu="loto4", valeur="1234", mise=Decimal("20"), option=2)
+        TicketLine.objects.create(ticket=self.ticket, jeu="loto5", valeur="12345", mise=Decimal("15"), option=3)
         
         # Create VOID ticket for rejection test
         self.void_ticket = Ticket.objects.create(
             borlette=self.borlette,
             agent=self.agent,
             tirage=self.tirage,
-            boules=["11"],
-            mises_boules=[Decimal("50")],
-            status=TicketStatus.VOID,
+            numero_ticket="TK-VOID",
+            statut=TicketStatus.ANNULE,
         )
+        TicketLine.objects.create(ticket=self.void_ticket, jeu="boule", valeur="11", mise=Decimal("50"))
         
         # Create ticket belonging to other agent
         self.other_ticket = Ticket.objects.create(
             borlette=self.borlette,
             agent=self.other_agent,
             tirage=self.tirage,
-            boules=["22"],
-            mises_boules=[Decimal("50")],
-            status=TicketStatus.PENDING,
+            numero_ticket="TK-OTHER",
+            statut=TicketStatus.VALIDE,
         )
+        TicketLine.objects.create(ticket=self.other_ticket, jeu="boule", valeur="22", mise=Decimal("50"))
 
     def _get_auth_headers(self, agent):
         """Helper to get JWT auth headers for an agent"""
-        # Mock JWT token validation
-        return {"HTTP_AUTHORIZATION": f"Bearer mock-token-{agent.id}"}
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(agent.user)
+        session_id = agent.user.active_session_id
+        if not session_id:
+            session_id = uuid.uuid4().hex
+            agent.user.active_session_id = session_id
+            agent.user.save(update_fields=["active_session_id"])
+        
+        refresh["session_id"] = session_id
+        refresh.access_token["session_id"] = session_id
+        
+        token = str(refresh.access_token)
+        return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
 
     @patch('agent_portal.api_views._get_agent_from_request')
     def test_blueprint_returns_correct_lines(self, mock_get_agent):
@@ -451,7 +497,7 @@ class BlueprintEndpointTests(TestCase):
         self.assertTrue(data["success"])
         self.assertEqual(data["ticket_id"], str(self.ticket.id))
         self.assertEqual(data["tirage_id"], self.tirage.id)
-        self.assertEqual(data["session_key"], "test-session-123")
+        self.assertEqual(data["session_key"], self.session_key)
         
         lines = data["lines"]
         

@@ -1,0 +1,533 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Facturation & Paiement | Central Borlette{% endblock %}
+{% block page_title %}Facturation & Paiement{% endblock %}
+{% block page_meta %}Gérez votre abonnement et effectuez vos règlements{% endblock %}
+
+{% block page_body %}
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     PAYMENT PAGE - PREMIUM GLASSMORPHISM
+     ═══════════════════════════════════════════════════════════ */
+  .payment-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 18px 40px;
+  }
+
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .grid-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Glass Card */
+  .glass-card {
+    background: linear-gradient(135deg, rgba(20, 27, 45, 0.85), rgba(15, 20, 35, 0.92));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    padding: 28px;
+    margin-bottom: 24px;
+    color: #ffffff;
+  }
+
+  .glass-card h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Package Selection Option */
+  .package-option {
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .package-option:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(58, 160, 255, 0.4);
+  }
+
+  .package-option.selected {
+    background: rgba(58, 160, 255, 0.1);
+    border-color: #3aa0ff;
+    box-shadow: 0 0 15px rgba(58, 160, 255, 0.2);
+  }
+
+  .package-details h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #ffffff;
+  }
+
+  .package-details p {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+  }
+
+  .package-price {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f59e0b;
+    text-align: right;
+  }
+
+  .package-price span {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+    display: block;
+  }
+
+  /* Custom Amount Input Box */
+  .custom-amount-box {
+    display: none;
+    margin-top: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .form-group {
+    margin-bottom: 0;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 8px;
+  }
+
+  .input-with-suffix {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-with-suffix input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 60px 12px 16px;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-with-suffix input:focus {
+    border-color: #3aa0ff;
+  }
+
+  .input-suffix {
+    position: absolute;
+    right: 16px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 700;
+  }
+
+  /* Summary details */
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 12px;
+  }
+
+  .summary-row.total {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+    margin-top: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .summary-row.total .price-highlight {
+    color: #f59e0b;
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  /* Checkout buttons */
+  .btn-pay {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    border: none;
+    margin-bottom: 12px;
+  }
+
+  .btn-stripe {
+    background: linear-gradient(135deg, #635bff, #7a73ff);
+    color: #ffffff;
+  }
+
+  .btn-stripe:hover {
+    background: linear-gradient(135deg, #524cdb, #6b63eb);
+    box-shadow: 0 0 15px rgba(99, 91, 255, 0.4);
+  }
+
+  .btn-moncash {
+    background: linear-gradient(135deg, #cf1620, #e6232e);
+    color: #ffffff;
+  }
+
+  .btn-moncash:hover {
+    background: linear-gradient(135deg, #b01019, #cc1c26);
+    box-shadow: 0 0 15px rgba(207, 22, 32, 0.4);
+  }
+
+  /* Custom styling for status or warning banners */
+  .status-banner {
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .status-banner.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: #f59e0b;
+  }
+
+  .status-banner.info {
+    background: rgba(58, 160, 255, 0.1);
+    border: 1px solid rgba(58, 160, 255, 0.25);
+    color: #3aa0ff;
+  }
+</style>
+
+<div class="payment-container">
+  {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for message in messages %}
+        <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/90">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- State Banner -->
+  <div class="status-banner info">
+    <span style="font-size: 18px;">ℹ️</span>
+    <div>
+      <strong>Note sur l'abonnement :</strong> Votre abonnement actuel expire le 
+      <strong>{{ subscription.end_date|date:"d/m/Y" }}</strong>. 
+      Vous pouvez le prolonger à tout moment. Les jours payés s'ajoutent à votre date d'expiration actuelle.
+    </div>
+  </div>
+
+  <div class="grid-layout">
+    <!-- Left Column: Choice of Package -->
+    <div>
+      <div class="glass-card">
+        <h2>
+          <span>🎯</span> Choisissez votre formule de renouvellement
+        </h2>
+        
+        <!-- Total (30 days) -->
+        <div class="package-option selected" id="pkg-total" onclick="selectPackage('total', {{ total_pkg_amount }})">
+          <div class="package-details">
+            <h3>Mensuel Complet (30 jours)</h3>
+            <p>Accès complet pour {{ agent_count }} agents actifs</p>
+          </div>
+          <div class="package-price">
+            {{ total_pkg_amount|floatformat:0 }} GDS
+            <span>+30 jours d'abonnement</span>
+          </div>
+        </div>
+
+        <!-- Half (15 days) -->
+        <div class="package-option" id="pkg-half" onclick="selectPackage('half', {{ half_pkg_amount }})">
+          <div class="package-details">
+            <h3>Demi-Mensuel (15 jours)</h3>
+            <p>Accès pour {{ agent_count }} agents actifs</p>
+          </div>
+          <div class="package-price">
+            {{ half_pkg_amount|floatformat:0 }} GDS
+            <span>+15 jours d'abonnement</span>
+          </div>
+        </div>
+
+        <!-- Custom (proportional days) -->
+        <div class="package-option" id="pkg-custom" onclick="selectPackage('custom', 0)">
+          <div class="package-details">
+            <h3>Montant personnalisé</h3>
+            <p>Crédité proportionnellement au tarif mensuel</p>
+          </div>
+          <div class="package-price" id="custom-display-price">
+            Saisir
+            <span>Calcul proportionnel</span>
+          </div>
+        </div>
+
+        <!-- Custom Input Box -->
+        <div class="custom-amount-box" id="custom-input-box">
+          <div class="form-group">
+            <label for="custom_amount">Montant personnalisé en Gourdes (HTG)</label>
+            <div class="input-with-suffix">
+              <input type="number" id="custom_amount" name="custom_amount" min="1" placeholder="Ex: 5000" oninput="updateCustomAmount(this.value)" />
+              <span class="input-suffix">GDS</span>
+            </div>
+            <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 6px; margin-bottom: 0;">
+              Exemple : Un paiement de <span id="calc-ex-amount">0</span> GDS prolongera votre abonnement de <strong id="calc-ex-days" style="color: #3aa0ff;">0</strong> jours.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Bank Proof Upload Form -->
+      <div class="glass-card">
+        <h2>
+          <span>📁</span> Fallback : Envoyer une preuve manuelle
+        </h2>
+        <p style="font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 20px;">
+          Si vous préférez effectuer un virement bancaire direct, ou un transfert manuel MonCash/Natcash, veuillez soumettre votre capture d'écran de preuve de paiement ici.
+        </p>
+
+        <!-- Bank details fallback -->
+        <div style="background: rgba(58, 160, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 14px; padding: 16px; margin-bottom: 20px; font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.6;">
+          <div style="margin-bottom: 6px;"><strong style="color: #3aa0ff;">MonCash direct :</strong> 31940146 (Jocelyn Charles)</div>
+          <div style="margin-bottom: 6px;"><strong style="color: #3aa0ff;">Natcash direct :</strong> 32007008 (Jhonny Paulin)</div>
+          <div><strong style="color: #f59e0b;">Zelle direct (>75,000 GDS) :</strong> 8455874927 (Misterline Dantan)</div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" action="{% url 'admin_portal:information' %}" style="display: flex; flex-direction: column; gap: 14px;">
+          {% csrf_token %}
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7);">Sélectionner le reçu de transaction :</label>
+            <input type="file" name="payment_proof" accept="image/*" required style="padding: 10px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 12px; background: rgba(255,255,255,0.03); color: white; font-size: 13px;">
+          </div>
+          <button type="submit" name="upload_payment_proof" style="padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; color: #10b981; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.15s; width: fit-content; align-self: flex-end;">
+            📤 Soumettre la preuve manuelle
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Column: Invoice Summary & Payment Methods -->
+    <div>
+      <div class="glass-card" style="position: sticky; top: 20px;">
+        <h2>
+          <span>📋</span> Résumé de Facture
+        </h2>
+        
+        <div class="summary-row">
+          <span>Nombre d'agents actifs</span>
+          <span style="font-weight: 600;">{{ agent_count }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Prix par agent (mensuel)</span>
+          <span>{{ amount_due_per_agent|floatformat:0 }} GDS</span>
+        </div>
+        <div class="summary-row">
+          <span>Abonnement de base</span>
+          <span id="summary-base">0 GDS</span>
+        </div>
+        <div class="summary-row">
+          <span>Jours d'extension</span>
+          <span id="summary-days" style="color: #3aa0ff; font-weight: 700;">0 jours</span>
+        </div>
+        
+        <div id="stripe-fee-row" class="summary-row" style="display: none;">
+          <span>Frais Stripe / Carte</span>
+          <span id="summary-stripe-fee">0 GDS</span>
+        </div>
+        <div id="moncash-fee-row" class="summary-row" style="display: none;">
+          <span>Frais de passerelle MonCash</span>
+          <span id="summary-moncash-fee">0 GDS</span>
+        </div>
+
+        <div class="summary-row total">
+          <span>Total à payer</span>
+          <span class="price-highlight" id="summary-total">0 GDS</span>
+        </div>
+
+        {% if config.automatic_payments_active %}
+          <div style="margin-top: 24px;">
+            <p style="font-size: 12px; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 16px;">
+              Paiement sécurisé et instantané. Choisissez votre mode de paiement ci-dessous.
+            </p>
+            
+            <!-- Stripe Payment Form -->
+            <form method="post" id="stripe-form" action="{% url 'admin_portal:stripe_checkout' %}">
+              {% csrf_token %}
+              <input type="hidden" name="package" id="stripe-package-input" value="total" />
+              <input type="hidden" name="custom_amount" id="stripe-custom-amount-input" value="0" />
+              <button type="submit" class="btn-pay btn-stripe" onclick="setFormPayment('stripe')">
+                <span>💳</span> Payer par Carte (Stripe)
+              </button>
+            </form>
+
+            <!-- MonCash Payment Form -->
+            <form method="post" id="moncash-form" action="{% url 'admin_portal:moncash_checkout' %}">
+              {% csrf_token %}
+              <input type="hidden" name="package" id="moncash-package-input" value="total" />
+              <input type="hidden" name="custom_amount" id="moncash-custom-amount-input" value="0" />
+              <button type="submit" class="btn-pay btn-moncash" onclick="setFormPayment('moncash')">
+                <span>📱</span> Payer avec MonCash
+              </button>
+            </form>
+          </div>
+        {% else %}
+          <div style="margin-top: 24px; padding: 16px; border: 1px dashed rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.05); border-radius: 14px; text-align: center;">
+            <p style="color: #f59e0b; font-size: 13px; font-weight: 700; margin: 0 0 8px 0;">
+              ⚠️ Paiements Automatiques Désactivés
+            </p>
+            <p style="color: rgba(255,255,255,0.65); font-size: 12px; margin: 0;">
+              Le superadmin a désactivé temporairement les paiements Stripe et MonCash. Veuillez soumettre une preuve de paiement manuelle ci-contre.
+            </p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedPackage = 'total';
+  let totalAmountDue = {{ total_amount_due }};
+  let currentBaseAmount = totalAmountDue;
+  
+  // Fee rates from settings
+  let stripeFeePercent = parseFloat("{{ config.stripe_fee_percent }}") || 3.5;
+  let stripeFeeFixed = parseFloat("{{ config.stripe_fee_fixed }}") || 0.30;
+  let moncashFeePercent = parseFloat("{{ config.moncash_fee_percent }}") || 1.0;
+  let moncashFeeFixed = parseFloat("{{ config.moncash_fee_fixed }}") || 0.0;
+
+  function selectPackage(pkg, amount) {
+    selectedPackage = pkg;
+    
+    // Toggle active state in UI
+    document.querySelectorAll('.package-option').forEach(el => el.classList.remove('selected'));
+    document.getElementById(`pkg-${pkg}`).classList.add('selected');
+    
+    const customBox = document.getElementById('custom-input-box');
+    if (pkg === 'custom') {
+      customBox.style.display = 'block';
+      let val = document.getElementById('custom_amount').value || 0;
+      updateCustomAmount(val);
+    } else {
+      customBox.style.display = 'none';
+      currentBaseAmount = amount;
+      updateSummary();
+    }
+  }
+
+  function updateCustomAmount(val) {
+    let amount = parseFloat(val) || 0;
+    currentBaseAmount = amount;
+    
+    // Update dynamic calculation text
+    let days = 0;
+    if (totalAmountDue > 0 && amount > 0) {
+      days = Math.round((amount / totalAmountDue) * 30);
+    }
+    
+    document.getElementById('calc-ex-amount').textContent = amount;
+    document.getElementById('calc-ex-days').textContent = days;
+    
+    // Update display price inside the package row
+    const displayPrice = document.getElementById('custom-display-price');
+    if (amount > 0) {
+      displayPrice.innerHTML = `${amount} GDS<span>+${days} jours d'abonnement</span>`;
+    } else {
+      displayPrice.innerHTML = `Saisir<span>Calcul proportionnel</span>`;
+    }
+    
+    updateSummary();
+  }
+
+  function updateSummary() {
+    let days = 30;
+    if (selectedPackage === 'half') {
+      days = 15;
+    } else if (selectedPackage === 'custom') {
+      days = totalAmountDue > 0 ? Math.round((currentBaseAmount / totalAmountDue) * 30) : 0;
+    }
+    
+    // Calculate stripe and moncash fees
+    let stripeFee = currentBaseAmount * (stripeFeePercent / 100) + stripeFeeFixed;
+    let moncashFee = currentBaseAmount * (moncashFeePercent / 100) + moncashFeeFixed;
+    
+    // Update labels
+    document.getElementById('summary-base').textContent = `${Math.round(currentBaseAmount)} GDS`;
+    document.getElementById('summary-days').textContent = `${days} jours`;
+    document.getElementById('summary-stripe-fee').textContent = `${stripeFee.toFixed(2)} GDS`;
+    document.getElementById('summary-moncash-fee').textContent = `${moncashFee.toFixed(2)} GDS`;
+    
+    // Update forms values
+    document.querySelectorAll('[id$="-package-input"]').forEach(input => input.value = selectedPackage);
+    document.querySelectorAll('[id$="-custom-amount-input"]').forEach(input => input.value = currentBaseAmount);
+    
+    // Dynamic Total depending on chosen view if we want to show fee, let's show the base total first
+    document.getElementById('summary-total').textContent = `${Math.round(currentBaseAmount)} GDS`;
+  }
+
+  function setFormPayment(method) {
+    // Show fee row according to selected payment method
+    document.getElementById('stripe-fee-row').style.display = method === 'stripe' ? 'flex' : 'none';
+    document.getElementById('moncash-fee-row').style.display = method === 'moncash' ? 'flex' : 'none';
+    
+    let base = currentBaseAmount;
+    let total = base;
+    if (method === 'stripe') {
+      let stripeFee = base * (stripeFeePercent / 100) + stripeFeeFixed;
+      total = base + stripeFee;
+    } else if (method === 'moncash') {
+      let moncashFee = base * (moncashFeePercent / 100) + moncashFeeFixed;
+      total = base + moncashFee;
+    }
+    
+    document.getElementById('summary-total').textContent = `${Math.round(total)} GDS`;
+  }
+
+  // Initial call
+  selectPackage('total', totalAmountDue);
+</script>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}Statut du Paiement | Central Borlette{% endblock %}
+{% block page_title %}Statut du Paiement{% endblock %}
+{% block page_meta %}Confirmation du règlement{% endblock %}
+
+{% block page_body %}
+<style>
+  .status-container {
+    max-width: 600px;
+    margin: 40px auto;
+    text-align: center;
+  }
+
+  .status-card {
+    background: linear-gradient(135deg, rgba(20, 27, 45, 0.85), rgba(15, 20, 35, 0.92));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    padding: 40px 30px;
+    color: #ffffff;
+  }
+
+  .status-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+  }
+
+  .status-card h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 12px;
+  }
+
+  .status-card p {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    margin-bottom: 30px;
+  }
+
+  .btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .btn-success {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #10b981;
+  }
+
+  .btn-success:hover {
+    background: rgba(16, 185, 129, 0.25);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+  }
+
+  .btn-cancel {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #ef4444;
+  }
+
+  .btn-cancel:hover {
+    background: rgba(239, 68, 68, 0.25);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
+  }
+</style>
+
+<div class="status-container">
+  {% if messages %}
+    <div class="mb-6 space-y-2 text-left">
+      {% for message in messages %}
+        <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/90">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="status-card">
+    {% if status == "success" %}
+      <div class="status-icon">✅</div>
+      <h2>Paiement Réussi !</h2>
+      <p>
+        Félicitations, votre paiement a été traité et vérifié avec succès. Votre abonnement a été prolongé. Vos agents peuvent continuer à vendre et imprimer leurs tickets sans interruption.
+      </p>
+      <a href="{% url 'admin_portal:information' %}" class="btn-action btn-success">
+        <span>📋</span> Retour aux informations
+      </a>
+    {% else %}
+      <div class="status-icon">❌</div>
+      <h2>Paiement Annulé ou Échoué</h2>
+      <p>
+        La transaction a été annulée ou n'a pas pu être validée. Si l'argent a été débité de votre compte, veuillez contacter le support technique avec les détails de votre transaction ou uploader une preuve manuelle.
+      </p>
+      <a href="{% url 'admin_portal:payment' %}" class="btn-action btn-cancel">
+        <span>🔄</span> Réessayer le paiement
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

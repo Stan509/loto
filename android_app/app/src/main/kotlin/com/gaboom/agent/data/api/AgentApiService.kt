@@ -8,6 +8,7 @@ import com.gaboom.agent.data.model.WithdrawCommissionResponse
 import com.gaboom.agent.data.model.DeviceRegisterResponse
 import com.gaboom.agent.data.model.DisponiblesResponse
 import com.gaboom.agent.data.model.HeartbeatResponse
+import com.gaboom.agent.data.model.HeartbeatRequest
 import com.gaboom.agent.data.model.HistoriqueResponse
 import com.gaboom.agent.data.model.LoginRequest
 import com.gaboom.agent.data.model.LoginResponse
@@ -123,7 +124,7 @@ interface AgentApiService {
     // ─── Heartbeat ──────────────────────────────────────────────────────────
 
     @POST("heartbeat/")
-    suspend fun heartbeat(): Response<HeartbeatResponse>
+    suspend fun heartbeat(@Body request: HeartbeatRequest): Response<HeartbeatResponse>
 
     // ─── Device Registration & Config (Phase I-A) ───────────────────────────
 

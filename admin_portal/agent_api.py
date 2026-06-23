@@ -103,6 +103,9 @@ def api_agent_stats(request: HttpRequest, agent_id: int) -> JsonResponse:
             "nom": agent.nom,
             "telephone": agent.telephone,
             "commission_rate": float(stats["commission_rate"]),
+            "latitude": float(agent.latitude) if agent.latitude is not None else None,
+            "longitude": float(agent.longitude) if agent.longitude is not None else None,
+            "last_location_updated_at": agent.last_location_updated_at.isoformat() if agent.last_location_updated_at else None,
         },
         "stats": {
             "total_mises": float(stats["total_mises"]),

@@ -31,6 +31,13 @@ class User(AbstractUser):
         help_text="Force l'utilisateur à changer son mot de passe à la prochaine connexion"
     )
 
+    active_session_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Identifiant de la session active de l'agent pour restreindre à un seul appareil"
+    )
+
 
 class Borlette(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="borlette")
@@ -264,6 +271,11 @@ class Agent(models.Model):
     last_login = models.DateTimeField(blank=True, null=True)
     last_seen_at = models.DateTimeField(blank=True, null=True)
 
+    # GPS coordinates tracking
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    last_location_updated_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self) -> str:
         return self.nom
 
@@ -495,22 +507,36 @@ class Tirage(models.Model):
         if not self.heure_tirage:
             return "OUVERT"
         
-        # Nouvelle logique: ouvert tout le temps sauf 5 min avant tirage, réouvert 30 min après
-        # Fermeture: 5 minutes avant le tirage
-        # Réouverture: 30 minutes après le tirage
+        from datetime import timedelta, datetime, time
         
         # Calculer l'heure de fermeture (tirage - 5 minutes)
-        from datetime import timedelta, datetime
         fermeture_time = (datetime.combine(datetime.min, self.heure_tirage) - timedelta(minutes=5)).time()
         
-        # Calculer l'heure de réouverture (tirage + 30 minutes)
-        reouverture_time = (datetime.combine(datetime.min, self.heure_tirage) + timedelta(minutes=30)).time()
+        t_10_00 = time(10, 0)
+        t_14_30 = time(14, 30)
+        t_18_00 = time(18, 0)
+        t_23_34 = time(23, 34)
+        t_02_00 = time(2, 0)
+        t_10_00_am = time(10, 0)
         
-        # Si l'heure actuelle est entre fermeture et réouverture, le tirage est fermé
-        if fermeture_time <= t < reouverture_time:
+        # Draws with results scheduled between 10:00 and 14:30 open at 02:00 AM
+        if t_10_00 <= self.heure_tirage <= t_14_30:
+            if t_02_00 <= t < fermeture_time:
+                return "OUVERT"
             return "FERME"
-        
-        return "OUVERT"
+            
+        # Draws with results scheduled between 18:00 and 23:34 open at 10:00 AM
+        elif t_18_00 <= self.heure_tirage <= t_23_34:
+            if t_10_00_am <= t < fermeture_time:
+                return "OUVERT"
+            return "FERME"
+            
+        # Default behavior: closed between closure and re-opening (+30 min)
+        else:
+            reouverture_time = (datetime.combine(datetime.min, self.heure_tirage) + timedelta(minutes=30)).time()
+            if fermeture_time <= t < reouverture_time:
+                return "FERME"
+            return "OUVERT"
 
     def rotate_session(self) -> None:
         """Génère une nouvelle session_key (appelé à la réouverture du tirage)."""
@@ -1167,6 +1193,7 @@ class SubscriptionType(models.TextChoices):
     TRIAL = "trial", "Essai Gratuit"
     STANDARD = "standard", "Standard"
     PREMIUM = "premium", "Premium"
+    MONTHLY = "mensuel", "Mensuel"
 
 class Subscription(models.Model):
     """Abonnement d'un directeur à une borlette."""
@@ -1218,6 +1245,14 @@ class Subscription(models.Model):
     def get_subscription_status(self):
         """Retourne le statut de l'abonnement."""
         from django.utils import timezone
+        today = timezone.now().date()
+        
+        # Si essai gratuit et a dépassé 30 jours, on passe à mensuel
+        if self.subscription_type == SubscriptionType.TRIAL:
+            if (today - self.start_date).days >= 30:
+                self.subscription_type = SubscriptionType.MONTHLY
+                self.save(update_fields=["subscription_type"])
+                
         if not self.is_active:
             return "inactive"
         if self.subscription_type == SubscriptionType.TRIAL:
@@ -1339,3 +1374,29 @@ class AccountRecoveryRequest(models.Model):
 
     def __str__(self) -> str:
         return f"Récupération {self.user.username} - {self.status}"
+
+
+class GlobalPaymentSettings(models.Model):
+    """Configuration globale pour Stripe et MonCash (SuperAdmin)."""
+    stripe_public_key = models.CharField(max_length=255, blank=True, default="")
+    stripe_secret_key = models.CharField(max_length=255, blank=True, default="")
+    
+    moncash_client_id = models.CharField(max_length=255, blank=True, default="")
+    moncash_secret_key = models.CharField(max_length=255, blank=True, default="")
+    moncash_sandbox = models.BooleanField(default=True)
+    
+    automatic_payments_active = models.BooleanField(default=False)
+    
+    stripe_fee_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("3.5"))
+    stripe_fee_fixed = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.30"))
+    moncash_fee_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("1.0"))
+    moncash_fee_fixed = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.0"))
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Configuration Globale Paiement"
+        verbose_name_plural = "Configurations Globales Paiement"
+
+    def __str__(self) -> str:
+        return "Configuration Globale Paiement"

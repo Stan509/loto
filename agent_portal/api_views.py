@@ -59,6 +59,12 @@ def jwt_required(view_func):
             validated_token = jwt_auth.get_validated_token(auth_header.split(" ")[1])
             user = jwt_auth.get_user(validated_token)
             request.user = user
+            
+            # Enforce single device connection for agents
+            if user.role == UserRole.AGENT:
+                token_session_id = validated_token.get("session_id")
+                if not token_session_id or token_session_id != user.active_session_id:
+                    return _json_error("Session expirée car vous êtes connecté sur un autre appareil", 401)
         except (InvalidToken, TokenError) as e:
             return _json_error(f"Token invalide: {str(e)}", 401)
         except Exception as e:
@@ -282,8 +288,15 @@ def api_login(request: HttpRequest) -> JsonResponse:
     except Exception:
         return _json_error("Profil agent non trouvé", 403)
 
+    # Generate and set active session ID
+    session_id = uuid.uuid4().hex
+    user.active_session_id = session_id
+    user.save(update_fields=["active_session_id"])
+
     # Générer tokens JWT
     refresh = RefreshToken.for_user(user)
+    refresh["session_id"] = session_id
+    refresh.access_token["session_id"] = session_id
 
     return _json_success({
         "agent": {
@@ -1815,62 +1828,20 @@ def api_ticket_blueprint(request: HttpRequest, ticket_id: str) -> JsonResponse:
         return _json_error("Ticket non trouvé ou non autorisé", 404)
 
     # Refuser si VOID
-    if ticket.status == TicketStatus.VOID:
+    if ticket.statut == TicketStatus.ANNULE:
         return _json_error("Impossible de refaire une fiche annulée", 400)
 
     # Construire les lignes normalisées
     lines = []
-    
-    # Boules
-    for i, boule in enumerate(ticket.boules or []):
-        if boule:
-            lines.append({
-                "jeu": "boule",
-                "valeur": boule,
-                "mise": float(ticket.mises_boules[i]) if ticket.mises_boules and i < len(ticket.mises_boules) else 0,
-            })
-    
-    # Mariages
-    for i, mariage in enumerate(ticket.mariages or []):
-        if mariage:
-            lines.append({
-                "jeu": "mariage",
-                "valeur": mariage,
-                "mise": float(ticket.mises_mariages[i]) if ticket.mises_mariages and i < len(ticket.mises_mariages) else 0,
-            })
-    
-    # Loto3
-    for i, loto3 in enumerate(ticket.loto3 or []):
-        if loto3:
-            lines.append({
-                "jeu": "loto3",
-                "valeur": loto3,
-                "mise": float(ticket.mises_loto3[i]) if ticket.mises_loto3 and i < len(ticket.mises_loto3) else 0,
-            })
-    
-    # Loto4
-    for i, loto4 in enumerate(ticket.loto4 or []):
-        if loto4:
-            mise = float(ticket.mises_loto4[i]) if ticket.mises_loto4 and i < len(ticket.mises_loto4) else 0
-            opt = ticket.options_loto4[i] if ticket.options_loto4 and i < len(ticket.options_loto4) else 1
-            lines.append({
-                "jeu": "loto4",
-                "valeur": loto4,
-                "mise": mise,
-                "option": opt,
-            })
-    
-    # Loto5
-    for i, loto5 in enumerate(ticket.loto5 or []):
-        if loto5:
-            mise = float(ticket.mises_loto5[i]) if ticket.mises_loto5 and i < len(ticket.mises_loto5) else 0
-            opt = ticket.options_loto5[i] if ticket.options_loto5 and i < len(ticket.options_loto5) else 1
-            lines.append({
-                "jeu": "loto5",
-                "valeur": loto5,
-                "mise": mise,
-                "option": opt,
-            })
+    for line in ticket.lignes.all():
+        line_dict = {
+            "jeu": line.jeu,
+            "valeur": line.valeur,
+            "mise": float(line.mise),
+        }
+        if line.jeu in ["loto4", "loto5"]:
+            line_dict["option"] = line.option
+        lines.append(line_dict)
 
     return _json_success({
         "ticket_id": str(ticket.id),
@@ -1900,7 +1871,22 @@ def api_agent_heartbeat(request: HttpRequest) -> JsonResponse:
         return _json_error("Agent non trouvé", 404)
     
     agent.last_seen_at = timezone.now()
-    agent.save(update_fields=["last_seen_at"])
+    update_fields = ["last_seen_at"]
+    
+    try:
+        if request.body:
+            body = json.loads(request.body.decode("utf-8"))
+            lat = body.get("latitude")
+            lng = body.get("longitude")
+            if lat is not None and lng is not None:
+                agent.latitude = Decimal(str(lat))
+                agent.longitude = Decimal(str(lng))
+                agent.last_location_updated_at = timezone.now()
+                update_fields.extend(["latitude", "longitude", "last_location_updated_at"])
+    except Exception:
+        pass
+        
+    agent.save(update_fields=update_fields)
     
     return _json_success({"status": "ok", "timestamp": agent.last_seen_at.isoformat()})
 

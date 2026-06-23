@@ -2117,3 +2117,454 @@ def depense_delete(request, depense_id: int):
         "admin_portal/depense_confirm_delete.html",
         {"expense": expense},
     )
+
+
+@login_required
+def payment_view(request):
+    guard = _portal_guard(request)
+    if guard:
+        return guard
+    guard2 = _require_admin(request)
+    if guard2:
+        return guard2
+
+    from accounts.models import Subscription, Agent, GlobalPaymentSettings, FinancialTransaction
+    borlette = request.user.borlette
+    config, _ = GlobalPaymentSettings.objects.get_or_create(id=1)
+
+    subscription = Subscription.objects.filter(
+        user=request.user,
+        borlette=borlette,
+        is_active=True
+    ).first()
+    
+    if not subscription:
+        subscription = Subscription.objects.filter(
+            user=request.user,
+            borlette=borlette
+        ).first()
+
+    agent_count = Agent.objects.filter(borlette=borlette, statut="ACTIF").count()
+
+    first_transaction = FinancialTransaction.objects.filter(
+        borlette=borlette,
+        type="activation"
+    ).first()
+    
+    has_promo_discount = False
+    if first_transaction and first_transaction.promo_code:
+        has_promo_discount = True
+    
+    amount_due_per_agent = 1200 if has_promo_discount else 1250
+    total_amount_due = max(agent_count * amount_due_per_agent, amount_due_per_agent)
+
+    # Prepare standard pricing packages
+    # 1. Total (30 days)
+    total_pkg_amount = total_amount_due
+    total_pkg_stripe_fee = Decimal(str(total_pkg_amount)) * (config.stripe_fee_percent / 100) + config.stripe_fee_fixed
+    total_pkg_moncash_fee = Decimal(str(total_pkg_amount)) * (config.moncash_fee_percent / 100) + config.moncash_fee_fixed
+    
+    # 2. Half (15 days)
+    half_pkg_amount = total_amount_due / 2
+    half_pkg_stripe_fee = Decimal(str(half_pkg_amount)) * (config.stripe_fee_percent / 100) + config.stripe_fee_fixed
+    half_pkg_moncash_fee = Decimal(str(half_pkg_amount)) * (config.moncash_fee_percent / 100) + config.moncash_fee_fixed
+
+    return render(
+        request,
+        "admin_portal/payment.html",
+        {
+            "borlette": borlette,
+            "subscription": subscription,
+            "agent_count": agent_count,
+            "amount_due_per_agent": amount_due_per_agent,
+            "total_amount_due": total_amount_due,
+            "config": config,
+            "total_pkg_amount": total_pkg_amount,
+            "total_pkg_stripe_fee": total_pkg_stripe_fee,
+            "total_pkg_moncash_fee": total_pkg_moncash_fee,
+            "half_pkg_amount": half_pkg_amount,
+            "half_pkg_stripe_fee": half_pkg_stripe_fee,
+            "half_pkg_moncash_fee": half_pkg_moncash_fee,
+            "today": timezone.now().date(),
+        }
+    )
+
+
+@login_required
+def stripe_checkout(request):
+    guard = _portal_guard(request)
+    if guard:
+        return guard
+    guard2 = _require_admin(request)
+    if guard2:
+        return guard2
+
+    if request.method != "POST":
+        return redirect("admin_portal:payment")
+
+    import requests
+    from accounts.models import GlobalPaymentSettings, Agent, FinancialTransaction
+    
+    borlette = request.user.borlette
+    config, _ = GlobalPaymentSettings.objects.get_or_create(id=1)
+    
+    if not config.automatic_payments_active:
+        messages.error(request, "Les paiements automatiques sont actuellement désactivés.")
+        return redirect("admin_portal:payment")
+
+    package = request.POST.get("package")
+    custom_amount_str = request.POST.get("custom_amount", "0")
+    
+    agent_count = Agent.objects.filter(borlette=borlette, statut="ACTIF").count()
+    first_transaction = FinancialTransaction.objects.filter(borlette=borlette, type="activation").first()
+    has_promo_discount = False
+    if first_transaction and first_transaction.promo_code:
+        has_promo_discount = True
+    
+    amount_due_per_agent = 1200 if has_promo_discount else 1250
+    total_amount_due = max(agent_count * amount_due_per_agent, amount_due_per_agent)
+    
+    if package == "total":
+        base_amount = Decimal(str(total_amount_due))
+        days = 30
+    elif package == "half":
+        base_amount = Decimal(str(total_amount_due / 2))
+        days = 15
+    elif package == "custom":
+        try:
+            base_amount = Decimal(custom_amount_str)
+            if base_amount <= 0:
+                raise ValueError()
+            days = int(round((float(base_amount) / float(total_amount_due)) * 30))
+            if days <= 0:
+                messages.error(request, "Le montant spécifié est trop faible pour ajouter au moins 1 jour d'abonnement.")
+                return redirect("admin_portal:payment")
+        except ValueError:
+            messages.error(request, "Montant personnalisé invalide.")
+            return redirect("admin_portal:payment")
+    else:
+        messages.error(request, "Forfait de paiement invalide.")
+        return redirect("admin_portal:payment")
+
+    stripe_fee = base_amount * (config.stripe_fee_percent / 100) + config.stripe_fee_fixed
+    total_amount_gds = base_amount + stripe_fee
+    
+    exchange_rate = 130.0
+    total_amount_usd = float(total_amount_gds) / exchange_rate
+    unit_amount_cents = int(round(total_amount_usd * 100))
+    
+    url = "https://api.stripe.com/v1/checkout/sessions"
+    headers = {
+        "Authorization": f"Bearer {config.stripe_secret_key}",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    
+    success_url = request.build_absolute_uri(reverse('admin_portal:stripe_callback')) + "?session_id={CHECKOUT_SESSION_ID}"
+    cancel_url = request.build_absolute_uri(reverse('admin_portal:payment_cancel'))
+    
+    payload = {
+        "payment_method_types[0]": "card",
+        "mode": "payment",
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+        "line_items[0][price_data][currency]": "usd",
+        "line_items[0][price_data][product_data][name]": f"Abonnement Borlette - {borlette.nom_borlette} ({days} jours)",
+        "line_items[0][price_data][unit_amount]": unit_amount_cents,
+        "line_items[0][quantity]": 1,
+        "metadata[borlette_id]": str(borlette.id),
+        "metadata[days]": str(days),
+        "metadata[amount_gds]": str(base_amount),
+        "metadata[user_id]": str(request.user.id),
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, data=payload)
+        if response.status_code == 200:
+            session_url = response.json().get("url")
+            return redirect(session_url)
+        else:
+            err_msg = response.json().get("error", {}).get("message", "Erreur Stripe inconnue")
+            messages.error(request, f"Erreur d'initialisation du paiement Stripe: {err_msg}")
+            return redirect("admin_portal:payment")
+    except Exception as e:
+        messages.error(request, f"Impossible de contacter Stripe: {str(e)}")
+        return redirect("admin_portal:payment")
+
+
+@login_required
+def moncash_checkout(request):
+    guard = _portal_guard(request)
+    if guard:
+        return guard
+    guard2 = _require_admin(request)
+    if guard2:
+        return guard2
+
+    if request.method != "POST":
+        return redirect("admin_portal:payment")
+
+    import requests
+    from accounts.models import GlobalPaymentSettings, Agent, FinancialTransaction
+    
+    borlette = request.user.borlette
+    config, _ = GlobalPaymentSettings.objects.get_or_create(id=1)
+    
+    if not config.automatic_payments_active:
+        messages.error(request, "Les paiements automatiques sont actuellement désactivés.")
+        return redirect("admin_portal:payment")
+
+    package = request.POST.get("package")
+    custom_amount_str = request.POST.get("custom_amount", "0")
+    
+    agent_count = Agent.objects.filter(borlette=borlette, statut="ACTIF").count()
+    first_transaction = FinancialTransaction.objects.filter(borlette=borlette, type="activation").first()
+    has_promo_discount = False
+    if first_transaction and first_transaction.promo_code:
+        has_promo_discount = True
+    
+    amount_due_per_agent = 1200 if has_promo_discount else 1250
+    total_amount_due = max(agent_count * amount_due_per_agent, amount_due_per_agent)
+    
+    if package == "total":
+        base_amount = Decimal(str(total_amount_due))
+        days = 30
+    elif package == "half":
+        base_amount = Decimal(str(total_amount_due / 2))
+        days = 15
+    elif package == "custom":
+        try:
+            base_amount = Decimal(custom_amount_str)
+            if base_amount <= 0:
+                raise ValueError()
+            days = int(round((float(base_amount) / float(total_amount_due)) * 30))
+            if days <= 0:
+                messages.error(request, "Le montant spécifié est trop faible pour ajouter au moins 1 jour d'abonnement.")
+                return redirect("admin_portal:payment")
+        except ValueError:
+            messages.error(request, "Montant personnalisé invalide.")
+            return redirect("admin_portal:payment")
+    else:
+        messages.error(request, "Forfait de paiement invalide.")
+        return redirect("admin_portal:payment")
+
+    moncash_fee = base_amount * (config.moncash_fee_percent / 100) + config.moncash_fee_fixed
+    total_amount_gds = int(round(base_amount + moncash_fee))
+    
+    base_url = "https://sandbox.moncashbutton.com/Moncash-middleware" if config.moncash_sandbox else "https://moncashbutton.com/Moncash-middleware"
+    
+    try:
+        token_url = f"{base_url}/oauth/token"
+        res_token = requests.post(
+            token_url,
+            auth=(config.moncash_client_id, config.moncash_secret_key),
+            params={"grant_type": "client_credentials"}
+        )
+        if res_token.status_code != 200:
+            messages.error(request, "Erreur d'authentification auprès de MonCash. Clés invalides.")
+            return redirect("admin_portal:payment")
+            
+        access_token = res_token.json().get("access_token")
+        
+        create_url = f"{base_url}/v1/CreatePayment"
+        order_id = f"mc_{borlette.id}_{days}_{int(timezone.now().timestamp())}_{request.user.id}"
+        
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        payload = {
+            "amount": total_amount_gds,
+            "orderId": order_id
+        }
+        res_pay = requests.post(create_url, headers=headers, json=payload)
+        
+        if res_pay.status_code in [200, 202, 201]:
+            payment_token = res_pay.json().get("payment_token", {}).get("token")
+            if payment_token:
+                redirect_url = f"{base_url}/Payment/Connect?token={payment_token}"
+                return redirect(redirect_url)
+            
+        messages.error(request, f"Erreur de création de paiement MonCash: {res_pay.text}")
+        return redirect("admin_portal:payment")
+    except Exception as e:
+        messages.error(request, f"Impossible de contacter MonCash: {str(e)}")
+        return redirect("admin_portal:payment")
+
+
+@login_required
+def stripe_callback(request):
+    guard = _portal_guard(request)
+    if guard:
+        return guard
+    guard2 = _require_admin(request)
+    if guard2:
+        return guard2
+
+    import requests
+    from accounts.models import GlobalPaymentSettings, Subscription, SubscriptionType, Borlette, User, FinancialTransaction, FinancialTransactionType, Agent
+    from datetime import timedelta
+    
+    session_id = request.GET.get("session_id")
+    if not session_id:
+        return redirect("admin_portal:payment_cancel")
+        
+    config, _ = GlobalPaymentSettings.objects.get_or_create(id=1)
+    url = f"https://api.stripe.com/v1/checkout/sessions/{session_id}"
+    headers = {"Authorization": f"Bearer {config.stripe_secret_key}"}
+    
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            session_data = response.json()
+            if session_data.get("payment_status") == "paid":
+                metadata = session_data.get("metadata", {})
+                borlette_id = int(metadata.get("borlette_id"))
+                days = int(metadata.get("days"))
+                amount_gds = Decimal(metadata.get("amount_gds"))
+                user_id = int(metadata.get("user_id"))
+                
+                borlette = Borlette.objects.get(id=borlette_id)
+                user = User.objects.get(id=user_id)
+                
+                subscription, _ = Subscription.objects.get_or_create(
+                    user=user,
+                    borlette=borlette,
+                    defaults={
+                        "subscription_type": SubscriptionType.MONTHLY,
+                        "end_date": timezone.now().date(),
+                        "is_active": True
+                    }
+                )
+                
+                today = timezone.now().date()
+                if subscription.end_date < today:
+                    subscription.end_date = today + timedelta(days=days)
+                else:
+                    subscription.end_date = subscription.end_date + timedelta(days=days)
+                    
+                subscription.subscription_type = SubscriptionType.MONTHLY
+                subscription.is_active = True
+                subscription.save()
+                
+                FinancialTransaction.objects.create(
+                    borlette=borlette,
+                    type=FinancialTransactionType.SUBSCRIPTION,
+                    total_amount=amount_gds,
+                    months_active=max(1, int(round(days / 30.0))),
+                    agents_count=Agent.objects.filter(borlette=borlette, statut="ACTIF").count(),
+                    eligible_agents=borlette.agents_eligible_share or 0
+                )
+                
+                messages.success(request, f"Votre abonnement a été prolongé de {days} jours avec succès via Stripe (Paiement par carte) !")
+                return redirect("admin_portal:payment_success")
+                
+        messages.error(request, "La vérification du paiement Stripe a échoué ou le paiement n'est pas finalisé.")
+        return redirect("admin_portal:payment_cancel")
+    except Exception as e:
+        messages.error(request, f"Erreur lors de la validation du paiement Stripe: {str(e)}")
+        return redirect("admin_portal:payment_cancel")
+
+
+@login_required
+def moncash_callback(request):
+    guard = _portal_guard(request)
+    if guard:
+        return guard
+    guard2 = _require_admin(request)
+    if guard2:
+        return guard2
+
+    import requests
+    from accounts.models import GlobalPaymentSettings, Subscription, SubscriptionType, Borlette, User, FinancialTransaction, FinancialTransactionType, Agent
+    from datetime import timedelta
+    
+    transaction_id = request.GET.get("transactionId")
+    if not transaction_id:
+        messages.error(request, "Paiement MonCash annulé ou ID de transaction manquant.")
+        return redirect("admin_portal:payment_cancel")
+        
+    config, _ = GlobalPaymentSettings.objects.get_or_create(id=1)
+    base_url = "https://sandbox.moncashbutton.com/Moncash-middleware" if config.moncash_sandbox else "https://moncashbutton.com/Moncash-middleware"
+    
+    try:
+        token_url = f"{base_url}/oauth/token"
+        res_token = requests.post(
+            token_url,
+            auth=(config.moncash_client_id, config.moncash_secret_key),
+            params={"grant_type": "client_credentials"}
+        )
+        access_token = res_token.json().get("access_token")
+        
+        retrieve_url = f"{base_url}/v1/RetrieveTransactionPayment"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        res_pay = requests.post(retrieve_url, headers=headers, json={"transactionId": transaction_id})
+        
+        if res_pay.status_code == 200:
+            tx_data = res_pay.json()
+            payment = tx_data.get("payment", {})
+            order_id = payment.get("reference")
+            
+            if order_id and order_id.startswith("mc_"):
+                parts = order_id.split("_")
+                borlette_id = int(parts[1])
+                days = int(parts[2])
+                user_id = int(parts[4])
+                
+                borlette = Borlette.objects.get(id=borlette_id)
+                user = User.objects.get(id=user_id)
+                
+                amount_gds = Decimal(str(payment.get("amount", "0")))
+                
+                subscription, _ = Subscription.objects.get_or_create(
+                    user=user,
+                    borlette=borlette,
+                    defaults={
+                        "subscription_type": SubscriptionType.MONTHLY,
+                        "end_date": timezone.now().date(),
+                        "is_active": True
+                    }
+                )
+                
+                today = timezone.now().date()
+                if subscription.end_date < today:
+                    subscription.end_date = today + timedelta(days=days)
+                else:
+                    subscription.end_date = subscription.end_date + timedelta(days=days)
+                    
+                subscription.subscription_type = SubscriptionType.MONTHLY
+                subscription.is_active = True
+                subscription.save()
+                
+                FinancialTransaction.objects.create(
+                    borlette=borlette,
+                    type=FinancialTransactionType.SUBSCRIPTION,
+                    total_amount=amount_gds,
+                    months_active=max(1, int(round(days / 30.0))),
+                    agents_count=Agent.objects.filter(borlette=borlette, statut="ACTIF").count(),
+                    eligible_agents=borlette.agents_eligible_share or 0
+                )
+                
+                messages.success(request, f"Votre abonnement a été prolongé de {days} jours avec succès via MonCash !")
+                return redirect("admin_portal:payment_success")
+                
+        messages.error(request, "La vérification du paiement MonCash a échoué.")
+        return redirect("admin_portal:payment_cancel")
+    except Exception as e:
+        messages.error(request, f"Erreur lors de la validation du paiement MonCash: {str(e)}")
+        return redirect("admin_portal:payment_cancel")
+
+
+@login_required
+def payment_success(request):
+    return render(request, "admin_portal/payment_status.html", {"status": "success"})
+
+
+@login_required
+def payment_cancel(request):
+    return render(request, "admin_portal/payment_status.html", {"status": "cancel"})
+
