@@ -339,7 +339,7 @@ class BluetoothPrinter(private val context: Context) {
     suspend fun printTicket(printData: com.gaboom.agent.data.model.PrintData): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             // Téléchargement préalable du logo (si présent)
-            val logoBitmap = downloadLogoBitmap(printData.borletteLogoUrl)
+            val logoBitmap = TicketShareUtil.downloadLogo(context, printData.borletteLogoUrl)
 
             // Convertir les données d'impression en TicketShareData pour générer le Bitmap de rendu
             val shareData = TicketShareUtil.fromPrintData(printData, logoBitmap)

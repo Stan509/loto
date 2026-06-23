@@ -34,6 +34,8 @@ object EscPosBuilder {
     private val DOUBLE_WIDTH_ON = byteArrayOf(GS, '!'.code.toByte(), 0x20)
     private val DOUBLE_SIZE_ON = byteArrayOf(GS, '!'.code.toByte(), 0x30)
     private val NORMAL_SIZE = byteArrayOf(GS, '!'.code.toByte(), 0x00)
+    private val FONT_A = byteArrayOf(ESC, 'M'.code.toByte(), 0)
+    private val FONT_B = byteArrayOf(ESC, 'M'.code.toByte(), 1)
 
     // Coupe papier
     private val CUT_PARTIAL = byteArrayOf(GS, 'V'.code.toByte(), 1)
@@ -168,25 +170,26 @@ object EscPosBuilder {
     fun buildTicket(data: PrintData, logoBitmap: Bitmap? = null): ByteArray {
         val buffer = mutableListOf<Byte>()
 
-        // Init
+        // Init et séléction de la police par défaut (Font A)
         buffer.addAll(INIT.toList())
+        buffer.addAll(FONT_A.toList())
 
         // ─── Header Borlette ───────────────────────────────────────────────
         buffer.addAll(ALIGN_CENTER.toList())
         buffer.addAll(DOUBLE_SIZE_ON.toList())
         buffer.addAll(BOLD_ON.toList())
-        buffer.addAll(data.borletteName.toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll(data.borletteName.stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
         buffer.addAll(NORMAL_SIZE.toList())
         buffer.addAll(BOLD_OFF.toList())
 
         if (data.borletteSlogan.isNotBlank()) {
-            buffer.addAll(data.borletteSlogan.toByteArray(Charsets.UTF_8).toList())
+            buffer.addAll(data.borletteSlogan.stripAccents().toByteArray(Charsets.UTF_8).toList())
             buffer.add(LF)
         }
 
         if (data.borletteTel.isNotBlank()) {
-            buffer.addAll("Tel: ${data.borletteTel}".toByteArray(Charsets.UTF_8).toList())
+            buffer.addAll("Tel: ${data.borletteTel}".stripAccents().toByteArray(Charsets.UTF_8).toList())
             buffer.add(LF)
         }
 
@@ -221,18 +224,18 @@ object EscPosBuilder {
         // ─── Info Ticket ───────────────────────────────────────────────────
         buffer.addAll(ALIGN_LEFT.toList())
         buffer.addAll(BOLD_ON.toList())
-        buffer.addAll("Ticket: ${data.ticketNumber}".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("Ticket: ${data.ticketNumber}".stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
         buffer.addAll(BOLD_OFF.toList())
 
-        buffer.addAll("Date: ${data.date}  ${data.time}".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("Date: ${data.date}  ${data.time}".stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
 
-        buffer.addAll("Agent: ${data.agentName}".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("Agent: ${data.agentName}".stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
 
         // Tirages
-        buffer.addAll("Tirage(s): ${data.tirages.joinToString(", ")}".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("Tirage(s): ${data.tirages.joinToString(", ")}".stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
 
         // Phase I-A2: Offline watermark
@@ -246,7 +249,7 @@ object EscPosBuilder {
             buffer.addAll(NORMAL_SIZE.toList())
             buffer.addAll(BOLD_OFF.toList())
             buffer.addAll(ALIGN_LEFT.toList())
-            buffer.addAll("A valider en ligne".toByteArray(Charsets.UTF_8).toList())
+            buffer.addAll("A valider en ligne".stripAccents().toByteArray(Charsets.UTF_8).toList())
             buffer.add(LF)
         }
 
@@ -260,7 +263,7 @@ object EscPosBuilder {
         buffer.addAll(BOLD_OFF.toList())
 
         for (line in data.lines) {
-            buffer.addAll(line.toByteArray(Charsets.UTF_8).toList())
+            buffer.addAll(line.stripAccents().toByteArray(Charsets.UTF_8).toList())
             buffer.add(LF)
         }
 
@@ -271,7 +274,7 @@ object EscPosBuilder {
         buffer.addAll(BOLD_ON.toList())
         buffer.addAll(DOUBLE_HEIGHT_ON.toList())
         val totalStr = "TOTAL: ${String.format("%.0f", data.totalMise)} HTG"
-        buffer.addAll(totalStr.toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll(totalStr.stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
         buffer.addAll(NORMAL_SIZE.toList())
         buffer.addAll(BOLD_OFF.toList())
@@ -283,27 +286,31 @@ object EscPosBuilder {
         if (data.mariageGratuitActif) {
             buffer.addAll(ALIGN_CENTER.toList())
             buffer.addAll(BOLD_ON.toList())
-            buffer.addAll("Mariage Gratuit ${data.mariageGratuitMontant} Gdes".toByteArray(Charsets.UTF_8).toList())
+            buffer.addAll("Mariage Gratuit ${data.mariageGratuitMontant} Gdes".stripAccents().toByteArray(Charsets.UTF_8).toList())
             buffer.add(LF)
             buffer.addAll(BOLD_OFF.toList())
             buffer.add(LF)
         }
 
-        // ─── Texte de pied de page ─────────────────────────────────────────
+        // ─── Texte de pied de page (Petite police Font B) ──────────────────
+        buffer.addAll(FONT_B.toList())
         buffer.addAll(ALIGN_CENTER.toList())
         if (data.ticketFooterText.isNotBlank()) {
-            buffer.addAll(data.ticketFooterText.toByteArray(Charsets.UTF_8).toList())
+            buffer.addAll(data.ticketFooterText.stripAccents().toByteArray(Charsets.UTF_8).toList())
             buffer.add(LF)
             buffer.add(LF)
         }
-        buffer.addAll("Gaboom Borlette OS  www.gaboombos.com".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("Gaboom Borlette OS  www.gaboombos.com".stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
-        buffer.addAll("--------------------------------".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("------------------------------------------".toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
-        buffer.addAll("Bonne chance".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("Bonne chance".stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
-        buffer.addAll("Merci pour votre confiance".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("Merci pour votre confiance".stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
+
+        // Restauration de la police par défaut (Font A)
+        buffer.addAll(FONT_A.toList())
 
         // Feed et coupe
         buffer.addAll(FEED_LINES_5.toList())
@@ -319,6 +326,7 @@ object EscPosBuilder {
         val buffer = mutableListOf<Byte>()
 
         buffer.addAll(INIT.toList())
+        buffer.addAll(FONT_A.toList())
         buffer.addAll(ALIGN_CENTER.toList())
 
         buffer.addAll(DOUBLE_SIZE_ON.toList())
@@ -335,7 +343,7 @@ object EscPosBuilder {
         buffer.addAll(ALIGN_LEFT.toList())
         buffer.addAll("Gaboom Agent".toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
-        buffer.addAll("Imprimante OK".toByteArray(Charsets.UTF_8).toList())
+        buffer.addAll("Imprimante OK".stripAccents().toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
 
         buffer.addAll("--------------------------------".toByteArray(Charsets.UTF_8).toList())
@@ -345,5 +353,16 @@ object EscPosBuilder {
         buffer.addAll(CUT_PARTIAL.toList())
 
         return buffer.toByteArray()
+    }
+
+    /**
+     * Supprime les accents et caractères diacritiques d'une chaîne pour la compatibilité d'impression
+     */
+    private fun String.stripAccents(): String {
+        val normalized = java.text.Normalizer.normalize(this, java.text.Normalizer.Form.NFD)
+        val pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+")
+        return pattern.matcher(normalized).replaceAll("")
+            .replace("ç", "c")
+            .replace("Ç", "C")
     }
 }

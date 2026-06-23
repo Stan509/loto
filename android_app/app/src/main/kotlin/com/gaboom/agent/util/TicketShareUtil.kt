@@ -152,14 +152,14 @@ object TicketShareUtil {
         
         val paintNormalCenter = Paint().apply {
             color = Color.BLACK
-            textSize = 16f
+            textSize = 14f
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
         }
         
         val paintSmall = Paint().apply {
             color = Color.GRAY
-            textSize = 14f
+            textSize = 11f
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
         }
@@ -203,13 +203,21 @@ object TicketShareUtil {
         // Calculate height
         val logoSize = 70
         var calcHeight = padding * 2
-        if (data.logoBitmap != null) calcHeight += logoSize + 10 // logo
+        
+        val hasBothLogoAndQr = data.logoBitmap != null && !data.qrCode.isNullOrBlank()
+        if (hasBothLogoAndQr) {
+            calcHeight += maxOf(logoSize, qrCodeSize) + 30 // side-by-side logo + QR + label
+        } else {
+            if (data.logoBitmap != null) calcHeight += logoSize + 10 // logo
+            if (!data.qrCode.isNullOrBlank()) calcHeight += qrCodeSize + 30 // QR + label
+        }
+        
         calcHeight += 30 // borlette name
-        if (!data.borletteSlogan.isNullOrBlank()) calcHeight += 20
-        if (!data.borletteAdresse.isNullOrBlank()) calcHeight += 18
-        if (!data.borletteTel.isNullOrBlank()) calcHeight += 20
-        calcHeight += 20 // space
-        if (!data.qrCode.isNullOrBlank()) calcHeight += qrCodeSize + 30 // QR + label
+        if (!data.borletteSlogan.isNullOrBlank()) calcHeight += 18
+        if (!data.borletteAdresse.isNullOrBlank()) calcHeight += 16
+        if (!data.borletteTel.isNullOrBlank()) calcHeight += 18
+        calcHeight += 15 // space
+        
         calcHeight += 25 // separator
         calcHeight += 25 * 4 // ticket info (4 lines)
         if (data.isOffline) calcHeight += 45 // offline watermark
@@ -224,10 +232,10 @@ object TicketShareUtil {
         if (data.mariageGratuitActif) calcHeight += 44 // mariage gratuit + separator
         // Footer text (estimate word-wrapped lines)
         if (!data.ticketFooterText.isNullOrBlank()) {
-            val estimatedLines = (data.ticketFooterText.length / 35) + 1
-            calcHeight += estimatedLines * 18
+            val estimatedLines = (data.ticketFooterText.length / 45) + 1
+            calcHeight += estimatedLines * 15
         }
-        calcHeight += 76 // brand info + separator + bonne chance + merci
+        calcHeight += 70 // brand info + separator + bonne chance + merci
         
         val height = calcHeight
         val centerX = width / 2f
@@ -241,10 +249,9 @@ object TicketShareUtil {
         var y = padding.toFloat()
         
         // ═══════════════════════════════════════════════════════════
-        // LOGO
+        // LOGO (seulement en haut si pas côte à côte)
         // ═══════════════════════════════════════════════════════════
-        
-        if (data.logoBitmap != null) {
+        if (data.logoBitmap != null && !hasBothLogoAndQr) {
             val scaledLogo = Bitmap.createScaledBitmap(data.logoBitmap, logoSize, logoSize, true)
             val logoX = (width - logoSize) / 2f
             canvas.drawBitmap(scaledLogo, logoX, y, null)
@@ -262,29 +269,48 @@ object TicketShareUtil {
         
         // Slogan
         if (!data.borletteSlogan.isNullOrBlank()) {
-            canvas.drawText(data.borletteSlogan, centerX, y + 14, paintSmall)
-            y += 20
+            canvas.drawText(data.borletteSlogan, centerX, y + 12, paintSmall)
+            y += 18
         }
         
         // Adresse
         if (!data.borletteAdresse.isNullOrBlank()) {
-            canvas.drawText(data.borletteAdresse, centerX, y + 12, paintSmall)
-            y += 18
+            canvas.drawText(data.borletteAdresse, centerX, y + 11, paintSmall)
+            y += 16
         }
         
         // Téléphone
         if (!data.borletteTel.isNullOrBlank()) {
             canvas.drawText("Tel: ${data.borletteTel}", centerX, y + 14, paintNormalCenter)
-            y += 20
+            y += 18
         }
         
         y += 10
         
         // ═══════════════════════════════════════════════════════════
-        // QR CODE
+        // QR CODE / LOGO+QR CÔTE À CÔTE
         // ═══════════════════════════════════════════════════════════
-        
-        if (!data.qrCode.isNullOrBlank()) {
+        if (hasBothLogoAndQr) {
+            val qrBitmap = QrCodeGenerator.generateQrCode(data.qrCode!!, qrCodeSize)
+            if (qrBitmap != null && data.logoBitmap != null) {
+                val gap = 20
+                val combinedWidth = logoSize + gap + qrCodeSize
+                val startX = (width - combinedWidth) / 2f
+                
+                // Draw logo
+                val scaledLogo = Bitmap.createScaledBitmap(data.logoBitmap, logoSize, logoSize, true)
+                val logoY = y + (maxOf(logoSize, qrCodeSize) - logoSize) / 2f
+                canvas.drawBitmap(scaledLogo, startX, logoY, null)
+                
+                // Draw QR code
+                val qrY = y + (maxOf(logoSize, qrCodeSize) - qrCodeSize) / 2f
+                canvas.drawBitmap(qrBitmap, startX + logoSize + gap, qrY, null)
+                
+                y += maxOf(logoSize, qrCodeSize) + 5
+                canvas.drawText("QR Code Groupe", centerX, y + 12, paintSmall)
+                y += 20
+            }
+        } else if (!data.qrCode.isNullOrBlank()) {
             val qrBitmap = QrCodeGenerator.generateQrCode(data.qrCode, qrCodeSize)
             if (qrBitmap != null) {
                 val qrX = (width - qrCodeSize) / 2f
@@ -413,16 +439,16 @@ object TicketShareUtil {
             }
             if (currentLine.isNotEmpty()) footerLines.add(currentLine)
             for (fl in footerLines) {
-                canvas.drawText(fl, centerX, y + 14, paintSmall)
-                y += 18
+                canvas.drawText(fl, centerX, y + 12, paintSmall)
+                y += 15
             }
-            y += 8
+            y += 5
         }
         
-        canvas.drawText("Gaboom Borlette OS  www.gaboombos.com", centerX, y + 14, paintSmall)
-        y += 18
-        canvas.drawText("--------------------------------", centerX, y + 14, paintSeparator)
-        y += 18
+        canvas.drawText("Gaboom Borlette OS  www.gaboombos.com", centerX, y + 12, paintSmall)
+        y += 15
+        canvas.drawText("--------------------------------", centerX, y + 12, paintSeparator)
+        y += 15
         canvas.drawText("Bonne chance", centerX, y + 14, paintNormalCenter)
         y += 18
         canvas.drawText("Merci pour votre confiance", centerX, y + 14, paintNormalCenter)
