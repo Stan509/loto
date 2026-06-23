@@ -258,44 +258,10 @@ fun VenteScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp)
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
-            // ═══════════════════════════════════════════════════════════
-            // HEADER: Logo + Borlette Info
-            // ═══════════════════════════════════════════════════════════
-            if (uiState.borletteLogoUrl.isNotBlank() || uiState.borletteName.isNotBlank()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    if (uiState.borletteLogoUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = uiState.borletteLogoUrl,
-                            contentDescription = "Logo",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Column {
-                        Text(
-                            uiState.borletteName.ifEmpty { "GABOOM BORLETTE" },
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                        if (uiState.borletteSlogan.isNotBlank()) {
-                            Text(
-                                uiState.borletteSlogan,
-                                fontSize = 10.sp,
-                                color = Color.Gray
-                            )
-                        }
-                    }
-                }
-                Divider(modifier = Modifier.padding(bottom = 6.dp))
-            }
             
             // ═══════════════════════════════════════════════════════════
             // TOP BAR: Multi-Tirage Toggle + Mise Défaut
@@ -915,24 +881,22 @@ fun VenteScreen(
                     .fillMaxWidth()
                     .background(
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                        RoundedCornerShape(10.dp)
+                        RoundedCornerShape(8.dp)
                     )
-                    .padding(12.dp),
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        "${finalTotal.toInt()} HTG",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("$totalBets paris", fontSize = 10.sp, color = Color.Gray)
-                        if (uiState.multiTirageMode && uiState.selectedTirageIds.isNotEmpty()) {
-                            Text(" × ${uiState.selectedTirageIds.size} tirages", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
-                        }
+                Text(
+                    "TOTAL : ${finalTotal.toInt()} HTG",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("$totalBets paris", fontSize = 11.sp, color = Color.DarkGray)
+                    if (uiState.multiTirageMode && uiState.selectedTirageIds.isNotEmpty()) {
+                        Text(" × ${uiState.selectedTirageIds.size} tirages", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -1115,8 +1079,10 @@ fun VenteScreen(
                             .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Logo
-                        if (!uiState.borletteLogoUrl.isNullOrBlank()) {
+                        val hasBothLogoAndQr = !uiState.borletteLogoUrl.isNullOrBlank()
+                        
+                        // Logo (only if NOT side-by-side)
+                        if (!uiState.borletteLogoUrl.isNullOrBlank() && !hasBothLogoAndQr) {
                             AsyncImage(
                                 model = uiState.borletteLogoUrl,
                                 contentDescription = "Logo",
@@ -1163,17 +1129,44 @@ fun VenteScreen(
                         
                         Spacer(modifier = Modifier.height(8.dp))
                         
-                        // QR Code placeholder (group_id sera généré à la création)
                         val previewQrContent = remember { "GABOOM-PREVIEW-${System.currentTimeMillis()}" }
-                        QrCodeImage(
-                            content = previewQrContent,
-                            size = 80.dp
-                        )
-                        Text(
-                            "QR Code Groupe",
-                            fontSize = 9.sp,
-                            color = Color.Gray
-                        )
+                        if (hasBothLogoAndQr) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                AsyncImage(
+                                    model = uiState.borletteLogoUrl,
+                                    contentDescription = "Logo",
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                QrCodeImage(
+                                    content = previewQrContent,
+                                    size = 60.dp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "QR Code Groupe",
+                                fontSize = 9.sp,
+                                color = Color.Gray
+                            )
+                        } else {
+                            QrCodeImage(
+                                content = previewQrContent,
+                                size = 80.dp
+                            )
+                            Text(
+                                "QR Code Groupe",
+                                fontSize = 9.sp,
+                                color = Color.Gray
+                            )
+                        }
                         
                         Spacer(modifier = Modifier.height(4.dp))
                         
@@ -1387,8 +1380,10 @@ fun VenteScreen(
                             .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Logo
-                        if (!ticketInfo.borletteLogoUrl.isNullOrBlank()) {
+                        val hasBothLogoAndQr = !ticketInfo.borletteLogoUrl.isNullOrBlank() && !ticketInfo.groupId.isNullOrBlank()
+                        
+                        // Logo (only if NOT side-by-side)
+                        if (!ticketInfo.borletteLogoUrl.isNullOrBlank() && !hasBothLogoAndQr) {
                             AsyncImage(
                                 model = ticketInfo.borletteLogoUrl,
                                 contentDescription = "Logo",
@@ -1407,6 +1402,37 @@ fun VenteScreen(
                         }
                         if (!ticketInfo.borletteTel.isNullOrBlank()) {
                             Text("Tel: ${ticketInfo.borletteTel}", fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center)
+                        }
+                        
+                        if (hasBothLogoAndQr) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                AsyncImage(
+                                    model = ticketInfo.borletteLogoUrl,
+                                    contentDescription = "Logo",
+                                    modifier = Modifier.size(48.dp),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                QrCodeImage(
+                                    content = ticketInfo.groupId!!,
+                                    size = 48.dp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("QR Code Groupe", fontSize = 9.sp, color = Color.Gray)
+                        } else if (!ticketInfo.groupId.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            QrCodeImage(
+                                content = ticketInfo.groupId!!,
+                                size = 60.dp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("QR Code Groupe", fontSize = 9.sp, color = Color.Gray)
                         }
                         
                         Divider(modifier = Modifier.padding(vertical = 6.dp), color = Color.LightGray)

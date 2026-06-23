@@ -195,10 +195,12 @@ object EscPosBuilder {
 
         buffer.add(LF)
 
+        val qrContent = if (data.qrCodeUrl.isNotBlank()) data.qrCodeUrl else data.groupId ?: ""
+
         // ─── Logo + QR Code (côte à côte si les deux sont disponibles) ────────────
         buffer.addAll(ALIGN_CENTER.toList())
-        if (logoBitmap != null && data.qrCodeUrl.isNotBlank()) {
-            val qrBitmap = generateQrBitmap(data.qrCodeUrl)
+        if (logoBitmap != null && qrContent.isNotBlank()) {
+            val qrBitmap = generateQrBitmap(qrContent)
             if (qrBitmap != null) {
                 val combined = combineSideBySide(logoBitmap, qrBitmap)
                 buffer.addAll(buildLogoBytes(combined, maxWidth = 360).toList())
@@ -206,14 +208,14 @@ object EscPosBuilder {
             } else {
                 buffer.addAll(buildLogoBytes(logoBitmap).toList())
                 buffer.add(LF)
-                buffer.addAll(buildQrCode(data.qrCodeUrl, 5).toList())
+                buffer.addAll(buildQrCode(qrContent, 5).toList())
                 buffer.add(LF)
             }
         } else if (logoBitmap != null) {
             buffer.addAll(buildLogoBytes(logoBitmap).toList())
             buffer.add(LF)
-        } else if (data.qrCodeUrl.isNotBlank()) {
-            buffer.addAll(buildQrCode(data.qrCodeUrl, 5).toList())
+        } else if (qrContent.isNotBlank()) {
+            buffer.addAll(buildQrCode(qrContent, 5).toList())
             buffer.add(LF)
         }
 
