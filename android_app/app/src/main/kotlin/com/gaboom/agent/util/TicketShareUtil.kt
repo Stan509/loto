@@ -42,7 +42,8 @@ object TicketShareUtil {
         val logoBitmap: Bitmap? = null,
         val ticketFooterText: String = "",
         val mariageGratuitActif: Boolean = false,
-        val mariageGratuitMontant: String = "0"
+        val mariageGratuitMontant: String = "0",
+        val isOffline: Boolean = false
     )
 
     data class TicketLineData(
@@ -62,13 +63,13 @@ object TicketShareUtil {
         
         // Header simple
         sb.appendLine("================================")
-        if (data.borletteName.isNotBlank()) {
+        if (!data.borletteName.isNullOrBlank()) {
             sb.appendLine("    ${data.borletteName.uppercase()}")
         }
-        if (data.borletteSlogan.isNotBlank()) {
+        if (!data.borletteSlogan.isNullOrBlank()) {
             sb.appendLine("    ${data.borletteSlogan}")
         }
-        if (data.borletteTel.isNotBlank()) {
+        if (!data.borletteTel.isNullOrBlank()) {
             sb.appendLine("    Tel: ${data.borletteTel}")
         }
         sb.appendLine("================================")
@@ -78,8 +79,13 @@ object TicketShareUtil {
         sb.appendLine("Ticket: #${data.ticketNo}")
         sb.appendLine("Date: ${data.date}")
         sb.appendLine("Tirage: ${data.tirageNom}")
-        if (data.agentName.isNotBlank()) {
+        if (!data.agentName.isNullOrBlank()) {
             sb.appendLine("Agent: ${data.agentName}")
+        }
+        if (data.isOffline) {
+            sb.appendLine()
+            sb.appendLine("*** HORS-LIGNE ***")
+            sb.appendLine("A valider en ligne")
         }
         sb.appendLine()
         sb.appendLine("--------------------------------")
@@ -108,7 +114,7 @@ object TicketShareUtil {
             sb.appendLine("Mariage Gratuit ${data.mariageGratuitMontant} Gdes")
             sb.appendLine("--------------------------------")
         }
-        if (data.ticketFooterText.isNotBlank()) {
+        if (!data.ticketFooterText.isNullOrBlank()) {
             sb.appendLine(data.ticketFooterText)
             sb.appendLine()
         }
@@ -199,13 +205,14 @@ object TicketShareUtil {
         var calcHeight = padding * 2
         if (data.logoBitmap != null) calcHeight += logoSize + 10 // logo
         calcHeight += 30 // borlette name
-        if (data.borletteSlogan.isNotBlank()) calcHeight += 20
-        if (data.borletteAdresse.isNotBlank()) calcHeight += 18
-        if (data.borletteTel.isNotBlank()) calcHeight += 20
+        if (!data.borletteSlogan.isNullOrBlank()) calcHeight += 20
+        if (!data.borletteAdresse.isNullOrBlank()) calcHeight += 18
+        if (!data.borletteTel.isNullOrBlank()) calcHeight += 20
         calcHeight += 20 // space
         if (!data.qrCode.isNullOrBlank()) calcHeight += qrCodeSize + 30 // QR + label
         calcHeight += 25 // separator
         calcHeight += 25 * 4 // ticket info (4 lines)
+        if (data.isOffline) calcHeight += 45 // offline watermark
         calcHeight += 25 // separator
         calcHeight += 22 // header ligne
         calcHeight += 22 * data.lines.size // lines
@@ -216,7 +223,7 @@ object TicketShareUtil {
         calcHeight += 25 // separator
         if (data.mariageGratuitActif) calcHeight += 44 // mariage gratuit + separator
         // Footer text (estimate word-wrapped lines)
-        if (data.ticketFooterText.isNotBlank()) {
+        if (!data.ticketFooterText.isNullOrBlank()) {
             val estimatedLines = (data.ticketFooterText.length / 35) + 1
             calcHeight += estimatedLines * 18
         }
@@ -254,19 +261,19 @@ object TicketShareUtil {
         y += 30
         
         // Slogan
-        if (data.borletteSlogan.isNotBlank()) {
+        if (!data.borletteSlogan.isNullOrBlank()) {
             canvas.drawText(data.borletteSlogan, centerX, y + 14, paintSmall)
             y += 20
         }
         
         // Adresse
-        if (data.borletteAdresse.isNotBlank()) {
+        if (!data.borletteAdresse.isNullOrBlank()) {
             canvas.drawText(data.borletteAdresse, centerX, y + 12, paintSmall)
             y += 18
         }
         
         // Téléphone
-        if (data.borletteTel.isNotBlank()) {
+        if (!data.borletteTel.isNullOrBlank()) {
             canvas.drawText("Tel: ${data.borletteTel}", centerX, y + 14, paintNormalCenter)
             y += 20
         }
@@ -302,12 +309,32 @@ object TicketShareUtil {
         y += 22
         canvas.drawText("Date: ${data.date}", padding.toFloat(), y + 16, paintNormal)
         y += 22
-        if (data.agentName.isNotBlank()) {
+        if (!data.agentName.isNullOrBlank()) {
             canvas.drawText("Agent: ${data.agentName}", padding.toFloat(), y + 16, paintNormal)
             y += 22
         }
         canvas.drawText("Tirage(s): ${data.tirageNom}", padding.toFloat(), y + 16, paintNormal)
         y += 22
+        
+        if (data.isOffline) {
+            val paintOfflineTitle = Paint().apply {
+                color = Color.RED
+                textSize = 20f
+                typeface = Typeface.DEFAULT_BOLD
+                isAntiAlias = true
+                textAlign = Paint.Align.CENTER
+            }
+            val paintOfflineSub = Paint().apply {
+                color = Color.RED
+                textSize = 14f
+                isAntiAlias = true
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText("*** HORS-LIGNE ***", centerX, y + 18, paintOfflineTitle)
+            y += 22
+            canvas.drawText("A valider en ligne", centerX, y + 14, paintOfflineSub)
+            y += 18
+        }
         
         // Separator
         canvas.drawText("--------------------------------", centerX, y + 12, paintSeparator)
@@ -370,7 +397,7 @@ object TicketShareUtil {
         // FOOTER
         // ═══════════════════════════════════════════════════════════
         
-        if (data.ticketFooterText.isNotBlank()) {
+        if (!data.ticketFooterText.isNullOrBlank()) {
             // Word-wrap footer text for narrow ticket width
             val footerWords = data.ticketFooterText.split(" ")
             val footerLines = mutableListOf<String>()
@@ -589,21 +616,29 @@ object TicketShareUtil {
     }
 
     private fun launchShareIntent(context: Context, intent: Intent, title: String) {
-        val appContext = context.applicationContext
-        try {
+        val activity = findActivity(context)
+        val targetContext = activity ?: context.applicationContext
+        
+        if (activity == null) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            // Tenter de démarrer l'intention directement (très fiable sur les POS personnalisés)
-            appContext.startActivity(intent)
-        } catch (e: Throwable) {
-            android.util.Log.e("TicketShare", "Direct start failed: ${e.message}, attempting chooser", e)
-            try {
-                val chooser = Intent.createChooser(intent, title)
+        }
+        
+        try {
+            // Tenter de démarrer avec un sélecteur d'applications standard
+            val chooser = Intent.createChooser(intent, title)
+            if (activity == null) {
                 chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                appContext.startActivity(chooser)
+            }
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            targetContext.startActivity(chooser)
+        } catch (e: Throwable) {
+            android.util.Log.e("TicketShare", "Chooser launch failed: ${e.message}, trying direct start", e)
+            try {
+                // Tenter de démarrer l'intention directement (très fiable sur les POS personnalisés)
+                targetContext.startActivity(intent)
             } catch (ex: Throwable) {
-                android.util.Log.e("TicketShare", "Chooser failed: ${ex.message}", ex)
-                Toast.makeText(appContext, "Aucune application de partage trouvée", Toast.LENGTH_SHORT).show()
+                android.util.Log.e("TicketShare", "Direct start also failed: ${ex.message}", ex)
+                Toast.makeText(context.applicationContext, "Aucune application de partage trouvée", Toast.LENGTH_LONG).show()
             }
         }
     }

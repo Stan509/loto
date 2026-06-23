@@ -1116,7 +1116,7 @@ fun VenteScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Logo
-                        if (uiState.borletteLogoUrl.isNotBlank()) {
+                        if (!uiState.borletteLogoUrl.isNullOrBlank()) {
                             AsyncImage(
                                 model = uiState.borletteLogoUrl,
                                 contentDescription = "Logo",
@@ -1135,7 +1135,7 @@ fun VenteScreen(
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center
                         )
-                        if (uiState.borletteSlogan.isNotBlank()) {
+                        if (!uiState.borletteSlogan.isNullOrBlank()) {
                             Text(
                                 uiState.borletteSlogan,
                                 fontSize = 11.sp,
@@ -1144,7 +1144,7 @@ fun VenteScreen(
                                 color = Color.Gray
                             )
                         }
-                        if (uiState.borletteAdresse.isNotBlank()) {
+                        if (!uiState.borletteAdresse.isNullOrBlank()) {
                             Text(
                                 uiState.borletteAdresse,
                                 fontSize = 10.sp,
@@ -1152,7 +1152,7 @@ fun VenteScreen(
                                 textAlign = TextAlign.Center
                             )
                         }
-                        if (uiState.borletteTel.isNotBlank()) {
+                        if (!uiState.borletteTel.isNullOrBlank()) {
                             Text(
                                 "Tel: ${uiState.borletteTel}",
                                 fontSize = 11.sp,
@@ -1190,9 +1190,9 @@ fun VenteScreen(
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Ticket: #PREVIEW", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             Text("Date: ${java.time.LocalDate.now()}  ${java.time.LocalTime.now().toString().take(5)}", fontSize = 11.sp)
-                            if (uiState.agentName.isNotBlank()) {
+                             if (!uiState.agentName.isNullOrBlank()) {
                                 Text("Agent: ${uiState.agentName}", fontSize = 11.sp)
-                            }
+                             }
                             Text("Tirage(s): ${tiragesNames.joinToString(", ")}", fontSize = 11.sp)
                         }
                         
@@ -1214,7 +1214,7 @@ fun VenteScreen(
                         uiState.lines.forEach { line ->
                             val isLoto = line.jeu.lowercase() in listOf("loto4", "loto5")
                             val optNum = if (isLoto && line.options.isNotEmpty()) line.options.first() else null
-                            val jeuDisplay = if (optNum != null) "${line.jeu.uppercase()}-$optNum" else line.jeu.uppercase()
+                            val jeuDisplay = if (optNum != null) "${line.jeu.uppercase()}-OPT$optNum" else line.jeu.uppercase()
                             
                             Text(
                                 String.format("%-8s %-9s %6.0f", jeuDisplay, line.valeur, line.miseBase),
@@ -1257,7 +1257,7 @@ fun VenteScreen(
                         )
                         
                         // Footer
-                        if (uiState.ticketFooterText.isNotBlank()) {
+                        if (!uiState.ticketFooterText.isNullOrBlank()) {
                             Text(
                                 uiState.ticketFooterText,
                                 fontSize = 9.sp,
@@ -1388,7 +1388,7 @@ fun VenteScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Logo
-                        if (ticketInfo.borletteLogoUrl.isNotBlank()) {
+                        if (!ticketInfo.borletteLogoUrl.isNullOrBlank()) {
                             AsyncImage(
                                 model = ticketInfo.borletteLogoUrl,
                                 contentDescription = "Logo",
@@ -1396,16 +1396,16 @@ fun VenteScreen(
                                 contentScale = androidx.compose.ui.layout.ContentScale.Fit
                             )
                         }
-                        if (ticketInfo.borletteName.isNotBlank()) {
+                        if (!ticketInfo.borletteName.isNullOrBlank()) {
                             Text(ticketInfo.borletteName, fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         }
-                        if (ticketInfo.borletteSlogan.isNotBlank()) {
+                        if (!ticketInfo.borletteSlogan.isNullOrBlank()) {
                             Text(ticketInfo.borletteSlogan, fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center)
                         }
-                        if (ticketInfo.borletteAdresse.isNotBlank()) {
+                        if (!ticketInfo.borletteAdresse.isNullOrBlank()) {
                             Text(ticketInfo.borletteAdresse, fontSize = 9.sp, color = Color.Gray, textAlign = TextAlign.Center)
                         }
-                        if (ticketInfo.borletteTel.isNotBlank()) {
+                        if (!ticketInfo.borletteTel.isNullOrBlank()) {
                             Text("Tel: ${ticketInfo.borletteTel}", fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center)
                         }
                         
@@ -1413,10 +1413,28 @@ fun VenteScreen(
                         
                         Text("Ticket: #${ticketInfo.ticketNo}", fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
                         Text("Date: ${ticketInfo.date} ${ticketInfo.time}", fontSize = 11.sp, modifier = Modifier.fillMaxWidth())
-                        if (ticketInfo.agentName.isNotBlank()) {
+                        if (!ticketInfo.agentName.isNullOrBlank()) {
                             Text("Agent: ${ticketInfo.agentName}", fontSize = 11.sp, modifier = Modifier.fillMaxWidth())
                         }
                         Text("Tirage(s): ${ticketInfo.tirageNom}", fontSize = 11.sp, modifier = Modifier.fillMaxWidth())
+                        if (ticketInfo.isOffline) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "*** HORS-LIGNE ***",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Red,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                "A valider en ligne",
+                                fontSize = 11.sp,
+                                color = Color.Red,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         
                         Divider(modifier = Modifier.padding(vertical = 6.dp), color = Color.LightGray)
                         
@@ -1448,7 +1466,7 @@ fun VenteScreen(
                         }
                         
                         Divider(modifier = Modifier.padding(vertical = 6.dp), color = Color.LightGray)
-                        if (ticketInfo.ticketFooterText.isNotBlank()) {
+                        if (!ticketInfo.ticketFooterText.isNullOrBlank()) {
                             Text(ticketInfo.ticketFooterText, fontSize = 9.sp, color = Color.Gray, textAlign = TextAlign.Center, lineHeight = 12.sp, modifier = Modifier.fillMaxWidth())
                             Spacer(modifier = Modifier.height(4.dp))
                         }
@@ -1482,7 +1500,7 @@ fun VenteScreen(
                                         isSharingImage = true
                                         try {
                                             val logoBitmap = withContext(Dispatchers.IO) {
-                                                if (ticketInfo.borletteLogoUrl.isNotBlank())
+                                                if (!ticketInfo.borletteLogoUrl.isNullOrBlank())
                                                     TicketShareUtil.downloadLogo(context, ticketInfo.borletteLogoUrl)
                                                 else null
                                             }
@@ -1513,7 +1531,7 @@ fun VenteScreen(
                                         isSharingPdf = true
                                         try {
                                             val logoBitmap = withContext(Dispatchers.IO) {
-                                                if (ticketInfo.borletteLogoUrl.isNotBlank())
+                                                if (!ticketInfo.borletteLogoUrl.isNullOrBlank())
                                                     TicketShareUtil.downloadLogo(context, ticketInfo.borletteLogoUrl)
                                                 else null
                                             }

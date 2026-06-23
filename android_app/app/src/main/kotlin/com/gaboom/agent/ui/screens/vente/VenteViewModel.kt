@@ -48,7 +48,8 @@ data class TicketShareInfo(
     val agentName: String = "",
     val ticketFooterText: String = "",
     val mariageGratuitActif: Boolean = false,
-    val mariageGratuitMontant: String = "0"
+    val mariageGratuitMontant: String = "0",
+    val isOffline: Boolean = false
 )
 
 data class VenteUiState(
@@ -597,9 +598,32 @@ class VenteViewModel @Inject constructor(
                     
                     val dummyTicketInfo = saveTicketOffline(tirage, apiLines)
                     
+                    val now = java.time.LocalDateTime.now()
+                    val shareInfo = TicketShareInfo(
+                        ticketNo = dummyTicketInfo.ticketNo,
+                        tirageNom = dummyTicketInfo.tirageNom,
+                        date = now.toLocalDate().toString(),
+                        time = now.toLocalTime().toString().take(5),
+                        lines = apiLines.map { "${it.jeu}:${it.valeur}:${it.option}" to it.mise },
+                        totalMise = dummyTicketInfo.totalMise,
+                        groupId = null,
+                        ticketId = dummyTicketInfo.ticketId,
+                        borletteName = _uiState.value.borletteName,
+                        borletteSlogan = _uiState.value.borletteSlogan,
+                        borletteTel = _uiState.value.borletteTel,
+                        borletteAdresse = _uiState.value.borletteAdresse,
+                        borletteLogoUrl = _uiState.value.borletteLogoUrl,
+                        agentName = _uiState.value.agentName,
+                        ticketFooterText = _uiState.value.ticketFooterText,
+                        mariageGratuitActif = _uiState.value.mariageGratuitActif,
+                        mariageGratuitMontant = _uiState.value.mariageGratuitMontant,
+                        isOffline = true
+                    )
+                    
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         ticketCreated = true,
+                        ticketToShare = shareInfo,
                         error = "Ticket créé hors ligne (HL)"
                     )
                     
@@ -925,7 +949,13 @@ class VenteViewModel @Inject constructor(
 
     private fun buildOfflinePrintData(ticket: CreatedTicketInfo, apiLines: List<TicketLine>): PrintData {
         val lines = apiLines.map { line ->
-            String.format("%-7s %-9s %6.0f", line.jeu, line.valeur, line.mise)
+            val isLoto = line.jeu.lowercase() in listOf("loto4", "loto5")
+            val jeuDisplay = if (isLoto && line.option != 1) {
+                "${line.jeu.uppercase()}-OPT${line.option}"
+            } else {
+                line.jeu.uppercase()
+            }
+            String.format("%-8s %-9s %6.0f", jeuDisplay, line.valeur, line.mise)
         }
         val now = java.util.Date()
         val dateFormat = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
@@ -1147,7 +1177,7 @@ class VenteViewModel @Inject constructor(
                         selectedTirages.forEach { tirage ->
                             val offlineInfo = saveTicketOffline(
                                 tirage = tirage,
-                                apiLines = entries.map { TicketLine(jeu = it.game, valeur = it.number, mise = it.stake, gratuit = it.gratuit) }
+                                apiLines = entries.map { TicketLine(jeu = it.game, valeur = it.number, mise = it.stake, gratuit = it.gratuit, option = it.option ?: 1) }
                             )
                             createdOffline.add(offlineInfo)
                         }

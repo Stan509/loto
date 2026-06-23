@@ -541,7 +541,7 @@ fun TicketManagementScreen(
                                     if (printData != null) {
                                         val logoBitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                                             try {
-                                                if (printData.borletteLogoUrl.isNotBlank())
+                                                if (!printData.borletteLogoUrl.isNullOrBlank())
                                                     TicketShareUtil.downloadLogo(context, printData.borletteLogoUrl)
                                                 else null
                                             } catch (_: Throwable) { null }
@@ -581,7 +581,7 @@ fun TicketManagementScreen(
                                     if (printData != null) {
                                         val logoBitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                                             try {
-                                                if (printData.borletteLogoUrl.isNotBlank())
+                                                if (!printData.borletteLogoUrl.isNullOrBlank())
                                                     TicketShareUtil.downloadLogo(context, printData.borletteLogoUrl)
                                                 else null
                                             } catch (_: Throwable) { null }
