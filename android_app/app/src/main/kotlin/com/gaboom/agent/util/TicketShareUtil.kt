@@ -486,10 +486,11 @@ object TicketShareUtil {
                 mise = if (miseToken.equals("GRATUIT", ignoreCase = true)) 0.0 
                        else (miseToken.replace("[^\\d\\.]".toRegex(), "").toDoubleOrNull() ?: 0.0)
                 
-                // fallback to check if option is in jeuRaw (e.g. LOTO4-2)
+                // fallback to check if option is in jeuRaw (e.g. LOTO4-2 or LOTO4-OPT2)
                 val optionParts = jeuRaw.split("-")
                 if (optionParts.size > 1) {
-                    opt = "OPT${optionParts[1]}"
+                    val rawOpt = optionParts[1]
+                    opt = if (rawOpt.startsWith("OPT", ignoreCase = true)) rawOpt.uppercase() else "OPT$rawOpt"
                 }
             }
             

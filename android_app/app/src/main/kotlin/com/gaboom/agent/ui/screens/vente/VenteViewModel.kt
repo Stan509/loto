@@ -950,7 +950,7 @@ class VenteViewModel @Inject constructor(
     private fun buildOfflinePrintData(ticket: CreatedTicketInfo, apiLines: List<TicketLine>): PrintData {
         val lines = apiLines.map { line ->
             val isLoto = line.jeu.lowercase() in listOf("loto4", "loto5")
-            val jeuDisplay = if (isLoto && line.option != 1) {
+            val jeuDisplay = if (isLoto && line.option >= 1) {
                 "${line.jeu.uppercase()}-OPT${line.option}"
             } else {
                 line.jeu.uppercase()

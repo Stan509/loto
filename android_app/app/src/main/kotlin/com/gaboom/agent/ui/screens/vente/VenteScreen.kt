@@ -1,12 +1,14 @@
 package com.gaboom.agent.ui.screens.vente
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -291,7 +293,7 @@ fun VenteScreen(
                     OutlinedTextField(
                         value = miseDefaut,
                         onValueChange = { if (it.all { c -> c.isDigit() }) miseDefaut = it },
-                        modifier = Modifier.width(70.dp).height(48.dp),
+                        modifier = Modifier.width(70.dp).height(50.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         textStyle = LocalTextStyle.current.copy(fontSize = 14.sp, textAlign = TextAlign.Center)
@@ -816,13 +818,18 @@ fun VenteScreen(
                             // Right: Mise + Delete
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (editingIndex == index) {
-                                    OutlinedTextField(
+                                    BasicTextField(
                                         value = editingMise,
                                         onValueChange = { if (it.all { c -> c.isDigit() }) editingMise = it },
-                                        modifier = Modifier.width(60.dp).height(36.dp),
+                                        modifier = Modifier
+                                            .width(70.dp)
+                                            .height(32.dp)
+                                            .background(Color.White, RoundedCornerShape(4.dp))
+                                            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
+                                            .padding(horizontal = 6.dp, vertical = 4.dp),
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                         singleLine = true,
-                                        textStyle = LocalTextStyle.current.copy(fontSize = 12.sp)
+                                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
                                     )
                                     IconButton(
                                         onClick = {
@@ -1474,7 +1481,7 @@ fun VenteScreen(
                             val jeuRaw = parts.getOrElse(0) { "" }
                             val valeur = parts.getOrElse(1) { "" }
                             val optStr = parts.getOrElse(2) { "1" }
-                            val jeu = if ((jeuRaw.equals("LOTO4", true) || jeuRaw.equals("LOTO5", true)) && optStr != "1")
+                            val jeu = if (jeuRaw.equals("LOTO4", true) || jeuRaw.equals("LOTO5", true))
                                 "${jeuRaw.uppercase()}-OPT$optStr" else jeuRaw.uppercase()
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
                                 Text(jeu, fontSize = 10.sp, modifier = Modifier.weight(0.35f), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)

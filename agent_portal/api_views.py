@@ -810,7 +810,7 @@ def api_ticket_print(request: HttpRequest, ticket_id: str) -> JsonResponse:
         mise = str(l.mise) if not l.gratuit else "GRATUIT"
         
         # Ajouter option pour LOTO4 et LOTO5 (champ option dans TicketLine)
-        if jeu in ["LOTO4", "LOTO5"] and l.option and l.option > 1:
+        if jeu in ["LOTO4", "LOTO5"] and l.option and l.option >= 1:
             lines_print.append(f"{jeu:<7} {valeur:<6} OPT{l.option} {mise:>8}")
         else:
             lines_print.append(f"{jeu:<7} {valeur:<6} {mise:>8}")
