@@ -71,14 +71,17 @@
                 </div>
                 <h1 class="font-bold">Espace Partenaire</h1>
             </div>
-            <button id="mobileMenuBtn" class="p-2 rounded-lg hover:bg-white/20 transition">
-                <i data-lucide="menu" class="h-6 w-6"></i>
-            </button>
+            <form method="post" action="{% url 'logout' %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="p-2 rounded-lg hover:bg-white/20 text-rose-200 transition" title="Déconnexion">
+                    <i data-lucide="log-out" class="h-5 w-5"></i>
+                </button>
+            </form>
         </div>
     </header>
 
     <!-- Sidebar -->
-    <aside class="sidebar fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-800 shadow-xl z-40 overflow-y-auto">
+    <aside class="sidebar fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-800 shadow-xl z-40 overflow-y-auto hidden lg:block">
         <!-- Logo -->
         <div class="partner-gradient p-6">
             <div class="flex items-center gap-3">
@@ -149,13 +152,10 @@
         </nav>
     </aside>
 
-    <!-- Overlay for mobile -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
-
     <!-- Main Content Area -->
     <main class="content-area">
         <!-- Top Bar -->
-        <div class="bg-white dark:bg-slate-800 shadow-sm px-6 py-4 sticky top-0 z-20">
+        <div class="hidden lg:block bg-white dark:bg-slate-800 shadow-sm px-6 py-4 sticky top-0 z-20">
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-xl font-bold text-slate-800 dark:text-white">{% block page_title %}Dashboard{% endblock %}</h2>
@@ -171,7 +171,7 @@
         </div>
 
         <!-- Content -->
-        <div class="p-6">
+        <div class="p-6 pb-24 lg:pb-6">
             {% if messages %}
             <div class="mb-6 space-y-2">
                 {% for message in messages %}
@@ -187,27 +187,40 @@
         </div>
     </main>
 
+    <!-- Mobile Bottom Navigation -->
+    <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-around py-2 px-1 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+        <a href="{% url 'partner:dashboard' %}" class="flex flex-col items-center justify-center text-xs py-1 px-2 rounded-lg {% if request.resolver_match.url_name == 'dashboard' %}text-indigo-600 dark:text-indigo-400{% else %}text-slate-500 dark:text-slate-400{% endif %}">
+            <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
+            <span class="text-[9px] mt-0.5 font-medium">Dash</span>
+        </a>
+        <a href="{% url 'partner:borlettes' %}" class="flex flex-col items-center justify-center text-xs py-1 px-2 rounded-lg {% if request.resolver_match.url_name == 'borlettes' %}text-indigo-600 dark:text-indigo-400{% else %}text-slate-500 dark:text-slate-400{% endif %}">
+            <i data-lucide="store" class="h-5 w-5"></i>
+            <span class="text-[9px] mt-0.5 font-medium">Borl.</span>
+        </a>
+        <a href="{% url 'partner:subscriptions' %}" class="flex flex-col items-center justify-center text-xs py-1 px-2 rounded-lg {% if request.resolver_match.url_name == 'subscriptions' %}text-indigo-600 dark:text-indigo-400{% else %}text-slate-500 dark:text-slate-400{% endif %}">
+            <i data-lucide="credit-card" class="h-5 w-5"></i>
+            <span class="text-[9px] mt-0.5 font-medium">Abon.</span>
+        </a>
+        <a href="{% url 'partner:tirages' %}" class="flex flex-col items-center justify-center text-xs py-1 px-2 rounded-lg {% if request.resolver_match.url_name == 'tirages' %}text-indigo-600 dark:text-indigo-400{% else %}text-slate-500 dark:text-slate-400{% endif %}">
+            <i data-lucide="dices" class="h-5 w-5"></i>
+            <span class="text-[9px] mt-0.5 font-medium">Tir.</span>
+        </a>
+        <a href="{% url 'partner:results' %}" class="flex flex-col items-center justify-center text-xs py-1 px-2 rounded-lg {% if request.resolver_match.url_name == 'results' %}text-indigo-600 dark:text-indigo-400{% else %}text-slate-500 dark:text-slate-400{% endif %}">
+            <i data-lucide="trophy" class="h-5 w-5"></i>
+            <span class="text-[9px] mt-0.5 font-medium">Rés.</span>
+        </a>
+        <a href="{% url 'partner:affiliates' %}" class="flex flex-col items-center justify-center text-xs py-1 px-2 rounded-lg {% if request.resolver_match.url_name == 'affiliates' %}text-indigo-600 dark:text-indigo-400{% else %}text-slate-500 dark:text-slate-400{% endif %}">
+            <i data-lucide="users" class="h-5 w-5"></i>
+            <span class="text-[9px] mt-0.5 font-medium">Aff.</span>
+        </a>
+        <a href="{% url 'partner:withdrawals' %}" class="flex flex-col items-center justify-center text-xs py-1 px-2 rounded-lg {% if request.resolver_match.url_name == 'withdrawals' %}text-indigo-600 dark:text-indigo-400{% else %}text-slate-500 dark:text-slate-400{% endif %}">
+            <i data-lucide="banknote" class="h-5 w-5"></i>
+            <span class="text-[9px] mt-0.5 font-medium">Retr.</span>
+        </a>
+    </nav>
+
     <script>
         lucide.createIcons();
-        
-        // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('open');
-                overlay.classList.toggle('hidden');
-            });
-        }
-        
-        if (overlay) {
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('open');
-                overlay.classList.add('hidden');
-            });
-        }
     </script>
     {% block extra_js %}{% endblock %}
 </body>

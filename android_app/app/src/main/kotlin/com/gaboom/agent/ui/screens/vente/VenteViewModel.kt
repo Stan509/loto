@@ -494,11 +494,11 @@ class VenteViewModel @Inject constructor(
         }
     }
 
-    fun generateGrap(chiffre: Int, mise: Double) {
-        val existingLines = _uiState.value.lines.filter { it.jeu.lowercase() == "boule" }.map { it.valeur }.toSet()
-        val grap = (0..9).map { "$chiffre$it" }
+    fun generateGrap(mise: Double) {
+        val existingLines = _uiState.value.lines.filter { it.jeu.lowercase() == "loto3" }.map { it.valeur }.toSet()
+        val grap = listOf("000", "111", "222", "333", "444", "555", "666", "777", "888", "999")
         val newLines = grap.filter { it !in existingLines }.map { valeur ->
-            TicketLineWithOptions(jeu = "boule", valeur = valeur, miseBase = mise, options = emptySet(), useGlobalOptions = false)
+            TicketLineWithOptions(jeu = "loto3", valeur = valeur, miseBase = mise, options = emptySet(), useGlobalOptions = false)
         }
         if (newLines.isNotEmpty()) {
             _uiState.value = _uiState.value.copy(lines = _uiState.value.lines + newLines)
@@ -686,7 +686,7 @@ class VenteViewModel @Inject constructor(
                     
                     // Offline printing support
                     val allowOfflinePrint = agentConfigDataStore.getAllowOfflinePrint()
-                    if (allowOfflinePrint && printer.isConnected()) {
+                    if (allowOfflinePrint) {
                         val printData = buildOfflinePrintData(dummyTicketInfo, apiLines)
                         printer.printTicket(printData)
                     }
@@ -1044,9 +1044,7 @@ class VenteViewModel @Inject constructor(
             if (printResponse.isSuccessful) {
                 val printData = printResponse.body()?.printData
                 if (printData != null) {
-                    if (printer.isConnected()) {
-                        printer.printTicket(printData)
-                    }
+                    printer.printTicket(printData)
                     printData
                 } else {
                     null
@@ -1379,12 +1377,12 @@ class VenteViewModel @Inject constructor(
                 }
 
                 if (printData != null) {
-                    if (printer.isConnected()) {
-                        printer.printTicket(printData)
+                    val result = printer.printTicket(printData)
+                    if (result.isSuccess) {
                         markTicketPrinted(index)
                     } else {
                         _uiState.value = _uiState.value.copy(
-                            printError = "Imprimante non connectée",
+                            printError = "Impression échouée: ${result.exceptionOrNull()?.message ?: "Erreur"}",
                             creationProgress = null
                         )
                     }

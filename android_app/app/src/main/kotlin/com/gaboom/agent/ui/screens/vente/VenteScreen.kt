@@ -569,7 +569,7 @@ fun VenteScreen(
                         )
                         DropdownMenuItem(
                             text = {
-                                Text("Grap (chiffre fixe au début)")
+                                Text("Grap (000, 111, ..., 999)")
                             },
                             onClick = {
                                 showAutomationsMenu = false
@@ -1373,7 +1373,7 @@ fun VenteScreen(
                         showPrintPreview = false
                     }
                 ) {
-                    Text("Confirmer & Imprimer")
+                    Text("Enregistrer & Imprimer")
                 }
             },
             dismissButton = {
@@ -1700,22 +1700,12 @@ fun VenteScreen(
     }
 
     if (showGrapDialog) {
-        var digitInput by remember { mutableStateOf("") }
         var stakeInput by remember { mutableStateOf(miseDefaut) }
-        var errorText by remember { mutableStateOf<String?>(null) }
         AlertDialog(
             onDismissRequest = { showGrapDialog = false },
-            title = { Text("Grap (Chiffre fixe au début)", fontWeight = FontWeight.Bold) },
+            title = { Text("Grap (000, 111, ..., 999)", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = digitInput,
-                        onValueChange = { if (it.all { c -> c.isDigit() } && it.length <= 1) digitInput = it },
-                        label = { Text("Chiffre (0-9)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
                     OutlinedTextField(
                         value = stakeInput,
                         onValueChange = { if (it.all { c -> c.isDigit() }) stakeInput = it },
@@ -1724,21 +1714,13 @@ fun VenteScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    errorText?.let {
-                        Text(it, color = Color.Red, fontSize = 12.sp)
-                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        val digit = digitInput.toIntOrNull()
-                        if (digit == null || digit !in 0..9) {
-                            errorText = "Le chiffre doit être compris entre 0 et 9"
-                            return@Button
-                        }
                         val stake = stakeInput.toDoubleOrNull() ?: 50.0
-                        viewModel.generateGrap(digit, stake)
+                        viewModel.generateGrap(stake)
                         showGrapDialog = false
                     }
                 ) {

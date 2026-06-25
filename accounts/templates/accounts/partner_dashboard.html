@@ -78,12 +78,14 @@
             </div>
           </div>
           {% if sub.payment_proof and sub.payment_proof.name %}
-          <a href="{{ sub.payment_proof.url }}" target="_blank" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition">
-            Voir preuve
+          <a href="{{ sub.payment_proof.url }}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition" title="Voir preuve">
+            <i data-lucide="eye" class="h-4 w-4"></i>
+            <span class="hidden md:inline">Voir preuve</span>
           </a>
           {% else %}
-          <span class="px-3 py-1.5 bg-slate-100 text-slate-500 text-xs rounded-lg">
-            Pas de fichier
+          <span class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-500 text-xs rounded-lg" title="Pas de fichier">
+            <i data-lucide="file-x" class="h-4 w-4"></i>
+            <span class="hidden md:inline">Pas de fichier</span>
           </span>
           {% endif %}
         </div>
@@ -112,26 +114,28 @@
         </span>
       </div>
       
-      {% if all_subscriptions %}
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto font-sans">
         <table class="w-full text-sm">
           <thead class="bg-slate-50 dark:bg-slate-800">
             <tr>
               <th class="px-3 py-2 text-left">Borlette</th>
-              <th class="px-3 py-2 text-left">Admin</th>
-              <th class="px-3 py-2 text-left">Type</th>
+              <th class="px-3 py-2 text-left hidden md:table-cell">Admin</th>
+              <th class="px-3 py-2 text-left hidden sm:table-cell">Type</th>
               <th class="px-3 py-2 text-left">Statut</th>
-              <th class="px-3 py-2 text-left">Expiration</th>
-              <th class="px-3 py-2 text-left">Preuve de paiement</th>
+              <th class="px-3 py-2 text-left hidden md:table-cell">Expiration</th>
+              <th class="px-3 py-2 text-center">Preuve</th>
               <th class="px-3 py-2 text-right">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
             {% for sub in all_subscriptions %}
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-              <td class="px-3 py-3 font-medium">{{ sub.borlette.nom_borlette }}</td>
-              <td class="px-3 py-3 text-slate-500">{{ sub.user.username }}</td>
-              <td class="px-3 py-3">
+              <td class="px-3 py-3 font-medium">
+                <div>{{ sub.borlette.nom_borlette }}</div>
+                <div class="text-[10px] text-slate-400 md:hidden">{{ sub.user.username }} • {% if sub.subscription_type == "trial" %}Essai{% else %}{{ sub.subscription_type }}{% endif %}</div>
+              </td>
+              <td class="px-3 py-3 text-slate-500 hidden md:table-cell">{{ sub.user.username }}</td>
+              <td class="px-3 py-3 hidden sm:table-cell">
                 {% if sub.subscription_type == "trial" %}
                   <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">Essai Gratuit</span>
                 {% elif sub.subscription_type == "standard" %}
@@ -152,8 +156,23 @@
                 {% else %}
                   <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Expiré</span>
                 {% endif %}
+                <div class="md:hidden text-[10px] mt-0.5">
+                  {% if sub.is_trial and sub.hours_remaining %}
+                    <span class="text-purple-600 font-semibold countdown-trial" 
+                          data-sub-id="{{ sub.id }}" 
+                          data-end-date="{{ sub.end_date|date:'c' }}">
+                      {{ sub.hours_remaining|floatformat:1 }}h
+                    </span>
+                  {% elif sub.days_remaining > 0 %}
+                    <span class="{% if sub.days_remaining <= 7 %}text-red-600 font-semibold{% elif sub.days_remaining <= 30 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+                      {{ sub.days_remaining }}j
+                    </span>
+                  {% elif sub.days_remaining <= 0 %}
+                    <span class="text-red-600 font-semibold">Expiré</span>
+                  {% endif %}
+                </div>
               </td>
-              <td class="px-3 py-3">
+              <td class="px-3 py-3 hidden md:table-cell">
                 <div class="text-xs">
                   {{ sub.end_date|date:"d/m/Y" }}
                 </div>
@@ -173,31 +192,41 @@
                   {% endif %}
                 </div>
               </td>
-              <td class="px-3 py-3">
+              <td class="px-3 py-3 text-center">
                 {% if sub.payment_proof %}
-                  <a href="{{ sub.payment_proof.url }}" target="_blank" class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200 transition">
-                    Voir
+                  <a href="{{ sub.payment_proof.url }}" target="_blank" class="text-green-600 hover:text-green-700" title="Voir preuve">
+                    <i data-lucide="file-text" class="h-5 w-5 mx-auto"></i>
                   </a>
                 {% else %}
-                  <span class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs">Aucune</span>
+                  <span class="text-slate-300 dark:text-slate-600" title="Aucune preuve">
+                    <i data-lucide="file-x" class="h-5 w-5 mx-auto"></i>
+                  </span>
                 {% endif %}
               </td>
               <td class="px-3 py-3 text-right">
                 {% if sub.payment_proof and sub.days_remaining <= 7 %}
                 {% if sub.subscription_type == "trial" %}
-                <a href="{% url 'partner:renew_subscription' sub.id %}" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition">
-                  Activation
+                <a href="{% url 'partner:renew_subscription' sub.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition" title="Activation">
+                  <i data-lucide="zap" class="h-4 w-4"></i>
+                  <span class="hidden md:inline">Activation</span>
                 </a>
                 {% else %}
-                <a href="{% url 'partner:renew_subscription' sub.id %}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition">
-                  Renouvellement 30 jours
+                <a href="{% url 'partner:renew_subscription' sub.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition" title="Renouvellement 30 jours">
+                  <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+                  <span class="hidden md:inline">Renouvellement</span>
                 </a>
                 {% endif %}
                 {% else %}
                 {% if not sub.payment_proof %}
-                <span class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs">En attente de preuve</span>
+                <span class="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs" title="En attente de preuve">
+                  <i data-lucide="clock" class="h-4 w-4"></i>
+                  <span class="hidden md:inline">En attente</span>
+                </span>
                 {% elif sub.days_remaining > 7 %}
-                <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Disponible dans {{ sub.days_remaining|add:"-7" }} jours</span>
+                <span class="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs" title="Disponible dans {{ sub.days_remaining|add:'-7' }} jours">
+                  <i data-lucide="calendar" class="h-4 w-4"></i>
+                  <span class="hidden md:inline">Dans {{ sub.days_remaining|add:"-7" }}j</span>
+                </span>
                 {% endif %}
                 {% endif %}
               </td>
@@ -229,7 +258,7 @@
         {% for withdrawal in pending_withdrawals %}
         <div class="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-l-4 border-amber-500">
           <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold">
+            <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-bold hidden sm:flex">
               {{ withdrawal.user.username|first|upper }}
             </div>
             <div>
@@ -237,8 +266,9 @@
               <div class="text-xs text-slate-500">{{ withdrawal.amount }} GDS • {{ withdrawal.created_at|date:"d/m/Y H:i" }}</div>
             </div>
           </div>
-          <a href="{% url 'partner:confirm_withdrawal' withdrawal.id %}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg transition">
-            Confirmer
+          <a href="{% url 'partner:confirm_withdrawal' withdrawal.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg transition" title="Confirmer">
+            <i data-lucide="check" class="h-4 w-4"></i>
+            <span class="hidden md:inline">Confirmer</span>
           </a>
         </div>
         {% endfor %}
@@ -271,8 +301,9 @@
             <div class="font-medium">{{ tirage.nom }}</div>
             <div class="text-xs text-slate-500">{{ tirage.borlette.nom_borlette }} • {{ tirage.heure_tirage|date:"d/m/Y H:i" }}</div>
           </div>
-          <a href="{% url 'partner:submit_result' tirage.id %}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg transition">
-            Donner résultat
+          <a href="{% url 'partner:submit_result' tirage.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg transition" title="Donner résultat">
+            <i data-lucide="plus-circle" class="h-4 w-4"></i>
+            <span class="hidden md:inline">Donner résultat</span>
           </a>
         </div>
         {% endfor %}
@@ -305,13 +336,13 @@
           <thead class="bg-slate-50 dark:bg-slate-800">
             <tr>
               <th class="px-3 py-2 text-left">Tirage</th>
-              <th class="px-3 py-2 text-left">Date</th>
+              <th class="px-3 py-2 text-left hidden sm:table-cell">Date</th>
               <th class="px-3 py-2 text-center">Lot1</th>
               <th class="px-3 py-2 text-center">Lot2</th>
               <th class="px-3 py-2 text-center">Lot3</th>
-              <th class="px-3 py-2 text-center">Loto3</th>
-              <th class="px-3 py-2 text-center">Loto4 (3 opt)</th>
-              <th class="px-3 py-2 text-center">Loto5 (2 opt)</th>
+              <th class="px-3 py-2 text-center hidden sm:table-cell">Loto3</th>
+              <th class="px-3 py-2 text-center hidden md:table-cell">Loto4</th>
+              <th class="px-3 py-2 text-center hidden lg:table-cell">Loto5</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
@@ -319,9 +350,10 @@
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
               <td class="px-3 py-3">
                 <div class="font-medium">{{ tirage.nom }}</div>
-                <div class="text-xs text-slate-500">{{ tirage.borlette.nom_borlette }}</div>
+                <div class="text-[10px] text-slate-400 md:hidden">{{ tirage.heure_tirage|date:"d/m/Y" }} • {{ tirage.borlette.nom_borlette }}</div>
+                <div class="text-xs text-slate-500 hidden md:block">{{ tirage.borlette.nom_borlette }}</div>
               </td>
-              <td class="px-3 py-3 text-slate-500">
+              <td class="px-3 py-3 text-slate-500 hidden sm:table-cell">
                 {{ tirage.heure_tirage|date:"d/m/Y" }}
               </td>
               {% with resultat=tirage.resultats.first %}
@@ -329,21 +361,21 @@
               <td class="px-3 py-3 text-center font-bold text-indigo-600">{{ resultat.lot1 }}</td>
               <td class="px-3 py-3 text-center font-bold text-indigo-600">{{ resultat.lot2 }}</td>
               <td class="px-3 py-3 text-center font-bold text-indigo-600">{{ resultat.lot3 }}</td>
-              <td class="px-3 py-3 text-center text-emerald-600">{{ resultat.chiffre_loto3|default:"-" }}</td>
-              <td class="px-3 py-3 text-center text-xs">
+              <td class="px-3 py-3 text-center text-emerald-600 hidden sm:table-cell">{{ resultat.chiffre_loto3|default:"-" }}</td>
+              <td class="px-3 py-3 text-center text-xs hidden md:table-cell">
                 <span class="text-blue-600">{{ resultat.loto4_option1|default:"-" }}</span>
                 <span class="text-slate-400">/</span>
                 <span class="text-blue-600">{{ resultat.loto4_option2|default:"-" }}</span>
                 <span class="text-slate-400">/</span>
                 <span class="text-blue-600">{{ resultat.loto4_option3|default:"-" }}</span>
               </td>
-              <td class="px-3 py-3 text-center text-xs">
+              <td class="px-3 py-3 text-center text-xs hidden lg:table-cell">
                 <span class="text-amber-600">{{ resultat.loto5_option1|default:"-" }}</span>
                 <span class="text-slate-400">/</span>
                 <span class="text-amber-600">{{ resultat.loto5_option2|default:"-" }}</span>
               </td>
               {% else %}
-              <td class="px-3 py-3 text-center text-slate-400" colspan="6">Pas de résultat</td>
+              <td class="px-3 py-3 text-center text-slate-400" colspan="7">Pas de résultat</td>
               {% endif %}
               {% endwith %}
             </tr>
@@ -371,23 +403,26 @@
       </div>
       
       {% if all_subscriptions %}
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto font-sans">
         <table class="w-full text-sm">
           <thead class="bg-slate-50 dark:bg-slate-800">
             <tr>
               <th class="px-3 py-2 text-left">Borlette</th>
-              <th class="px-3 py-2 text-left">Admin</th>
-              <th class="px-3 py-2 text-left">Expire le</th>
+              <th class="px-3 py-2 text-left hidden md:table-cell">Admin</th>
+              <th class="px-3 py-2 text-left hidden sm:table-cell">Expire le</th>
               <th class="px-3 py-2 text-left">Temps restant</th>
               <th class="px-3 py-2 text-right">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
             {% for sub in all_subscriptions %}
-            <tr>
-              <td class="px-3 py-3 font-medium">{{ sub.borlette.nom_borlette }}</td>
-              <td class="px-3 py-3 text-slate-500">{{ sub.user.username }}</td>
-              <td class="px-3 py-3">{{ sub.end_date|date:"d/m/Y" }}</td>
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+              <td class="px-3 py-3 font-medium">
+                <div>{{ sub.borlette.nom_borlette }}</div>
+                <div class="text-[10px] text-slate-400 md:hidden">{{ sub.user.username }} • Expire: {{ sub.end_date|date:"d/m/Y" }}</div>
+              </td>
+              <td class="px-3 py-3 text-slate-500 hidden md:table-cell">{{ sub.user.username }}</td>
+              <td class="px-3 py-3 hidden sm:table-cell">{{ sub.end_date|date:"d/m/Y" }}</td>
               <td class="px-3 py-3">
                 {% if sub.days_remaining > 0 %}
                   <span class="px-2 py-1 rounded text-xs font-semibold
@@ -405,19 +440,27 @@
               <td class="px-3 py-3 text-right">
                 {% if sub.payment_proof and sub.days_remaining <= 7 %}
                 {% if sub.subscription_type == "trial" %}
-                <a href="{% url 'partner:renew_subscription' sub.id %}" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition">
-                  Activation
+                <a href="{% url 'partner:renew_subscription' sub.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition" title="Activation">
+                  <i data-lucide="zap" class="h-4 w-4"></i>
+                  <span class="hidden md:inline">Activation</span>
                 </a>
                 {% else %}
-                <a href="{% url 'partner:renew_subscription' sub.id %}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition">
-                  Renouvellement 30 jours
+                <a href="{% url 'partner:renew_subscription' sub.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition" title="Renouvellement 30 jours">
+                  <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+                  <span class="hidden md:inline">Renouvellement</span>
                 </a>
                 {% endif %}
                 {% else %}
                 {% if not sub.payment_proof %}
-                <span class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs">En attente de preuve</span>
+                <span class="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs" title="En attente de preuve">
+                  <i data-lucide="clock" class="h-4 w-4"></i>
+                  <span class="hidden md:inline">En attente</span>
+                </span>
                 {% elif sub.days_remaining > 7 %}
-                <span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Disponible dans {{ sub.days_remaining|add:"-7" }} jours</span>
+                <span class="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs" title="Disponible dans {{ sub.days_remaining|add:'-7' }} jours">
+                  <i data-lucide="calendar" class="h-4 w-4"></i>
+                  <span class="hidden md:inline">Dans {{ sub.days_remaining|add:"-7" }}j</span>
+                </span>
                 {% endif %}
                 {% endif %}
               </td>

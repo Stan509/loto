@@ -294,13 +294,6 @@ class TicketManagementViewModel @Inject constructor(
                 if (response.isSuccessful && response.body()?.success == true) {
                     val printData = response.body()?.printData
                     if (printData != null) {
-                        if (!bluetoothPrinter.isConnected()) {
-                            _uiState.value = _uiState.value.copy(
-                                reprintingTicketId = null,
-                                error = "Imprimante non connectée"
-                            )
-                            return@launch
-                        }
                         val printResult = bluetoothPrinter.printTicket(printData)
                         if (printResult.isSuccess) {
                             _uiState.value = _uiState.value.copy(
