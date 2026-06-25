@@ -35,7 +35,7 @@ BASE_PRICES = {
 # ============================================================================
 
 DIRECTOR_DISCOUNTS = {
-    'activation': Decimal('2500.00'),  # Réduction de 2,500 GDS sur activation
+    'activation': Decimal('500.00'),   # Réduction de 500 GDS sur activation (12500 - 500 = 12000 GDS)
     'per_agent': Decimal('50.00'),     # Réduction de 50 GDS par agent (1250 - 50 = 1200 GDS)
 }
 
@@ -59,13 +59,15 @@ BONUS_VALIDITY_MONTHS = 6
 # ============================================================================
 
 
-def calculate_director_price(agents_count: int, has_promo_code: bool = False) -> dict:
+def calculate_director_price(agents_count: int, has_promo_code: bool = False, signup_date=None, current_date=None) -> dict:
     """
     Calcule le prix pour un directeur avec ou sans code promo.
     
     Args:
         agents_count: Nombre d'agents enregistrés
         has_promo_code: True si le directeur utilise un code promo affilié
+        signup_date: Date d'inscription du directeur
+        current_date: Date actuelle du calcul
         
     Returns:
         Dict avec les détails du prix:
@@ -76,13 +78,25 @@ def calculate_director_price(agents_count: int, has_promo_code: bool = False) ->
         - total_activation: Prix final de l'activation
         - total_agents: Prix final pour les agents
         - total: Prix total à payer
+        - is_within_6_months: True si la réduction est encore valide
     """
+    if current_date is None:
+        current_date = timezone.now()
+        
+    is_within_6_months = True
+    if has_promo_code and signup_date is not None:
+        validity_end = signup_date + timedelta(days=30 * BONUS_VALIDITY_MONTHS)
+        is_within_6_months = current_date <= validity_end
+
     base_activation = BASE_PRICES['activation']
     base_agents = BASE_PRICES['agent_monthly'] * agents_count
     
     if has_promo_code:
         discount_activation = DIRECTOR_DISCOUNTS['activation']
-        discount_agents = DIRECTOR_DISCOUNTS['per_agent'] * agents_count
+        if is_within_6_months:
+            discount_agents = DIRECTOR_DISCOUNTS['per_agent'] * agents_count
+        else:
+            discount_agents = Decimal('0.00')
     else:
         discount_activation = Decimal('0.00')
         discount_agents = Decimal('0.00')
@@ -101,6 +115,7 @@ def calculate_director_price(agents_count: int, has_promo_code: bool = False) ->
         'total_agents': max(total_agents, Decimal('0.00')),
         'total': max(total_activation + total_agents, Decimal('0.00')),
         'has_promo_code': has_promo_code,
+        'is_within_6_months': is_within_6_months,
         'agents_count': agents_count,
     }
 

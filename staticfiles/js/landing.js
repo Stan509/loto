@@ -295,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const baseTotal = baseActivation + (baseAgent * agents);
 
             // Réductions
-            const discountActivation = hasPromo ? 2500 : 0;
+            const discountActivation = hasPromo ? 500 : 0;
             const discountPerAgent = hasPromo ? 50 : 0;
             const discountAgents = discountPerAgent * agents;
             const totalDiscount = discountActivation + discountAgents;

@@ -480,9 +480,14 @@
             <span style="font-size: 18px;">🎉</span>
             <span style="font-weight: 600; color: #10b981;">Code promo appliqué: {{ promo_code_used }}</span>
           </div>
-          <div style="font-size: 12px; color: #10b981; margin-bottom: 4px;">Rabais activation: 2,500 GDS (12,500 → 10,000 GDS)</div>
-          <div style="font-size: 12px; color: #10b981;">Rabais par agent: 50 GDS (1,250 → 1,200 GDS)</div>
-          <div style="font-size: 13px; font-weight: 600; color: #10b981; margin-top: 8px;">Économie totale: {{ total_savings }} GDS</div>
+          <div style="font-size: 12px; color: #10b981; margin-bottom: 4px;">Rabais activation: 500 GDS (12,500 → 12,000 GDS)</div>
+          {% if is_within_6_months %}
+            <div style="font-size: 12px; color: #10b981;">Rabais par agent: 50 GDS (1,250 → 1,200 GDS) - Actif (valable les 6 premiers mois)</div>
+            <div style="font-size: 13px; font-weight: 600; color: #10b981; margin-top: 8px;">Économie totale: {{ total_savings }} GDS</div>
+          {% else %}
+            <div style="font-size: 12px; color: #f59e0b;">La réduction de 50 GDS par agent (6 premiers mois) est expirée. Tarif actuel: 1,250 GDS par agent.</div>
+            <div style="font-size: 13px; font-weight: 600; color: #10b981; margin-top: 8px;">Économie totale: {{ total_savings }} GDS (uniquement sur l'activation)</div>
+          {% endif %}
         </div>
         {% endif %}
         <div class="tiles">

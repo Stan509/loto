@@ -683,15 +683,18 @@ def information(request):
     if first_transaction and first_transaction.promo_code:
         has_promo_discount = True
         promo_code_used = first_transaction.promo_code.code
-        discount_amount = 2500  # Rabais activation
+        discount_amount = 500  # Rabais activation (12500 -> 12000 GDS)
         discounted_price = base_price - discount_amount
     
+    signup_date = first_transaction.created_at if first_transaction else request.user.date_joined
+    is_within_6_months = timezone.now() <= signup_date + timezone.timedelta(days=30 * 6)
+    
     # Calculate amount due per agent (with or without promo discount)
-    amount_due_per_agent = 1200 if has_promo_discount else 1250
+    amount_due_per_agent = 1200 if (has_promo_discount and is_within_6_months) else 1250
     total_amount_due = agent_count * amount_due_per_agent
     
     # Calculate savings
-    total_agent_savings = (1250 - amount_due_per_agent) * agent_count if has_promo_discount else 0
+    total_agent_savings = (1250 - amount_due_per_agent) * agent_count if (has_promo_discount and is_within_6_months) else 0
     total_savings = discount_amount + total_agent_savings
 
     if request.method == "POST":
@@ -730,6 +733,7 @@ def information(request):
         "discounted_price": discounted_price,
         "total_agent_savings": total_agent_savings,
         "total_savings": total_savings,
+        "is_within_6_months": is_within_6_months,
     })
 
 
@@ -2154,8 +2158,11 @@ def payment_view(request):
     has_promo_discount = False
     if first_transaction and first_transaction.promo_code:
         has_promo_discount = True
+        
+    signup_date = first_transaction.created_at if first_transaction else request.user.date_joined
+    is_within_6_months = timezone.now() <= signup_date + timezone.timedelta(days=30 * 6)
     
-    amount_due_per_agent = 1200 if has_promo_discount else 1250
+    amount_due_per_agent = 1200 if (has_promo_discount and is_within_6_months) else 1250
     total_amount_due = max(agent_count * amount_due_per_agent, amount_due_per_agent)
 
     # Prepare standard pricing packages
@@ -2186,6 +2193,8 @@ def payment_view(request):
             "half_pkg_stripe_fee": half_pkg_stripe_fee,
             "half_pkg_moncash_fee": half_pkg_moncash_fee,
             "today": timezone.now().date(),
+            "has_promo_discount": has_promo_discount,
+            "is_within_6_months": is_within_6_months,
         }
     )
 
@@ -2220,8 +2229,11 @@ def stripe_checkout(request):
     has_promo_discount = False
     if first_transaction and first_transaction.promo_code:
         has_promo_discount = True
+        
+    signup_date = first_transaction.created_at if first_transaction else request.user.date_joined
+    is_within_6_months = timezone.now() <= signup_date + timezone.timedelta(days=30 * 6)
     
-    amount_due_per_agent = 1200 if has_promo_discount else 1250
+    amount_due_per_agent = 1200 if (has_promo_discount and is_within_6_months) else 1250
     total_amount_due = max(agent_count * amount_due_per_agent, amount_due_per_agent)
     
     if package == "total":
@@ -2321,8 +2333,11 @@ def moncash_checkout(request):
     has_promo_discount = False
     if first_transaction and first_transaction.promo_code:
         has_promo_discount = True
+        
+    signup_date = first_transaction.created_at if first_transaction else request.user.date_joined
+    is_within_6_months = timezone.now() <= signup_date + timezone.timedelta(days=30 * 6)
     
-    amount_due_per_agent = 1200 if has_promo_discount else 1250
+    amount_due_per_agent = 1200 if (has_promo_discount and is_within_6_months) else 1250
     total_amount_due = max(agent_count * amount_due_per_agent, amount_due_per_agent)
     
     if package == "total":

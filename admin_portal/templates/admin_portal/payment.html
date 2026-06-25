@@ -262,6 +262,20 @@
     </div>
   </div>
 
+  {% if has_promo_discount %}
+  <div class="status-banner {% if is_within_6_months %}info{% else %}warning{% endif %}" style="margin-top: -12px;">
+    <span style="font-size: 18px;">🎉</span>
+    <div>
+      <strong>Promo d'inscription active :</strong> 
+      {% if is_within_6_months %}
+        Frais d'activation réduit à 12,000 GDS au lieu de 12,500 GDS (permanent) et réduction par agent active : <strong>{{ amount_due_per_agent|floatformat:0 }} GDS</strong> au lieu de 1,250 GDS (période de 6 mois en cours).
+      {% else %}
+        Frais d'activation réduit à 12,000 GDS au lieu de 12,500 GDS (permanent). Cependant, la période de promotion de 6 mois sur les agents est terminée : tarif par agent actuel de <strong>1,250 GDS</strong>.
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
   <div class="grid-layout">
     <!-- Left Column: Choice of Package -->
     <div>

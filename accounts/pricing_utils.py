@@ -114,9 +114,10 @@ def calculate_subscription_amount(borlette, months: int = 1,
     ).first()
     
     has_promo = first_transaction and first_transaction.promo_code is not None
+    signup_date = first_transaction.created_at if first_transaction else borlette.user.date_joined
     
     # Calculer le prix
-    price_calc = calculate_director_price(agents_count, has_promo)
+    price_calc = calculate_director_price(agents_count, has_promo, signup_date=signup_date)
     
     # Multiplier par le nombre de mois
     return price_calc['total'] * months
@@ -198,22 +199,26 @@ def get_director_savings_info(borlette) -> dict:
     ).first()
     
     has_promo = first_transaction and first_transaction.promo_code is not None
+    signup_date = first_transaction.created_at if first_transaction else borlette.user.date_joined
     
     agents_count = borlette.agents.count()
     
     # Calculer le prix avec et sans promo
     price_without_promo = calculate_director_price(agents_count, False)
-    price_with_promo = calculate_director_price(agents_count, True)
+    price_with_promo = calculate_director_price(agents_count, True, signup_date=signup_date)
+    
+    is_within_6_months = price_with_promo['is_within_6_months']
     
     return {
         'has_promo_code': has_promo,
+        'is_within_6_months': is_within_6_months,
         'agents_count': agents_count,
         'base_price': price_without_promo['total'],
         'discounted_price': price_with_promo['total'] if has_promo else price_without_promo['total'],
         'total_savings': price_without_promo['total'] - price_with_promo['total'] if has_promo else Decimal('0.00'),
         'activation_savings': DIRECTOR_DISCOUNTS['activation'] if has_promo else Decimal('0.00'),
-        'per_agent_savings': DIRECTOR_DISCOUNTS['per_agent'] if has_promo else Decimal('0.00'),
-        'total_agent_savings': DIRECTOR_DISCOUNTS['per_agent'] * agents_count if has_promo else Decimal('0.00'),
+        'per_agent_savings': DIRECTOR_DISCOUNTS['per_agent'] if (has_promo and is_within_6_months) else Decimal('0.00'),
+        'total_agent_savings': (DIRECTOR_DISCOUNTS['per_agent'] * agents_count) if (has_promo and is_within_6_months) else Decimal('0.00'),
     }
 
 
