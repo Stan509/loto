@@ -60,6 +60,7 @@ data class VenteUiState(
     val autoMariageEnabled: Boolean = false,
     val autoLoto4Enabled: Boolean = false,
     val autoLoto5Enabled: Boolean = false,
+    val inverseEnabled: Boolean = false,
     // Global options - apply to all new Loto4/Loto5 lines
     val globalLoto4Options: Set<Int> = setOf(1),  // Default: Option 1 checked
     val globalLoto5Options: Set<Int> = setOf(1),  // Default: Option 1 checked
@@ -207,6 +208,9 @@ class VenteViewModel @Inject constructor(
             )
         } else {
             // Non-Loto: single line as before
+            val isBouleTwoDigits = (jeu.lowercase() == "boule") && valeur.length == 2
+            val shouldInverse = isBouleTwoDigits && _uiState.value.inverseEnabled && (valeur[0] != valeur[1])
+
             val newLine = TicketLineWithOptions(
                 jeu = jeu,
                 valeur = valeur,
@@ -214,8 +218,22 @@ class VenteViewModel @Inject constructor(
                 options = emptySet(),
                 useGlobalOptions = false
             )
+            
+            val linesToAdd = mutableListOf(newLine)
+            if (shouldInverse) {
+                linesToAdd.add(
+                    TicketLineWithOptions(
+                        jeu = jeu,
+                        valeur = valeur.reversed(),
+                        miseBase = mise,
+                        options = emptySet(),
+                        useGlobalOptions = false
+                    )
+                )
+            }
+
             _uiState.value = _uiState.value.copy(
-                lines = _uiState.value.lines + newLine,
+                lines = _uiState.value.lines + linesToAdd,
                 error = null
             )
         }
@@ -458,6 +476,45 @@ class VenteViewModel @Inject constructor(
     }
 
     // ─── Automations ─────────────────────────────────────────────────────────
+
+    fun toggleInverseEnabled() {
+        _uiState.value = _uiState.value.copy(
+            inverseEnabled = !_uiState.value.inverseEnabled
+        )
+    }
+
+    fun generateBoulesPaires(mise: Double) {
+        val existingLines = _uiState.value.lines.filter { it.jeu.lowercase() == "boule" }.map { it.valeur }.toSet()
+        val paires = listOf("00", "11", "22", "33", "44", "55", "66", "77", "88", "99")
+        val newLines = paires.filter { it !in existingLines }.map { valeur ->
+            TicketLineWithOptions(jeu = "boule", valeur = valeur, miseBase = mise, options = emptySet(), useGlobalOptions = false)
+        }
+        if (newLines.isNotEmpty()) {
+            _uiState.value = _uiState.value.copy(lines = _uiState.value.lines + newLines)
+        }
+    }
+
+    fun generateGrap(chiffre: Int, mise: Double) {
+        val existingLines = _uiState.value.lines.filter { it.jeu.lowercase() == "boule" }.map { it.valeur }.toSet()
+        val grap = (0..9).map { "$chiffre$it" }
+        val newLines = grap.filter { it !in existingLines }.map { valeur ->
+            TicketLineWithOptions(jeu = "boule", valeur = valeur, miseBase = mise, options = emptySet(), useGlobalOptions = false)
+        }
+        if (newLines.isNotEmpty()) {
+            _uiState.value = _uiState.value.copy(lines = _uiState.value.lines + newLines)
+        }
+    }
+
+    fun generatePointes(chiffre: Int, mise: Double) {
+        val existingLines = _uiState.value.lines.filter { it.jeu.lowercase() == "boule" }.map { it.valeur }.toSet()
+        val pointes = (0..9).map { "$it$chiffre" }
+        val newLines = pointes.filter { it !in existingLines }.map { valeur ->
+            TicketLineWithOptions(jeu = "boule", valeur = valeur, miseBase = mise, options = emptySet(), useGlobalOptions = false)
+        }
+        if (newLines.isNotEmpty()) {
+            _uiState.value = _uiState.value.copy(lines = _uiState.value.lines + newLines)
+        }
+    }
 
     fun toggleAutoMariage(enabled: Boolean, defaultMise: Double) {
         _uiState.value = _uiState.value.copy(autoMariageEnabled = enabled)

@@ -272,9 +272,13 @@ def api_login(request: HttpRequest) -> JsonResponse:
 
     username = body.get("username", "").strip()
     password = body.get("password", "")
+    device_signature = body.get("device_signature", "").strip()
 
     if not username or not password:
         return _json_error("Username et password requis", 400)
+        
+    if not device_signature:
+        return _json_error("Signature de l'appareil requise", 400)
 
     user = authenticate(request, username=username, password=password)
     if user is None:
@@ -288,10 +292,16 @@ def api_login(request: HttpRequest) -> JsonResponse:
     except Exception:
         return _json_error("Profil agent non trouvé", 403)
 
+    # Vérifier s'il y a déjà un appareil connecté et actif
+    if agent.is_online and user.device_signature and user.device_signature != device_signature:
+        return _json_error("Cet agent est déjà connecté sur un autre appareil.", 403)
+
     # Generate and set active session ID
     session_id = uuid.uuid4().hex
     user.active_session_id = session_id
-    user.save(update_fields=["active_session_id"])
+    user.device_signature = device_signature
+    user.save(update_fields=["active_session_id", "device_signature"])
+
 
     # Générer tokens JWT
     refresh = RefreshToken.for_user(user)
@@ -1463,9 +1473,10 @@ def api_ticket_list_agent(request: HttpRequest) -> JsonResponse:
         if status_filter and computed_status != status_filter:
             continue
         
-        # Check if can be voided (< 5 minutes)
-        age_minutes = (now - ticket.created_at).total_seconds() / 60
-        can_void = age_minutes < 5 and ticket.statut != TicketStatus.ANNULE and not ticket.is_paid
+        # Check if can be voided (< 60 seconds)
+        age_seconds = (now - ticket.created_at).total_seconds()
+        can_void = age_seconds < 60 and ticket.statut != TicketStatus.ANNULE and not ticket.is_paid
+        age_minutes = age_seconds / 60.0
         
         # Count bets
         num_bets = ticket.lignes.count()
@@ -1534,10 +1545,10 @@ def api_ticket_search_agent(request: HttpRequest) -> JsonResponse:
     if not ticket:
         return _json_error("Ticket non trouvé", 404)
 
-    # Vérifier si suppression possible (<7 min et pas payé)
+    # Vérifier si suppression possible (< 60 secondes et pas payé)
     now = timezone.now()
     can_delete = (
-        (now - ticket.created_at) <= timedelta(minutes=7)
+        (now - ticket.created_at).total_seconds() < 60
         and ticket.total_gain_paye == 0
         and ticket.statut != TicketStatus.ANNULE
     )
@@ -1625,9 +1636,9 @@ def api_ticket_group_search(request: HttpRequest, group_id: str) -> JsonResponse
         else:
             computed_status = "pending"
         
-        # Vérifier si annulation possible
-        age_minutes = (now - ticket.created_at).total_seconds() / 60
-        can_void = age_minutes < 5 and ticket.statut != TicketStatus.ANNULE and not ticket.is_paid
+        # Vérifier si annulation possible (< 60 secondes)
+        age_seconds = (now - ticket.created_at).total_seconds()
+        can_void = age_seconds < 60 and ticket.statut != TicketStatus.ANNULE and not ticket.is_paid
         
         lines = []
         for line in ticket.lignes.all():
@@ -1766,13 +1777,13 @@ def api_ticket_void_agent(request: HttpRequest, ticket_id: str) -> JsonResponse:
     except Ticket.DoesNotExist:
         return _json_error("Ticket non trouvé", 404)
 
-    # Vérification délai 7 minutes
+    # Vérification délai 60 secondes
     now = timezone.now()
     age = now - ticket.created_at
 
-    if age > timedelta(minutes=7):
+    if age > timedelta(seconds=60):
         return _json_error(
-            f"Annulation impossible: ticket créé il y a {int(age.total_seconds() // 60)} minutes (max 7 min)",
+            f"Annulation impossible: ticket créé il y a {int(age.total_seconds())} secondes (max 60 sec)",
             400
         )
 

@@ -50,6 +50,10 @@ class TicketPayoutService:
         # Paiement TOTAL uniquement (pas de partiel)
         pay_amount = remaining
         
+        # Vérifier si l'agent a assez de fonds dans sa caisse
+        if pay_amount > agent.solde_caisse_calculé:
+            return {"success": False, "error": "Solde de caisse insuffisant pour payer ce gain"}
+        
         # Vérifier ownership
         if ticket.agent != agent:
             return {"success": False, "error": "Ce ticket n'appartient pas à cet agent"}
@@ -123,19 +127,10 @@ def create_cashbox_entry_for_sale(ticket) -> None:
 
 def void_ticket_with_cashbox_reversal(ticket) -> dict:
     """
-    Annule un ticket et crée une écriture inverse caisse si nécessaire.
-    
-    Règles:
-    - Ticket passe en statut ANNULE (pas delete)
-    - Si SALE_CASH_IN existe, créer ADJUSTMENT négatif pour annuler
-    - Tickets VOID exclus de tous calculs
-    
-    Returns:
-        dict avec résultat
+    Annule un ticket en le supprimant de la base de données.
+    Supprime également toutes les entrées de caisse et de grand livre associées.
     """
-    from agent_portal.models import (
-        AgentCashboxEntry, CashboxEntryType, TicketStatus
-    )
+    from agent_portal.models import TicketStatus
     
     if ticket.statut == TicketStatus.ANNULE:
         return {"success": False, "error": "Ticket déjà annulé"}
@@ -144,29 +139,20 @@ def void_ticket_with_cashbox_reversal(ticket) -> dict:
         return {"success": False, "error": "Impossible d'annuler: gains déjà payés"}
     
     with transaction.atomic():
-        # Chercher entrée SALE_CASH_IN existante
-        sale_entry = AgentCashboxEntry.objects.filter(
-            related_ticket=ticket,
-            entry_type=CashboxEntryType.SALE_CASH_IN
-        ).first()
+        ticket_no = ticket.numero_ticket
         
-        # Créer écriture inverse si vente était enregistrée
-        if sale_entry:
-            AgentCashboxEntry.objects.create(
-                agent=ticket.agent,
-                borlette=ticket.borlette,
-                entry_type=CashboxEntryType.ADJUSTMENT,
-                amount=-sale_entry.amount,  # Négatif pour annuler
-                description=f"Annulation ticket {ticket.numero_ticket}",
-                related_ticket=ticket,
-            )
+        # Supprimer les entrées de caisse associées
+        ticket.cashbox_entries.all().delete()
         
-        # Marquer ticket comme annulé
-        ticket.statut = TicketStatus.ANNULE
-        ticket.save(update_fields=["statut"])
-    
+        # Supprimer les entrées de grand livre (ledger / commissions) associées
+        ticket.ledger_entries.all().delete()
+        
+        # Supprimer le ticket (les lignes de ticket sont supprimées en cascade)
+        ticket.delete()
+        
     return {
         "success": True,
-        "message": f"Ticket {ticket.numero_ticket} annulé",
-        "cashbox_reversed": sale_entry is not None,
+        "message": f"Ticket {ticket_no} supprimé avec succès",
+        "cashbox_reversed": True,
     }
+

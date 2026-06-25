@@ -100,6 +100,21 @@ class SearchTicketViewModel @Inject constructor(
         }
     }
 
+    fun getPrintData(ticketId: String, onResult: (com.gaboom.agent.data.model.PrintData?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = apiService.getTicketPrint(ticketId)
+                if (response.isSuccessful) {
+                    onResult(response.body()?.printData)
+                } else {
+                    onResult(null)
+                }
+            } catch (e: Exception) {
+                onResult(null)
+            }
+        }
+    }
+
     fun payTicket(ticketId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null, successMessage = null)

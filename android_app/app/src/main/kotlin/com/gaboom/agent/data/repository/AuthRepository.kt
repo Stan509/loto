@@ -1,5 +1,7 @@
 package com.gaboom.agent.data.repository
 
+import android.content.Context
+import android.provider.Settings
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -10,6 +12,7 @@ import com.gaboom.agent.data.model.BorletteInfo
 import com.gaboom.agent.data.model.LoginRequest
 import com.gaboom.agent.data.config.AgentConfigDataStore
 import com.gaboom.agent.data.model.DeviceRegisterRequest
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -17,6 +20,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val dataStore: DataStore<Preferences>,
     private val apiService: AgentApiService,
     private val agentConfigDataStore: AgentConfigDataStore
@@ -39,7 +43,8 @@ class AuthRepository @Inject constructor(
 
     suspend fun login(username: String, password: String): Result<Unit> {
         return try {
-            val response = apiService.login(LoginRequest(username, password))
+            val deviceSignature = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown_device"
+            val response = apiService.login(LoginRequest(username, password, deviceSignature))
 
             if (response.isSuccessful) {
                 val body = response.body()

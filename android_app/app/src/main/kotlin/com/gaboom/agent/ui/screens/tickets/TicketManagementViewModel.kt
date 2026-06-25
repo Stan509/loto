@@ -276,6 +276,15 @@ class TicketManagementViewModel @Inject constructor(
         }
     }
 
+    suspend fun voidTicketSync(ticketId: String): Boolean {
+        return try {
+            val response = apiService.voidTicket(ticketId)
+            response.isSuccessful && response.body()?.success == true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     fun reprintTicket(ticketId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(reprintingTicketId = ticketId, error = null)

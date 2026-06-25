@@ -26,7 +26,7 @@ import com.gaboom.agent.data.model.TicketSearchResult
 @Composable
 fun SearchTicketScreen(
     onBack: () -> Unit,
-    onRefaire: (TicketSearchResult) -> Unit = { }, // Disabled - kept for API compatibility
+    onRefaire: (TicketSearchResult) -> Unit = { },
     viewModel: SearchTicketViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -34,6 +34,7 @@ fun SearchTicketScreen(
     var selectedTicket by remember { mutableStateOf<TicketSearchResult?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         topBar = {
@@ -156,15 +157,29 @@ fun SearchTicketScreen(
                             },
                             onPrint = { viewModel.printTicket(ticket.id) },
                             onRefaire = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Fonction désactivée temporairement",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
+                                onRefaire(ticket)
                             },
                             onPay = { viewModel.payTicket(ticket.id) },
-                            onVoid = { viewModel.voidTicket(ticket.id) }
+                            onVoid = { viewModel.voidTicket(ticket.id) },
+                            onViewPdf = {
+                                viewModel.getPrintData(ticket.id) { printData ->
+                                    if (printData != null) {
+                                        scope.launch {
+                                            val shareData = com.gaboom.agent.util.TicketShareUtil.fromPrintData(
+                                                printData = printData,
+                                                logoBitmap = null,
+                                                totalGainDu = ticket.totalGainDu,
+                                                isWinner = ticket.isWinner
+                                            )
+                                            com.gaboom.agent.util.TicketShareUtil.openTicketPdf(context, shareData)
+                                        }
+                                    } else {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Erreur de récupération des données du ticket")
+                                        }
+                                    }
+                                }
+                            }
                         )
                     }
                 }
@@ -181,7 +196,8 @@ private fun TicketResultCard(
     onPrint: () -> Unit,
     onRefaire: () -> Unit,
     onPay: () -> Unit,
-    onVoid: () -> Unit
+    onVoid: () -> Unit,
+    onViewPdf: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -312,6 +328,19 @@ private fun TicketResultCard(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Refaire", fontSize = 12.sp)
                     }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Voir le ticket
+                Button(
+                    onClick = onViewPdf,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) {
+                    Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Voir le ticket", fontSize = 12.sp)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))

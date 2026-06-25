@@ -180,6 +180,22 @@ class BluetoothPrinter(private val context: Context) {
     }
 
     /**
+     * Tente de se connecter à l'imprimante dont l'adresse MAC est mise en cache
+     */
+    suspend fun connectCachedPrinter(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val cachedMac = context.getSharedPreferences("printer_prefs", Context.MODE_PRIVATE)
+                .getString("cached_printer_mac", null)
+            if (cachedMac.isNullOrBlank()) {
+                return@withContext Result.failure(Exception("Aucune imprimante en cache"))
+            }
+            connect(cachedMac)
+        } catch (e: Throwable) {
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Connecte à une imprimante Bluetooth
      */
     fun checkBluetoothPermission(): Boolean {
@@ -223,6 +239,12 @@ class BluetoothPrinter(private val context: Context) {
             // Connecter
             socket?.connect()
 
+            // Mettre en cache l'adresse MAC après connexion réussie
+            try {
+                context.getSharedPreferences("printer_prefs", Context.MODE_PRIVATE)
+                    .edit().putString("cached_printer_mac", device.address).apply()
+            } catch (prefEx: Throwable) {}
+
             Result.success(Unit)
         } catch (e: Throwable) {
             // Tentative de fallback par réflexion (port 1)
@@ -232,6 +254,13 @@ class BluetoothPrinter(private val context: Context) {
                 socket = method.invoke(device, 1) as? BluetoothSocket
                 try { bluetoothAdapter?.cancelDiscovery() } catch (e: Throwable) {}
                 socket?.connect()
+
+                // Mettre en cache l'adresse MAC après connexion réussie
+                try {
+                    context.getSharedPreferences("printer_prefs", Context.MODE_PRIVATE)
+                        .edit().putString("cached_printer_mac", device.address).apply()
+                } catch (prefEx: Throwable) {}
+
                 Result.success(Unit)
             } catch (fallbackEx: Throwable) {
                 // Tentative fallback port 2
@@ -241,6 +270,13 @@ class BluetoothPrinter(private val context: Context) {
                     socket = method2.invoke(device, 2) as? BluetoothSocket
                     try { bluetoothAdapter?.cancelDiscovery() } catch (e: Throwable) {}
                     socket?.connect()
+
+                    // Mettre en cache l'adresse MAC après connexion réussie
+                    try {
+                        context.getSharedPreferences("printer_prefs", Context.MODE_PRIVATE)
+                            .edit().putString("cached_printer_mac", device.address).apply()
+                    } catch (prefEx: Throwable) {}
+
                     Result.success(Unit)
                 } catch (ex3: Throwable) {
                     val errorMsg = ex3.message ?: fallbackEx.message ?: e.message ?: "Échec de connexion"
@@ -427,19 +463,8 @@ class BluetoothPrinter(private val context: Context) {
      * mais ne doit PAS bloquer le fallback ESC/POS.
      */
     private suspend fun printViaSystem(bitmap: Bitmap, ticketNo: String): Boolean = withContext(Dispatchers.Main) {
-        try {
-            val printManager = context.getSystemService(Context.PRINT_SERVICE) as? PrintManager ?: return@withContext false
-            val jobName = "Ticket_$ticketNo"
-            // Sur les terminaux POS sans Print Spooler, on retourne false
-            // pour laisser le fallback ESC/POS (Bluetooth/USB/Serial) s'exécuter
-            printManager.print(jobName, TicketPrintAdapter(context, bitmap, jobName), null)
-            // Retourne false pour toujours passer au fallback ESC/POS sur les terminaux POS
-            // Le Print Spooler Android n'est pas le mécanisme d'impression souhaité sur Sunmi/Telpo
-            false
-        } catch (e: Throwable) {
-            android.util.Log.e("UniversalPrinter", "Erreur printViaSystem: ${e.message}", e)
-            false
-        }
+        // Skip print dialog entirely to avoid print spooler latency on POS terminals
+        false
     }
 
     /**

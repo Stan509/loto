@@ -805,4 +805,71 @@ object TicketShareUtil {
             }
             .show()
     }
+
+    /**
+     * Génère et ouvre le ticket sous format PDF
+     */
+    suspend fun openTicketPdf(context: Context, data: TicketShareData) = withContext(Dispatchers.IO) {
+        try {
+            val bitmap = generateTicketImage(context, data)
+            val pdfDocument = android.graphics.pdf.PdfDocument()
+            val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+            val page = pdfDocument.startPage(pageInfo)
+            page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+            pdfDocument.finishPage(page)
+
+            val safeTicketNo = data.ticketNo.replace("[^a-zA-Z0-9]".toRegex(), "_")
+            val cachePath = File(context.cacheDir, "shared_tickets")
+            cachePath.mkdirs()
+            val file = File(cachePath, "ticket_$safeTicketNo.pdf")
+
+            FileOutputStream(file).use { out ->
+                pdfDocument.writeTo(out)
+            }
+            pdfDocument.close()
+
+            val uri = FileProvider.getUriForFile(
+                context.applicationContext,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/pdf")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                if (findActivity(context) == null) {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                try {
+                    val activity = findActivity(context) ?: context
+                    activity.startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(context.applicationContext, "Aucun lecteur PDF trouvé. Essai de partage...", Toast.LENGTH_SHORT).show()
+                    // Fallback to share pdf
+                    try {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/pdf"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            clipData = android.content.ClipData.newUri(context.contentResolver, "ticket", uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            if (findActivity(context) == null) {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Partager le ticket PDF"))
+                    } catch (e2: Exception) {
+                        Toast.makeText(context.applicationContext, "Erreur d'ouverture/partage PDF", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("TicketShare", "Erreur openTicketPdf: ${e.message}", e)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context.applicationContext, "Erreur de génération PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 }

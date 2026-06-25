@@ -255,11 +255,12 @@ def partner_submit_result(request: HttpRequest, tirage_id: int):
         if lot1 and lot2 and lot3:
             Resultat.objects.update_or_create(
                 tirage=tirage,
+                session_key=tirage.session_key,
                 defaults={
                     'lot1': lot1,
                     'lot2': lot2,
                     'lot3': lot3,
-                    'date_resultat': timezone.now().date(),
+                    'date': timezone.now().date(),
                 }
             )
             messages.success(request, "Résultats enregistrés avec succès.")

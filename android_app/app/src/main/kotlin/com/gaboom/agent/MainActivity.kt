@@ -26,10 +26,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import com.gaboom.agent.data.HeartbeatManager
 import com.gaboom.agent.data.config.AppConfigDataStore
+import com.gaboom.agent.print.BluetoothPrinter
 import com.gaboom.agent.ui.navigation.AppNavigation
 import com.gaboom.agent.ui.theme.GaboomAgentTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -39,6 +42,9 @@ class MainActivity : ComponentActivity() {
     
     @Inject
     lateinit var appConfigDataStore: AppConfigDataStore
+
+    @Inject
+    lateinit var printer: BluetoothPrinter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -142,6 +148,13 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         heartbeatManager.start()
+        lifecycleScope.launch {
+            try {
+                printer.connectCachedPrinter()
+            } catch (e: Exception) {
+                // Silently ignore or log connection failure
+            }
+        }
     }
 
     override fun onPause() {

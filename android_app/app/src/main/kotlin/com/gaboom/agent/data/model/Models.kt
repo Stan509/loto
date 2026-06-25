@@ -12,7 +12,8 @@ import com.google.gson.annotations.SerializedName
 
 data class LoginRequest(
     val username: String,
-    val password: String
+    val password: String,
+    @SerializedName("device_signature") val deviceSignature: String
 )
 
 data class LoginResponse(

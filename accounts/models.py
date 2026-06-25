@@ -38,6 +38,14 @@ class User(AbstractUser):
         help_text="Identifiant de la session active de l'agent pour restreindre à un seul appareil"
     )
 
+    device_signature = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Signature de l'appareil de l'agent"
+    )
+
+
 
 class Borlette(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="borlette")
@@ -296,40 +304,11 @@ class Agent(models.Model):
     def solde_caisse_calculé(self) -> Decimal:
         """
         Solde de caisse physique de l'agent.
-
-        Formule :
-          Solde = Mises collectées (tickets VALIDE)
-                - Gains dus aux joueurs (total_gain_du)
-                - Retraits admin (WITHDRAWAL, stockés négatifs)
-                + Réapprovisionnements admin (REPLENISH, stockés positifs)
-                ± Ajustements caisse
+        Formule : Somme directe de toutes les transactions de caisse.
         """
-        from django.db.models import Sum
-        from agent_portal.models import AgentCashboxEntry, CashboxEntryType, TicketStatus
+        from agent_portal.models import AgentCashboxEntry
+        return AgentCashboxEntry.get_agent_cashbox_balance(self).get("balance")
 
-        # 1. Mises encaissées sur tous les tickets valides
-        from agent_portal.models import Ticket
-        agg = Ticket.objects.filter(
-            agent=self,
-            statut=TicketStatus.VALIDE,
-        ).aggregate(
-            total_mises=Sum("total_mise"),
-            total_gains_du=Sum("total_gain_du"),
-        )
-        total_mises = agg["total_mises"] or Decimal("0")
-        total_gains_du = agg["total_gains_du"] or Decimal("0")
-
-        # 2. Mouvements admin (retraits négatifs, réapprovisionnements positifs, ajustements)
-        cashbox_agg = AgentCashboxEntry.objects.filter(agent=self).aggregate(
-            withdrawals=Sum("amount", filter=models.Q(entry_type=CashboxEntryType.WITHDRAWAL)),
-            replenishments=Sum("amount", filter=models.Q(entry_type=CashboxEntryType.REPLENISH)),
-            adjustments=Sum("amount", filter=models.Q(entry_type=CashboxEntryType.ADJUSTMENT)),
-        )
-        withdrawals = cashbox_agg["withdrawals"] or Decimal("0")
-        replenishments = cashbox_agg["replenishments"] or Decimal("0")
-        adjustments = cashbox_agg["adjustments"] or Decimal("0")
-
-        return total_mises - total_gains_du + withdrawals + replenishments + adjustments
 
 
 class TirageType(models.TextChoices):
@@ -799,6 +778,26 @@ class Resultat(models.Model):
         ]
         ordering = ["-date", "-created_at"]
     
+    def save(self, *args, **kwargs):
+        # Nettoyer complementaire et chiffre_loto3
+        c = (self.complementaire or "").strip() or (self.chiffre_loto3 or "").strip()
+        if c:
+            self.complementaire = c
+            self.chiffre_loto3 = c
+        
+        # Calculer automatiquement les combinaisons loto
+        if self.lot1 and self.lot2 and self.lot3:
+            self.loto4_option1 = f"{self.lot1}{self.lot2}"
+            self.loto4_option2 = f"{self.lot1}{self.lot3}"
+            self.loto4_option3 = f"{self.lot2}{self.lot3}"
+            
+            l3 = f"{c}{self.lot1}" if c else ""
+            if l3:
+                self.loto5_option1 = f"{l3}{self.lot2}"
+                self.loto5_option2 = f"{l3}{self.lot3}"
+                
+        super().save(*args, **kwargs)
+
     def __str__(self) -> str:
         return f"{self.tirage.nom} {self.date} - {self.lot1}/{self.lot2}/{self.lot3}"
     
@@ -810,33 +809,36 @@ class Resultat(models.Model):
     
     @property
     def loto4_opt1(self) -> str:
-        """Loto4 option 1 = lot3 + lot1 (ex: 23 + 51 = 2351)"""
-        return f"{self.lot3}{self.lot1}"
+        """Loto4 option 1 = 1er lot + 2eme lot"""
+        return f"{self.lot1}{self.lot2}" if self.lot1 and self.lot2 else ""
     
     @property
     def loto4_opt2(self) -> str:
-        """Loto4 option 2 = lot3 + lot2 (ex: 23 + 77 = 2377)"""
-        return f"{self.lot3}{self.lot2}"
+        """Loto4 option 2 = 1er lot + 3eme lot"""
+        return f"{self.lot1}{self.lot3}" if self.lot1 and self.lot3 else ""
     
     @property
     def loto4_opt3(self) -> str:
-        """Loto4 option 3 = lot2 + lot1 (ex: 51 + 77 = 5177)"""
-        return f"{self.lot2}{self.lot1}"
+        """Loto4 option 3 = 2eme lot + 3eme lot"""
+        return f"{self.lot2}{self.lot3}" if self.lot2 and self.lot3 else ""
     
     @property
     def loto5_opt1(self) -> str:
-        """Loto5 option 1 = loto3 + lot2 (ex: 923 + 51 = 92351)"""
-        return f"{self.loto3}{self.lot2}"
+        """Loto5 option 1 = loto3 + 2eme lot"""
+        return f"{self.loto3}{self.lot2}" if self.loto3 and self.lot2 else ""
     
     @property
     def loto5_opt2(self) -> str:
-        """Loto5 option 2 = loto3 + lot3 (ex: 923 + 77 = 92377)"""
-        return f"{self.loto3}{self.lot3}"
+        """Loto5 option 2 = loto3 + 3eme lot"""
+        return f"{self.loto3}{self.lot3}" if self.loto3 and self.lot3 else ""
 
     @property
     def loto5_opt3(self) -> str:
-        """Loto5 option 3 = lot3 + lot2 + lot1 (ex: 23 + 51 + 77 -> dernier chiffre lot3 + lot2 + lot1)"""
-        return f"{self.lot3}{self.lot2}{self.lot1[1]}"
+        """Loto5 option 3 = dernier chiffre du premier lot + 2eme lot + 3eme lot"""
+        if self.lot1 and self.lot2 and self.lot3:
+            return f"{self.lot1[-1]}{self.lot2}{self.lot3}"
+        return ""
+
 
 
 class LotteryAPIConfig(models.Model):

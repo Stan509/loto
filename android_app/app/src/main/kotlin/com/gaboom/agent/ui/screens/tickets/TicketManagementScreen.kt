@@ -45,6 +45,7 @@ import java.time.format.DateTimeFormatter
 fun TicketManagementScreen(
     onNavigateBack: () -> Unit,
     onScanQrCode: (() -> Unit)? = null,
+    onRefaire: (String) -> Unit = { },
     viewModel: TicketManagementViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -359,7 +360,34 @@ fun TicketManagementScreen(
                             onPay = { confirmPayTicket = ticket },
                             onVoid = { confirmVoidTicket = ticket },
                             onReprint = { viewModel.reprintTicket(ticket.id) },
-                            onShare = { showShareDialog = ticket }
+                            onShare = { showShareDialog = ticket },
+                            onRefaire = { onRefaire(ticket.id) },
+                            onModifier = {
+                                scope.launch {
+                                    val success = viewModel.voidTicketSync(ticket.id)
+                                    if (success) {
+                                        onRefaire(ticket.id)
+                                    } else {
+                                        snackbarHostState.showSnackbar("Échec de l'annulation du ticket pour modification")
+                                    }
+                                }
+                            },
+                            onViewPdf = {
+                                scope.launch {
+                                    val printData = viewModel.getTicketPrintData(ticket.id)
+                                    if (printData != null) {
+                                        val shareData = TicketShareUtil.fromPrintData(
+                                            printData = printData,
+                                            logoBitmap = null,
+                                            totalGainDu = ticket.totalGainDu,
+                                            isWinner = ticket.isWinner
+                                        )
+                                        TicketShareUtil.openTicketPdf(context, shareData)
+                                    } else {
+                                        snackbarHostState.showSnackbar("Erreur de récupération des données")
+                                    }
+                                }
+                            }
                         )
                     }
                     
@@ -757,7 +785,10 @@ private fun TicketCard(
     onPay: () -> Unit,
     onVoid: () -> Unit,
     onReprint: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onRefaire: () -> Unit,
+    onModifier: () -> Unit,
+    onViewPdf: () -> Unit
 ) {
     val statusColor = Color(ticket.getStatusColor())
     
@@ -845,22 +876,53 @@ private fun TicketCard(
                 )
                 
                 // Action buttons
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // Void button (< 5 min)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // Refaire button (available anytime)
+                    OutlinedButton(
+                        onClick = onRefaire,
+                        modifier = Modifier.height(32.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp)
+                    ) {
+                        Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text("Refaire", fontSize = 10.sp)
+                    }
+
+                    // Void & Modify buttons (< 60s)
                     if (ticket.canVoid) {
                         OutlinedButton(
                             onClick = onVoid,
                             enabled = !isVoiding,
                             modifier = Modifier.height(32.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
                         ) {
-                            if (isVoiding) {
-                                Text("...", fontSize = 11.sp)
-                            } else {
-                                Icon(Icons.Default.Cancel, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Annuler", fontSize = 11.sp)
+                            Icon(Icons.Default.Cancel, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text("Annuler", fontSize = 10.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = onModifier,
+                            enabled = !isVoiding,
+                            modifier = Modifier.height(32.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp)
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text("Modifier", fontSize = 10.sp)
+                        }
+                    } else {
+                        // Show "Voir le ticket" (PDF viewer) if not cancelled
+                        if (ticket.status != "cancelled") {
+                            OutlinedButton(
+                                onClick = onViewPdf,
+                                modifier = Modifier.height(32.dp),
+                                contentPadding = PaddingValues(horizontal = 6.dp)
+                            ) {
+                                Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text("Voir", fontSize = 10.sp)
                             }
                         }
                     }
@@ -869,7 +931,7 @@ private fun TicketCard(
                     OutlinedButton(
                         onClick = onShare,
                         modifier = Modifier.height(32.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
                         Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp))
                     }
@@ -880,15 +942,9 @@ private fun TicketCard(
                             onClick = onReprint,
                             enabled = !isReprinting,
                             modifier = Modifier.height(32.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp)
+                            contentPadding = PaddingValues(horizontal = 6.dp)
                         ) {
-                            if (isReprinting) {
-                                Text("...", fontSize = 11.sp)
-                            } else {
-                                Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Imprimer", fontSize = 11.sp)
-                            }
+                            Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(14.dp))
                         }
                     }
                     
@@ -898,15 +954,15 @@ private fun TicketCard(
                             onClick = onPay,
                             enabled = !isPaying,
                             modifier = Modifier.height(32.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
                         ) {
                             if (isPaying) {
-                                Text("...", fontSize = 11.sp, color = Color.White)
+                                Text("...", fontSize = 10.sp, color = Color.White)
                             } else {
                                 Icon(Icons.Default.Payments, contentDescription = null, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Payer", fontSize = 11.sp)
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text("Payer", fontSize = 10.sp)
                             }
                         }
                     }

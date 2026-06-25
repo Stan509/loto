@@ -334,19 +334,15 @@ def partner_submit_result(request: HttpRequest, tirage_id: int):
                     'lot1': lot1,
                     'lot2': lot2,
                     'lot3': lot3,
-                    'date_resultat': timezone.now().date(),
+                    'date': timezone.now().date(),
                     'chiffre_loto3': loto3 if loto3 else '',
-                    'loto4_option1': loto4_1 if loto4_1 else '',
-                    'loto4_option2': loto4_2 if loto4_2 else '',
-                    'loto4_option3': loto4_3 if loto4_3 else '',
-                    'loto5_option1': loto5_1 if loto5_1 else '',
-                    'loto5_option2': loto5_2 if loto5_2 else '',
                     'source': 'PARTNER',
                     'statut': 'pending',
                 }
                 
                 obj, created = Resultat.objects.update_or_create(
                     tirage=t,
+                    session_key=t.session_key,
                     defaults=defaults
                 )
                 if created:

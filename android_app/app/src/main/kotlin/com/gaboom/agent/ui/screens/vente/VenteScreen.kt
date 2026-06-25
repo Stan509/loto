@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -62,6 +63,9 @@ fun VenteScreen(
     var showLotoOptionsMenu by remember { mutableStateOf(false) }
     var showPrintPreview by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
+    var showPairesDialog by remember { mutableStateOf(false) }
+    var showGrapDialog by remember { mutableStateOf(false) }
+    var showPointesDialog by remember { mutableStateOf(false) }
 
     // Init with default tirage pre-selected or blueprint if provided
     LaunchedEffect(Unit) {
@@ -245,122 +249,130 @@ fun VenteScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Vente Ticket") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Retour")
-                    }
-                }
-            )
-        }
+        // topBar removed to save space
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(bottom = 16.dp)
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(bottom = 8.dp)
+                .padding(horizontal = 12.dp, vertical = 4.dp)
         ) {
             
             // ═══════════════════════════════════════════════════════════
-            // TOP BAR: Multi-Tirage Toggle + Mise Défaut
+            // COMBINED TOP CONTROL ROW: Back + Multi Switch + Selected Draws + Default Mise
             // ═══════════════════════════════════════════════════════════
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // Back button
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.ArrowBack, 
+                        contentDescription = "Retour",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                // Switch Multi-Tirage
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { viewModel.toggleMultiTirageMode(!uiState.multiTirageMode) }
+                ) {
                     Text(
-                        if (uiState.multiTirageMode) "Multi" else "Direct", 
+                        text = if (uiState.multiTirageMode) "Multi" else "Direct",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
+                        fontSize = 11.sp,
                         color = if (uiState.multiTirageMode) MaterialTheme.colorScheme.primary else Color.Gray
                     )
                     Switch(
                         checked = uiState.multiTirageMode,
                         onCheckedChange = { viewModel.toggleMultiTirageMode(it) },
-                        modifier = Modifier.scale(0.7f)
+                        modifier = Modifier.scale(0.6f).height(24.dp)
                     )
                 }
-                
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Mise:", fontSize = 11.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    OutlinedTextField(
-                        value = miseDefaut,
-                        onValueChange = { if (it.all { c -> c.isDigit() }) miseDefaut = it },
-                        modifier = Modifier.width(70.dp).height(50.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontSize = 14.sp, textAlign = TextAlign.Center)
-                    )
-                }
-            }
 
-            // ═══════════════════════════════════════════════════════════
-            // MULTI-TIRAGE: Compact Summary + Modifier Button
-            // ═══════════════════════════════════════════════════════════
-            if (uiState.multiTirageMode) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Surface(
+                // Selection Tirage (click to open ModalBottomSheet)
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { showTirageSheet = true },
-                    color = if (uiState.selectedTirageIds.isEmpty()) 
-                            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                           else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        .weight(1f)
+                        .height(36.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            if (uiState.selectedTirageIds.isEmpty()) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+                            else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (uiState.selectedTirageIds.isEmpty()) MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                                    else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(6.dp)
+                        )
+                        .clickable { showTirageSheet = true }
+                        .padding(horizontal = 6.dp),
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            Icons.Default.DateRange, 
-                            contentDescription = null, 
-                            modifier = Modifier.size(18.dp),
-                            tint = if (uiState.selectedTirageIds.isEmpty()) MaterialTheme.colorScheme.error 
+                            Icons.Default.DateRange,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = if (uiState.selectedTirageIds.isEmpty()) MaterialTheme.colorScheme.error
                                    else MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            if (uiState.selectedTirageIds.isEmpty()) {
-                                Text(
-                                    "Sélectionnez au moins un tirage",
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            } else {
-                                val selectedNames = uiState.availableTirages
-                                    .filter { it.id in uiState.selectedTirageIds }
-                                    .take(3)
-                                    .joinToString(", ") { "${it.nom} ${it.heureTirage}" }
-                                val suffix = if (uiState.selectedTirageIds.size > 3) "..." else ""
-                                Text(
-                                    "$selectedNames$suffix",
-                                    fontSize = 11.sp,
-                                    maxLines = 1,
-                                    color = Color.Unspecified
-                                )
-                                Text(
-                                    "${uiState.selectedTirageIds.size} tirage(s)",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
+                        val text = if (uiState.selectedTirageIds.isEmpty()) {
+                            "Choisir Tirages"
+                        } else {
+                            val selectedNames = uiState.availableTirages
+                                .filter { it.id in uiState.selectedTirageIds }
+                                .joinToString(",") { it.nom.take(3).uppercase() }
+                            selectedNames
                         }
-                        Icon(
-                            Icons.Default.Edit, 
-                            contentDescription = "Modifier",
-                            modifier = Modifier.size(16.dp),
-                            tint = Color.Gray
+                        Text(
+                            text = text,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = if (uiState.selectedTirageIds.isEmpty()) MaterialTheme.colorScheme.error
+                                   else MaterialTheme.colorScheme.primary
                         )
                     }
+                }
+
+                // Default Mise
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text("Mise:", fontSize = 10.sp, color = Color.Gray)
+                    BasicTextField(
+                        value = miseDefaut,
+                        onValueChange = { if (it.all { c -> c.isDigit() }) miseDefaut = it },
+                        modifier = Modifier
+                            .width(48.dp)
+                            .height(30.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
+                            .border(1.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 4.dp, vertical = 6.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 11.sp,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
                 }
             }
 
@@ -472,7 +484,8 @@ fun VenteScreen(
                             val activeCount = listOf(
                                 uiState.autoMariageEnabled,
                                 uiState.autoLoto4Enabled,
-                                uiState.freeMariageChecked
+                                uiState.freeMariageChecked,
+                                uiState.inverseEnabled
                             ).count { it }
                             if (activeCount > 0) {
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -496,6 +509,22 @@ fun VenteScreen(
                         expanded = showAutomationsMenu,
                         onDismissRequest = { showAutomationsMenu = false }
                     ) {
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(
+                                        checked = uiState.inverseEnabled,
+                                        onCheckedChange = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Inverse")
+                                }
+                            },
+                            onClick = { 
+                                viewModel.toggleInverseEnabled()
+                            }
+                        )
                         DropdownMenuItem(
                             text = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -526,6 +555,34 @@ fun VenteScreen(
                             },
                             onClick = { 
                                 viewModel.toggleAutoLoto4(!uiState.autoLoto4Enabled, miseDefaut.toDoubleOrNull() ?: 50.0)
+                            }
+                        )
+                        Divider()
+                        DropdownMenuItem(
+                            text = {
+                                Text("Boules paires (00, 11, ..., 99)")
+                            },
+                            onClick = {
+                                showAutomationsMenu = false
+                                showPairesDialog = true
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text("Grap (chiffre fixe au début)")
+                            },
+                            onClick = {
+                                showAutomationsMenu = false
+                                showGrapDialog = true
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text("Pointes (chiffre fixe à la fin)")
+                            },
+                            onClick = {
+                                showAutomationsMenu = false
+                                showPointesDialog = true
                             }
                         )
                         if (uiState.freeMariageEnabled) {
@@ -672,7 +729,7 @@ fun VenteScreen(
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 itemsIndexed(uiState.lines) { index, line ->
                     Surface(
@@ -683,7 +740,7 @@ fun VenteScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                .padding(horizontal = 6.dp, vertical = 3.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -807,11 +864,11 @@ fun VenteScreen(
                                     }
                                 }
                                 
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     line.valeur,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp
+                                    fontSize = 13.sp
                                 )
                             }
                             
@@ -822,14 +879,14 @@ fun VenteScreen(
                                         value = editingMise,
                                         onValueChange = { if (it.all { c -> c.isDigit() }) editingMise = it },
                                         modifier = Modifier
-                                            .width(70.dp)
-                                            .height(32.dp)
+                                            .width(60.dp)
+                                            .height(28.dp)
                                             .background(Color.White, RoundedCornerShape(4.dp))
                                             .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
-                                            .padding(horizontal = 6.dp, vertical = 4.dp),
+                                            .padding(horizontal = 4.dp, vertical = 4.dp),
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                         singleLine = true,
-                                        textStyle = LocalTextStyle.current.copy(fontSize = 13.sp)
+                                        textStyle = LocalTextStyle.current.copy(fontSize = 12.sp)
                                     )
                                     IconButton(
                                         onClick = {
@@ -837,9 +894,9 @@ fun VenteScreen(
                                             viewModel.updateLineMise(index, newMise)
                                             editingIndex = null
                                         },
-                                        modifier = Modifier.size(28.dp)
+                                        modifier = Modifier.size(24.dp)
                                     ) {
-                                        Icon(Icons.Default.Check, contentDescription = "OK", tint = Color(0xFF4CAF50), modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.Check, contentDescription = "OK", tint = Color(0xFF4CAF50), modifier = Modifier.size(14.dp))
                                     }
                                 } else {
                                     Surface(
@@ -989,23 +1046,25 @@ fun VenteScreen(
                 }
             }
 
-            // Row 1: Preview + Share buttons
+            // Action Buttons: Aperçu, Partager, Créer (Single Row)
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Preview Button
+                // Button 1: Aperçu
                 OutlinedButton(
                     onClick = { showPrintPreview = true },
-                    modifier = Modifier.weight(1f).height(44.dp),
+                    modifier = Modifier.weight(1.5f).height(40.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
                     enabled = uiState.lines.isNotEmpty() && !uiState.isLoading
                 ) {
-                    Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Aperçu", fontSize = 12.sp)
+                    Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text("Aperçu", fontSize = 10.sp)
                 }
-                
-                // Save & Share Button
+
+                // Button 2: Partager / Enreg.
                 OutlinedButton(
                     onClick = {
                         if (uiState.multiTirageMode) {
@@ -1014,7 +1073,8 @@ fun VenteScreen(
                             viewModel.createAndShareTicket(tirageId)
                         }
                     },
-                    modifier = Modifier.weight(1f).height(44.dp),
+                    modifier = Modifier.weight(1.8f).height(40.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
                     enabled = uiState.lines.isNotEmpty() 
                         && !uiState.isLoading
                         && (if (uiState.multiTirageMode) uiState.selectedTirageIds.isNotEmpty() else tirageId != null),
@@ -1022,38 +1082,38 @@ fun VenteScreen(
                         contentColor = MaterialTheme.colorScheme.secondary
                     )
                 ) {
-                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Enreg. & Partager", fontSize = 11.sp)
+                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text("Partager", fontSize = 10.sp)
                 }
-            }
-            
-            Spacer(modifier = Modifier.height(6.dp))
-            
-            // Row 2: Create/Print Button
-            Button(
-                onClick = {
-                    if (uiState.multiTirageMode) {
-                        viewModel.createMultiTickets()
-                    } else if (tirageId != null) {
-                        viewModel.createTicket(tirageId)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                enabled = uiState.lines.isNotEmpty() 
-                    && !uiState.isLoading
-                    && (if (uiState.multiTirageMode) uiState.selectedTirageIds.isNotEmpty() else tirageId != null)
-            ) {
-                Icon(Icons.Default.Print, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    when {
-                        uiState.isLoading -> if (uiState.multiTirageMode) "Création..." else "Envoi..."
-                        uiState.multiTirageMode -> "Créer ${uiState.selectedTirageIds.size} Ticket(s)"
-                        else -> "Confirmer & Imprimer"
+
+                // Button 3: Créer Ticket / Confirmer & Imprimer
+                Button(
+                    onClick = {
+                        if (uiState.multiTirageMode) {
+                            viewModel.createMultiTickets()
+                        } else if (tirageId != null) {
+                            viewModel.createTicket(tirageId)
+                        }
                     },
-                    fontSize = 13.sp
-                )
+                    modifier = Modifier.weight(2f).height(40.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+                    enabled = uiState.lines.isNotEmpty() 
+                        && !uiState.isLoading
+                        && (if (uiState.multiTirageMode) uiState.selectedTirageIds.isNotEmpty() else tirageId != null)
+                ) {
+                    Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = when {
+                            uiState.isLoading -> "Création..."
+                            uiState.multiTirageMode -> "Créer (${uiState.selectedTirageIds.size})"
+                            else -> "Créer"
+                        },
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
@@ -1600,6 +1660,148 @@ fun VenteScreen(
                     onTicketCreated()
                 }) {
                     Text("Fermer")
+                }
+            }
+        )
+    }
+
+    if (showPairesDialog) {
+        var stakeInput by remember { mutableStateOf(miseDefaut) }
+        AlertDialog(
+            onDismissRequest = { showPairesDialog = false },
+            title = { Text("Boules Paires", fontWeight = FontWeight.Bold) },
+            text = {
+                OutlinedTextField(
+                    value = stakeInput,
+                    onValueChange = { if (it.all { c -> c.isDigit() }) stakeInput = it },
+                    label = { Text("Mise") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val stake = stakeInput.toDoubleOrNull() ?: 50.0
+                        viewModel.generateBoulesPaires(stake)
+                        showPairesDialog = false
+                    }
+                ) {
+                    Text("Générer")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPairesDialog = false }) {
+                    Text("Annuler")
+                }
+            }
+        )
+    }
+
+    if (showGrapDialog) {
+        var digitInput by remember { mutableStateOf("") }
+        var stakeInput by remember { mutableStateOf(miseDefaut) }
+        var errorText by remember { mutableStateOf<String?>(null) }
+        AlertDialog(
+            onDismissRequest = { showGrapDialog = false },
+            title = { Text("Grap (Chiffre fixe au début)", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = digitInput,
+                        onValueChange = { if (it.all { c -> c.isDigit() } && it.length <= 1) digitInput = it },
+                        label = { Text("Chiffre (0-9)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = stakeInput,
+                        onValueChange = { if (it.all { c -> c.isDigit() }) stakeInput = it },
+                        label = { Text("Mise") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    errorText?.let {
+                        Text(it, color = Color.Red, fontSize = 12.sp)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val digit = digitInput.toIntOrNull()
+                        if (digit == null || digit !in 0..9) {
+                            errorText = "Le chiffre doit être compris entre 0 et 9"
+                            return@Button
+                        }
+                        val stake = stakeInput.toDoubleOrNull() ?: 50.0
+                        viewModel.generateGrap(digit, stake)
+                        showGrapDialog = false
+                    }
+                ) {
+                    Text("Générer")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGrapDialog = false }) {
+                    Text("Annuler")
+                }
+            }
+        )
+    }
+
+    if (showPointesDialog) {
+        var digitInput by remember { mutableStateOf("") }
+        var stakeInput by remember { mutableStateOf(miseDefaut) }
+        var errorText by remember { mutableStateOf<String?>(null) }
+        AlertDialog(
+            onDismissRequest = { showPointesDialog = false },
+            title = { Text("Pointes (Chiffre fixe à la fin)", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = digitInput,
+                        onValueChange = { if (it.all { c -> c.isDigit() } && it.length <= 1) digitInput = it },
+                        label = { Text("Chiffre (0-9)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = stakeInput,
+                        onValueChange = { if (it.all { c -> c.isDigit() }) stakeInput = it },
+                        label = { Text("Mise") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    errorText?.let {
+                        Text(it, color = Color.Red, fontSize = 12.sp)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val digit = digitInput.toIntOrNull()
+                        if (digit == null || digit !in 0..9) {
+                            errorText = "Le chiffre doit être compris entre 0 et 9"
+                            return@Button
+                        }
+                        val stake = stakeInput.toDoubleOrNull() ?: 50.0
+                        viewModel.generatePointes(digit, stake)
+                        showPointesDialog = false
+                    }
+                ) {
+                    Text("Générer")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPointesDialog = false }) {
+                    Text("Annuler")
                 }
             }
         )

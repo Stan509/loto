@@ -122,7 +122,10 @@ fun AppNavigation(navController: NavHostController) {
 
         composable(Routes.SEARCH_TICKET) {
             SearchTicketScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onRefaire = { ticketResult ->
+                    navController.navigate(Routes.vente(blueprintTicketId = ticketResult.id))
+                }
             )
         }
 
@@ -159,7 +162,10 @@ fun AppNavigation(navController: NavHostController) {
 
         composable(Routes.TICKET_MANAGEMENT) {
             TicketManagementScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onRefaire = { blueprintTicketId ->
+                    navController.navigate(Routes.vente(blueprintTicketId = blueprintTicketId))
+                }
             )
         }
     }
