@@ -495,10 +495,11 @@ class VenteViewModel @Inject constructor(
     }
 
     fun generateGrap(mise: Double) {
+        val individualMise = mise / 10.0
         val existingLines = _uiState.value.lines.filter { it.jeu.lowercase() == "loto3" }.map { it.valeur }.toSet()
         val grap = listOf("000", "111", "222", "333", "444", "555", "666", "777", "888", "999")
         val newLines = grap.filter { it !in existingLines }.map { valeur ->
-            TicketLineWithOptions(jeu = "loto3", valeur = valeur, miseBase = mise, options = emptySet(), useGlobalOptions = false)
+            TicketLineWithOptions(jeu = "loto3", valeur = valeur, miseBase = individualMise, options = emptySet(), useGlobalOptions = false)
         }
         if (newLines.isNotEmpty()) {
             _uiState.value = _uiState.value.copy(lines = _uiState.value.lines + newLines)
