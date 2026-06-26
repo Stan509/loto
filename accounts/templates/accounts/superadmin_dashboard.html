@@ -156,6 +156,12 @@
                         </button>
                       </form>
                     {% endif %}
+                    <form method="post" action="{% url 'superadmin_reset_user_password' b.user.id %}" class="inline ml-1" onsubmit="return confirm('Voulez-vous vraiment réinitialiser le mot de passe de cet administrateur ?');">
+                      {% csrf_token %}
+                      <button type="submit" class="gaboom-btn-ghost px-3 py-1.5 text-xs text-amber-600 hover:bg-amber-500/10 border-amber-500/30">
+                        🔑 Réinitialiser
+                      </button>
+                    </form>
                   </td>
                 </tr>
               {% endfor %}

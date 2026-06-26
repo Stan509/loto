@@ -1,0 +1,89 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}SuperAdmin • Configuration SMTP{% endblock %}
+
+{% block page_title %}
+  SMTP • Configuration Serveur Email
+{% endblock %}
+
+{% block page_meta %}
+  <div class="text-xs text-slate-700 dark:text-slate-200">
+    SuperAdmin uniquement · Configuration de l'envoi d'emails automatiques
+  </div>
+{% endblock %}
+
+{% block page_body %}
+  <div class="mx-auto w-full max-w-2xl space-y-6">
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for message in messages %}
+          <div class="rounded-2xl border border-white/10 bg-white/20 backdrop-blur-xl px-4 py-3 text-sm text-slate-900 dark:text-white">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-6 space-y-6">
+      {% csrf_token %}
+
+      <div class="space-y-4">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white border-b border-white/10 pb-2">Toggle d'Activation</h3>
+        <div class="flex items-center gap-3">
+          <input id="is_active" name="is_active" type="checkbox" class="h-4 w-4" {% if config.is_active %}checked{% endif %} />
+          <label for="is_active" class="text-sm font-semibold text-slate-900 dark:text-white">Activer le serveur SMTP personnalisé</label>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Si désactivé, l'envoi d'email utilisera la configuration par défaut de Django.</p>
+      </div>
+
+      <div class="space-y-4">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white border-b border-white/10 pb-2">Paramètres SMTP</h3>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1">Hôte SMTP (SMTP Host)</label>
+          <input name="smtp_host" type="text" value="{{ config.smtp_host }}" required class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="mail.privateemail.com" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1">Port SMTP</label>
+          <input name="smtp_port" type="number" value="{{ config.smtp_port }}" required class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="587" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1">Utilisateur SMTP (SMTP Username)</label>
+          <input name="smtp_username" type="text" value="{{ config.smtp_username }}" required class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="no-reply@gaboom509.com" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1">Mot de passe SMTP</label>
+          <input name="smtp_password" type="password" value="" class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="Laissez vide pour conserver le mot de passe actuel" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1">Expéditeur de l'email (From Email)</label>
+          <input name="from_email" type="text" value="{{ config.from_email|default:'' }}" class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="Gaboom Central &lt;no-reply@gaboom509.com&gt;" />
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 pt-2">
+          <div class="flex items-center gap-3">
+            <input id="smtp_use_tls" name="smtp_use_tls" type="checkbox" class="h-4 w-4" {% if config.smtp_use_tls %}checked{% endif %} />
+            <label for="smtp_use_tls" class="text-sm font-semibold text-slate-900 dark:text-white">Utiliser TLS (Recommandé pour port 587)</label>
+          </div>
+          <div class="flex items-center gap-3">
+            <input id="smtp_use_ssl" name="smtp_use_ssl" type="checkbox" class="h-4 w-4" {% if config.smtp_use_ssl %}checked{% endif %} />
+            <label for="smtp_use_ssl" class="text-sm font-semibold text-slate-900 dark:text-white">Utiliser SSL (Port 465)</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <a href="{% url 'superadmin_dashboard' %}" class="gaboom-btn-ghost border-white/15 bg-white/5 text-slate-950 dark:text-white hover:bg-white/10 px-6 py-2 rounded-2xl text-sm font-semibold transition">
+          Retour
+        </a>
+        <button type="submit" class="gaboom-btn-primary px-6 py-2">
+          💾 Enregistrer la Configuration SMTP
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

@@ -45,6 +45,29 @@ class User(AbstractUser):
         help_text="Signature de l'appareil de l'agent"
     )
 
+    email_verification_token = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Jeton de vérification de l'email"
+    )
+    is_email_verified = models.BooleanField(
+        default=False,
+        help_text="Indique si l'email a été vérifié"
+    )
+    password_reset_token = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Jeton de récupération de mot de passe"
+    )
+    password_reset_token_expires = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Date d'expiration du jeton de récupération"
+    )
+
+
 
 
 class Borlette(models.Model):
@@ -1402,3 +1425,24 @@ class GlobalPaymentSettings(models.Model):
 
     def __str__(self) -> str:
         return "Configuration Globale Paiement"
+
+
+class SMTPSettings(models.Model):
+    """Configuration SMTP dynamique pour Namecheap/serveur d'envoi d'emails."""
+    smtp_host = models.CharField(max_length=255, default="mail.privateemail.com")
+    smtp_port = models.IntegerField(default=587)
+    smtp_username = models.CharField(max_length=255, blank=True)
+    smtp_password = models.CharField(max_length=255, blank=True)
+    smtp_use_tls = models.BooleanField(default=True)
+    smtp_use_ssl = models.BooleanField(default=False)
+    from_email = models.CharField(max_length=255, blank=True, null=True, help_text="Ex: Gaboom <no-reply@gaboom509.com>")
+    is_active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Configuration SMTP"
+        verbose_name_plural = "Configurations SMTP"
+
+    def __str__(self) -> str:
+        return f"SMTP {self.smtp_host} ({self.smtp_username})"
+

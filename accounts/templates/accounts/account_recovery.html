@@ -7,6 +7,22 @@
   <title>Central Borlette - Récupération du compte</title>
   <script src="{% static 'js/gaboom-theme.js' %}"></script>
   <link rel="stylesheet" href="{% static 'css/gaboom.css' %}">
+  <style>
+    .tab-btn {
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .tab-btn.active {
+      border-color: #ea580c;
+      color: #ea580c;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
 </head>
 <body>
   <div class="gaboom-app-bg flex items-center justify-center p-6">
@@ -23,46 +39,106 @@
       </div>
 
       <div class="gaboom-card mt-6 p-8">
-        <h1 class="text-2xl font-semibold tracking-tight">Récupération du compte</h1>
-        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Entrez vos informations pour que notre équipe puisse vous aider à retrouver l'accès.</p>
+        <h1 class="text-2xl font-bold tracking-tight">Récupération du compte</h1>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 mb-6">Choisissez votre méthode de récupération ci-dessous.</p>
+
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6">
+          <button type="button" onclick="switchTab('password-tab', this)" class="tab-btn active flex-1 pb-3 text-center text-sm font-semibold transition-colors">
+            Mot de passe
+          </button>
+          <button type="button" onclick="switchTab('username-tab', this)" class="tab-btn flex-1 pb-3 text-center text-sm font-semibold transition-colors">
+            Identifiant
+          </button>
+          <button type="button" onclick="switchTab('manual-tab', this)" class="tab-btn flex-1 pb-3 text-center text-sm font-semibold transition-colors">
+            Demande Manuelle
+          </button>
+        </div>
 
         {% if messages %}
           {% for message in messages %}
-            <div class="mt-4 rounded-xl border px-4 py-3 text-sm {% if message.tags == 'success' %}border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300{% else %}border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300{% endif %}">
+            <div class="mb-6 rounded-xl border px-4 py-3 text-sm {% if message.tags == 'success' %}border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300{% else %}border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300{% endif %}">
               {{ message }}
             </div>
           {% endfor %}
         {% endif %}
 
-        <form method="post" class="gaboom-auth-form mt-6 space-y-4" novalidate>
-          {% csrf_token %}
+        <!-- Tab 1: Forgot Password -->
+        <div id="password-tab" class="tab-content active">
+          <form method="post" class="gaboom-auth-form space-y-4" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="forgot_password">
+            <div>
+              <label class="text-sm font-medium">Adresse Email</label>
+              <input type="email" name="email" required placeholder="nom@example.com" class="mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <p class="mt-1 text-xs text-slate-500">Un lien de réinitialisation vous sera envoyé par email.</p>
+            </div>
+            <button class="gaboom-btn-primary w-full" type="submit">Réinitialiser le mot de passe</button>
+          </form>
+        </div>
 
-          <div>
-            <label class="text-sm font-medium">Nom d'utilisateur</label>
-            <input type="text" name="username" required class="mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
+        <!-- Tab 2: Forgot Username -->
+        <div id="username-tab" class="tab-content">
+          <form method="post" class="gaboom-auth-form space-y-4" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="forgot_username">
+            <div>
+              <label class="text-sm font-medium">Adresse Email</label>
+              <input type="email" name="email" required placeholder="nom@example.com" class="mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <p class="mt-1 text-xs text-slate-500">Les noms d'utilisateurs associés à cette adresse vous seront envoyés.</p>
+            </div>
+            <button class="gaboom-btn-primary w-full" type="submit">Récupérer l'identifiant</button>
+          </form>
+        </div>
 
-          <div>
-            <label class="text-sm font-medium">Numéro de téléphone</label>
-            <input type="tel" name="phone" class="mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <p class="mt-1 text-xs text-slate-500">Numéro associé à votre compte pour vérification</p>
-          </div>
+        <!-- Tab 3: Legacy Manual Request -->
+        <div id="manual-tab" class="tab-content">
+          <form method="post" class="gaboom-auth-form space-y-4" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="manual_recovery">
+            <div>
+              <label class="text-sm font-medium">Nom d'utilisateur</label>
+              <input type="text" name="username" required placeholder="Ex: mon_username" class="mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
 
-          <div>
-            <label class="text-sm font-medium">Message (optionnel)</label>
-            <textarea name="message" rows="3" class="mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-          </div>
+            <div>
+              <label class="text-sm font-medium">Numéro de téléphone</label>
+              <input type="tel" name="phone" placeholder="+509 0000-0000" class="mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <p class="mt-1 text-xs text-slate-500">Numéro associé à votre compte pour vérification.</p>
+            </div>
 
-          <button class="gaboom-btn-primary w-full" type="submit">Envoyer la demande</button>
-        </form>
+            <div>
+              <label class="text-sm font-medium">Message (optionnel)</label>
+              <textarea name="message" rows="3" placeholder="Informations complémentaires..." class="mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
 
-        <div class="mt-4 text-center">
-          <a href="/portal/login/" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline">
+            <button class="gaboom-btn-primary w-full" type="submit">Envoyer la demande manuelle</button>
+          </form>
+        </div>
+
+        <div class="mt-6 text-center">
+          <a href="/portal/login/" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline font-medium">
             Retour à la connexion
           </a>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    function switchTab(tabId, btn) {
+      // Hide all contents
+      document.querySelectorAll('.tab-content').forEach(function(content) {
+        content.classList.remove('active');
+      });
+      // Remove active from all buttons
+      document.querySelectorAll('.tab-btn').forEach(function(button) {
+        button.classList.remove('active');
+      });
+      // Show chosen content and make button active
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+  </script>
 </body>
 </html>

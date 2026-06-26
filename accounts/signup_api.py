@@ -3,6 +3,7 @@ API pour l'inscription des nouvelles borlettes avec gestion du code promo.
 """
 
 import json
+import uuid
 from django.http import JsonResponse
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
@@ -15,6 +16,7 @@ from accounts.models import (
 from accounts.audit import log_audit
 from accounts.pricing_config import calculate_director_price
 from accounts.pricing_utils import create_activation_transaction
+from accounts.mail_service import send_custom_email
 
 
 def _json_error(message: str, status: int = 400):
@@ -81,13 +83,18 @@ def api_signup(request) -> JsonResponse:
         except PromoCode.DoesNotExist:
             return _json_error("Code promo invalide", 400)
 
+    token = uuid.uuid4().hex
+
     with transaction.atomic():
-        # Créer l'utilisateur
+        # Créer l'utilisateur (commence inactif pour confirmation par mail)
         user = User.objects.create_user(
             username=username,
             email=email,
             password=password,
             role=UserRole.ADMIN,
+            is_active=False,
+            email_verification_token=token,
+            is_email_verified=False,
         )
 
         # Créer la borlette (ou mettre à jour si créée par le signal)
@@ -140,10 +147,32 @@ def api_signup(request) -> JsonResponse:
             request=request,
         )
 
+    # Envoyer l'email de confirmation
+    domain = request.get_host()
+    protocol = "https" if request.is_secure() else "http"
+    verify_url = f"{protocol}://{domain}/accounts/verify-email/{token}/"
+    
+    subject = "Confirmez votre compte Gaboom Central"
+    message_text = f"Bonjour {username},\n\nMerci de vous être inscrit sur Gaboom Central. Veuillez confirmer votre adresse email en cliquant sur le lien suivant :\n{verify_url}\n\nL'équipe Gaboom"
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #ea580c; text-align: center;">Bienvenue chez Gaboom Central</h2>
+        <p>Bonjour <strong>{username}</strong>,</p>
+        <p>Merci de vous être inscrit sur Gaboom Central. Pour confirmer votre adresse email et activer votre compte, veuillez cliquer sur le bouton ci-dessous :</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{verify_url}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Confirmer mon compte</a>
+        </div>
+        <p style="font-size: 12px; color: #666;">Si le bouton ne fonctionne pas, copiez-collez le lien suivant dans votre navigateur :<br><a href="{verify_url}">{verify_url}</a></p>
+        <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #999; text-align: center;">&copy; Gaboom Central · Tous droits réservés</p>
+    </div>
+    """
+    send_custom_email(subject, message_text, email, html_message=html_message)
+
     return _json_success({
         "user_id": user.id,
         "borlette_id": borlette.id,
         "activation_amount": str(price_calc['total']),
         "promo_applied": bool(promo_code),
-        "message": "Inscription réussie ! Connectez-vous pour accéder à votre dashboard.",
+        "message": "Inscription réussie ! Un email de confirmation a été envoyé à votre adresse. Veuillez confirmer votre compte avant de vous connecter.",
     })

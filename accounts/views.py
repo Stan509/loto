@@ -1,5 +1,6 @@
 import secrets
 import string
+import uuid
 
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -20,6 +21,7 @@ from accounts.models import (
     FinancialTransaction,
     GlobalPaymentSettings,
 )
+from accounts.mail_service import send_custom_email
 
 
 @login_required
@@ -64,43 +66,166 @@ def superadmin_api_config(request: HttpRequest):
     )
 
 
-def account_recovery(request: HttpRequest):
-    """Page de demande de récupération de compte (Admin de Borlette)."""
+def verify_email(request: HttpRequest, token: str):
+    """Vérification de l'adresse email de l'administrateur ou de l'affilié."""
+    user = get_object_or_404(User, email_verification_token=token)
+    
+    user.is_active = True
+    user.is_email_verified = True
+    user.email_verification_token = None
+    user.save(update_fields=["is_active", "is_email_verified", "email_verification_token"])
+    
+    messages.success(
+        request,
+        "Votre adresse email a été confirmée avec succès ! Vous pouvez maintenant vous connecter à votre compte."
+    )
+    return render(request, "accounts/email_verified.html", {"user": user})
+
+
+def reset_password(request: HttpRequest, token: str):
+    """Réinitialisation du mot de passe avec le jeton reçu par email."""
+    user = get_object_or_404(
+        User, 
+        password_reset_token=token,
+        password_reset_token_expires__gt=timezone.now()
+    )
+    
     if request.method == "POST":
-        username = (request.POST.get("username") or "").strip()
-        phone = (request.POST.get("phone") or "").strip()
-        message_text = (request.POST.get("message") or "").strip()
+        new_password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+        
+        if not new_password or new_password != confirm_password:
+            messages.error(request, "Les mots de passe ne correspondent pas ou sont vides.")
+            return render(request, "accounts/reset_password.html", {"token": token})
+            
+        user.set_password(new_password)
+        user.password_reset_token = None
+        user.password_reset_token_expires = None
+        user.save()
+        
+        messages.success(request, "Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.")
+        return redirect("/portal/login/")
+        
+    return render(request, "accounts/reset_password.html", {"token": token})
 
-        if not username:
-            messages.error(request, "Nom d'utilisateur requis")
+
+def account_recovery(request: HttpRequest):
+    """Page de demande de récupération de compte."""
+    if request.method == "POST":
+        action = request.POST.get("action", "")
+        
+        if action == "forgot_password":
+            email = (request.POST.get("email") or "").strip()
+            if not email:
+                messages.error(request, "Adresse email requise")
+                return redirect("account_recovery")
+                
+            users = User.objects.filter(email=email)
+            if not users.exists():
+                # We show success message anyway to prevent email enumeration
+                messages.success(request, "Si l'adresse email existe, un lien de réinitialisation a été envoyé.")
+                return redirect("account_recovery")
+                
+            # Pick first matching active/valid user
+            user = users.first()
+            token = uuid.uuid4().hex
+            user.password_reset_token = token
+            user.password_reset_token_expires = timezone.now() + timezone.timedelta(hours=2)
+            user.save(update_fields=["password_reset_token", "password_reset_token_expires"])
+            
+            domain = request.get_host()
+            protocol = "https" if request.is_secure() else "http"
+            reset_url = f"{protocol}://{domain}/accounts/reset-password/{token}/"
+            
+            subject = "Réinitialisation de votre mot de passe Gaboom"
+            message_text = f"Bonjour {user.username},\n\nVous avez demandé la réinitialisation de votre mot de passe. Veuillez cliquer sur le lien suivant dans les 2 prochaines heures :\n{reset_url}\n\nSi vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email."
+            html_message = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <h2 style="color: #ea580c; text-align: center;">Réinitialisation de mot de passe</h2>
+                <p>Bonjour <strong>{user.username}</strong>,</p>
+                <p>Vous avez demandé à réinitialiser le mot de passe de votre compte Gaboom Central. Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe :</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{reset_url}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Réinitialiser mon mot de passe</a>
+                </div>
+                <p style="font-size: 12px; color: #666;">Ce lien expirera dans 2 heures. Si le bouton ne fonctionne pas, copiez-collez le lien suivant dans votre navigateur :<br><a href="{reset_url}">{reset_url}</a></p>
+                <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+                <p style="font-size: 12px; color: #999; text-align: center;">&copy; Gaboom Central · Tous droits réservés</p>
+            </div>
+            """
+            send_custom_email(subject, message_text, email, html_message=html_message)
+            messages.success(request, "Un lien de réinitialisation a été envoyé à votre adresse email.")
             return redirect("account_recovery")
-
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            messages.error(request, "Ce compte n'existe pas dans notre système")
+            
+        elif action == "forgot_username":
+            email = (request.POST.get("email") or "").strip()
+            if not email:
+                messages.error(request, "Adresse email requise")
+                return redirect("account_recovery")
+                
+            users = User.objects.filter(email=email)
+            if not users.exists():
+                messages.success(request, "Si l'adresse email existe, les identifiants ont été envoyés.")
+                return redirect("account_recovery")
+                
+            usernames = [u.username for u in users]
+            usernames_str = ", ".join(usernames)
+            
+            subject = "Récupération de vos identifiants Gaboom"
+            message_text = f"Bonjour,\n\nVous avez demandé à récupérer vos identifiants Gaboom Central. Les comptes associés à cet email sont :\n\n{usernames_str}\n\nL'équipe Gaboom"
+            html_message = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <h2 style="color: #ea580c; text-align: center;">Récupération d'identifiants</h2>
+                <p>Bonjour,</p>
+                <p>Voici les noms d'utilisateurs associés à votre adresse email sur Gaboom Central :</p>
+                <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 16px; text-align: center; margin: 20px 0;">
+                    <strong>{usernames_str}</strong>
+                </div>
+                <p>Vous pouvez maintenant vous connecter en utilisant l'un de ces identifiants.</p>
+                <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+                <p style="font-size: 12px; color: #999; text-align: center;">&copy; Gaboom Central · Tous droits réservés</p>
+            </div>
+            """
+            send_custom_email(subject, message_text, email, html_message=html_message)
+            messages.success(request, "Vos identifiants ont été envoyés à votre adresse email.")
             return redirect("account_recovery")
+            
+        else:
+            # Demande de récupération manuelle
+            username = (request.POST.get("username") or "").strip()
+            phone = (request.POST.get("phone") or "").strip()
+            message_text = (request.POST.get("message") or "").strip()
 
-        if user.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
-            messages.error(request, "Seuls les administrateurs de Borlette peuvent utiliser cette fonction")
+            if not username:
+                messages.error(request, "Nom d'utilisateur requis")
+                return redirect("account_recovery")
+
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                messages.error(request, "Ce compte n'existe pas dans notre système")
+                return redirect("account_recovery")
+
+            if user.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+                messages.error(request, "Seuls les administrateurs de Borlette peuvent utiliser cette fonction")
+                return redirect("account_recovery")
+
+            borlette = getattr(user, "borlette", None)
+
+            AccountRecoveryRequest.objects.create(
+                user=user,
+                borlette=borlette,
+                phone_number=phone,
+                message=message_text,
+            )
+
+            messages.success(
+                request,
+                "Demande manuelle envoyée avec succès. Notre équipe va traiter votre demande dans les plus breves délais."
+            )
             return redirect("account_recovery")
-
-        borlette = getattr(user, "borlette", None)
-
-        AccountRecoveryRequest.objects.create(
-            user=user,
-            borlette=borlette,
-            phone_number=phone,
-            message=message_text,
-        )
-
-        messages.success(
-            request,
-            "Demande envoyée avec succès. Notre équipe va traiter votre demande dans les plus brefs délais."
-        )
-        return redirect("account_recovery")
 
     return render(request, "accounts/account_recovery.html")
+
 
 
 @login_required
@@ -298,5 +423,130 @@ def superadmin_payment_config(request: HttpRequest):
             "config": config,
         },
     )
+
+
+@login_required
+def superadmin_smtp_config(request: HttpRequest):
+    if not request.user.is_superuser:
+        messages.error(request, "Accès réservé au superadmin")
+        return redirect("/admin/")
+
+    from accounts.models import SMTPSettings
+    config = SMTPSettings.objects.filter(is_active=True).first()
+    if not config:
+        config = SMTPSettings.objects.create(
+            smtp_host="mail.privateemail.com",
+            smtp_port=587,
+            smtp_username="",
+            smtp_password="",
+            smtp_use_tls=True,
+            smtp_use_ssl=False,
+            from_email="",
+            is_active=True
+        )
+
+    if request.method == "POST":
+        config.smtp_host = (request.POST.get("smtp_host") or "").strip()
+        config.smtp_port = int(request.POST.get("smtp_port") or 587)
+        config.smtp_username = (request.POST.get("smtp_username") or "").strip()
+        
+        password = request.POST.get("smtp_password", "").strip()
+        if password:
+            config.smtp_password = password
+            
+        config.smtp_use_tls = request.POST.get("smtp_use_tls") == "on"
+        config.smtp_use_ssl = request.POST.get("smtp_use_ssl") == "on"
+        config.from_email = (request.POST.get("from_email") or "").strip()
+        config.save()
+        
+        messages.success(request, "Configuration SMTP mise à jour avec succès.")
+        return redirect("superadmin_smtp_config")
+
+    return render(
+        request,
+        "accounts/superadmin_smtp_config.html",
+        {
+            "config": config,
+        },
+    )
+
+
+@login_required
+def superadmin_email_marketing(request: HttpRequest):
+    if not request.user.is_superuser:
+        messages.error(request, "Accès réservé au superadmin")
+        return redirect("/admin/")
+
+    if request.method == "POST":
+        subject = (request.POST.get("subject") or "").strip()
+        message_body = (request.POST.get("message_body") or "").strip()
+        target = request.POST.get("target", "all")
+        is_html = request.POST.get("is_html") == "on"
+        
+        if not subject or not message_body:
+            messages.error(request, "Le sujet et le corps du message sont obligatoires.")
+            return redirect("superadmin_email_marketing")
+            
+        # Select users
+        if target == "admins":
+            users = User.objects.filter(role=UserRole.ADMIN, email__isnull=False)
+        elif target == "affiliates":
+            users = User.objects.filter(role=UserRole.AFFILIATE, email__isnull=False)
+        else:
+            users = User.objects.filter(role__in=[UserRole.ADMIN, UserRole.AFFILIATE], email__isnull=False)
+            
+        # Clean target emails
+        recipient_list = [u.email for u in users if u.email and "@" in u.email]
+        
+        if not recipient_list:
+            messages.warning(request, "Aucun destinataire trouvé pour ce segment.")
+            return redirect("superadmin_email_marketing")
+            
+        # Send emails
+        sent_count = 0
+        from accounts.mail_service import send_custom_email
+        for email in recipient_list:
+            html = message_body if is_html else None
+            text = message_body if not is_html else "Veuillez ouvrir cet email avec un client compatible HTML."
+            
+            success = send_custom_email(subject, text, email, html_message=html)
+            if success:
+                sent_count += 1
+                
+        messages.success(request, f"Campagne email envoyée avec succès à {sent_count} destinataire(s).")
+        return redirect("superadmin_email_marketing")
+
+    return render(request, "accounts/superadmin_email_marketing.html")
+
+
+@login_required
+def superadmin_reset_user_password(request: HttpRequest, user_id: int):
+    if not request.user.is_superuser:
+        messages.error(request, "Accès réservé au superadmin")
+        return redirect("/admin/")
+
+    user = get_object_or_404(User, id=user_id)
+    
+    if request.method == "POST":
+        new_password = request.POST.get("new_password", "").strip()
+        force_change = request.POST.get("force_change") == "on"
+        
+        if not new_password:
+            # Generate a temporary one
+            alphabet = string.ascii_letters + string.digits
+            new_password = ''.join(secrets.choice(alphabet) for _ in range(12))
+            
+        user.set_password(new_password)
+        if force_change:
+            user.must_change_password = True
+        user.save()
+        
+        messages.success(
+            request, 
+            f"Le mot de passe de '{user.username}' a été réinitialisé à : {new_password}"
+        )
+        
+    return redirect("superadmin_dashboard")
+
 
 

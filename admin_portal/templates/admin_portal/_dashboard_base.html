@@ -112,6 +112,18 @@
                 <i data-lucide="settings-2" class="h-5 w-5 shrink-0"></i>
                 <span class="whitespace-nowrap">API Configuration</span>
               </a>
+              <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'superadmin_payment_config' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_payment_config' %}">
+                <i data-lucide="credit-card" class="h-5 w-5 shrink-0"></i>
+                <span class="whitespace-nowrap">Paiements Config</span>
+              </a>
+              <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'superadmin_smtp_config' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_smtp_config' %}">
+                <i data-lucide="mail" class="h-5 w-5 shrink-0"></i>
+                <span class="whitespace-nowrap">SMTP Config</span>
+              </a>
+              <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'superadmin_email_marketing' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_email_marketing' %}">
+                <i data-lucide="send" class="h-5 w-5 shrink-0"></i>
+                <span class="whitespace-nowrap">Email Marketing</span>
+              </a>
               <a class="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition border border-transparent bg-white/30 text-slate-900 hover:bg-white/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 {% if request.resolver_match.url_name == 'superadmin_recovery_requests' or request.resolver_match.url_name == 'superadmin_resolve_recovery' %}border-gaboom-orange/60 bg-gaboom-orange/25 ring-1 ring-gaboom-orange/35{% endif %}" href="{% url 'superadmin_recovery_requests' %}">
                 <i data-lucide="key-round" class="h-5 w-5 shrink-0"></i>
                 <span class="whitespace-nowrap">Récupérations</span>

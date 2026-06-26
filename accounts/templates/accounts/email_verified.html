@@ -1,0 +1,49 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Central Borlette - Email Confirmé</title>
+  <script src="{% static 'js/gaboom-theme.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'css/gaboom.css' %}">
+</head>
+<body>
+  <div class="gaboom-app-bg flex items-center justify-center p-6">
+    <div class="w-full max-w-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <img src="{% static 'logo.png' %}" alt="Gaboom Logo" class="h-9 w-9 object-contain rounded-full">
+          <div class="leading-tight">
+            <div class="text-sm font-semibold tracking-tight">Gaboom</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Central Borlette</div>
+          </div>
+        </div>
+        <button type="button" class="gaboom-btn-ghost" onclick="window.__gaboomToggleTheme && window.__gaboomToggleTheme()">Thème</button>
+      </div>
+
+      <div class="gaboom-card mt-6 p-8 text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        </div>
+
+        <h1 class="text-2xl font-bold tracking-tight mt-4">Compte Activé !</h1>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          Félicitations <strong>{{ user.username }}</strong>, votre adresse email a été confirmée avec succès.
+        </p>
+        <p class="mt-1 text-xs text-slate-500">
+          Vous pouvez dès à présent vous connecter à votre compte et configurer votre espace.
+        </p>
+
+        <div class="mt-6">
+          <a href="/portal/login/" class="gaboom-btn-primary w-full block text-center py-2.5 font-semibold text-sm rounded-xl">
+            Se connecter maintenant
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

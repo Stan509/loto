@@ -4,7 +4,9 @@ import json
 import random
 import re
 import string
+import uuid
 from decimal import Decimal
+from accounts.mail_service import send_custom_email
 
 from functools import wraps
 
@@ -149,20 +151,30 @@ def api_affiliate_register(request: HttpRequest) -> JsonResponse:
         return _cors_json(request, {"success": False, "error": "invalid_json"}, status=400)
 
     username = (payload.get("username") or "").strip()
+    email = (payload.get("email") or "").strip()
     password = payload.get("password") or ""
 
-    if not username or not password:
+    if not username or not password or not email:
         return _cors_json(request, {"success": False, "error": "missing_fields"}, status=400)
 
     if User.objects.filter(username=username).exists():
         return _cors_json(request, {"success": False, "error": "username_already_used"}, status=409)
 
+    if User.objects.filter(email=email).exists():
+        return _cors_json(request, {"success": False, "error": "email_already_used"}, status=409)
+
+    token = uuid.uuid4().hex
+
     try:
         with transaction.atomic():
             user = User.objects.create_user(
                 username=username,
+                email=email,
                 password=password,
                 role=UserRole.AFFILIATE,
+                is_active=False,
+                email_verification_token=token,
+                is_email_verified=False,
             )
 
             code = generate_promo_code(username)
@@ -174,8 +186,6 @@ def api_affiliate_register(request: HttpRequest) -> JsonResponse:
                 code = generate_promo_code(username)
 
             promo = PromoCode.objects.create(code=code, owner=user)
-
-            login(request, user)
 
             log_audit(
                 action=AuditAction.STAFF_CREATE,
@@ -191,12 +201,34 @@ def api_affiliate_register(request: HttpRequest) -> JsonResponse:
             return _cors_json(request, {"success": False, "error": "promo_code_generation_failed"}, status=500)
         raise
 
+    # Envoyer l'email de confirmation
+    domain = request.get_host()
+    protocol = "https" if request.is_secure() else "http"
+    verify_url = f"{protocol}://{domain}/accounts/verify-email/{token}/"
+    
+    subject = "Confirmez votre compte Partenaire Gaboom"
+    message_text = f"Bonjour {username},\n\nMerci de rejoindre le programme d'affiliation Gaboom. Veuillez confirmer votre adresse email en cliquant sur le lien suivant :\n{verify_url}\n\nL'équipe Gaboom"
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #ea580c; text-align: center;">Bienvenue chez Gaboom Affiliation</h2>
+        <p>Bonjour <strong>{username}</strong>,</p>
+        <p>Merci de rejoindre le programme d'affiliation Gaboom. Pour confirmer votre adresse email et activer votre compte, veuillez cliquer sur le bouton ci-dessous :</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{verify_url}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Confirmer mon compte</a>
+        </div>
+        <p style="font-size: 12px; color: #666;">Si le bouton ne fonctionne pas, copiez-collez le lien suivant dans votre navigateur :<br><a href="{verify_url}">{verify_url}</a></p>
+        <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #999; text-align: center;">&copy; Gaboom Central · Tous droits réservés</p>
+    </div>
+    """
+    send_custom_email(subject, message_text, email, html_message=html_message)
+
     return _cors_json(
         request,
         {
             "success": True,
             "promo_code": code,
-            "redirect_url": "/affiliate/dashboard/"
+            "message": "Inscription réussie ! Un email de confirmation a été envoyé. Veuillez confirmer votre compte avant de vous connecter."
         },
         status=201
     )

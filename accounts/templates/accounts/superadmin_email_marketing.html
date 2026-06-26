@@ -1,0 +1,72 @@
+{% extends "admin_portal/_page_shell.html" %}
+
+{% block title %}SuperAdmin • Email Marketing{% endblock %}
+
+{% block page_title %}
+  Marketing • Campagnes d'Emails
+{% endblock %}
+
+{% block page_meta %}
+  <div class="text-xs text-slate-700 dark:text-slate-200">
+    SuperAdmin uniquement · Envoyer des emails marketing ou informatifs aux admins et affiliés
+  </div>
+{% endblock %}
+
+{% block page_body %}
+  <div class="mx-auto w-full max-w-2xl space-y-6">
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for message in messages %}
+          <div class="rounded-2xl border border-white/10 bg-white/20 backdrop-blur-xl px-4 py-3 text-sm text-slate-900 dark:text-white">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" class="rounded-3xl border border-white/10 bg-white/20 backdrop-blur-xl p-6 space-y-6">
+      {% csrf_token %}
+
+      <div class="space-y-4">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white border-b border-white/10 pb-2">Destinataires</h3>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Segment cible</label>
+          <select name="target" class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-[#1e1e24] dark:text-white">
+            <option value="all">Tous les utilisateurs (Admins & Affiliés)</option>
+            <option value="admins">Administrateurs de Borlette uniquement</option>
+            <option value="affiliates">Affiliés uniquement</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white border-b border-white/10 pb-2">Message</h3>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1">Sujet de l'email</label>
+          <input name="subject" type="text" required class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="Entrez le sujet de l'email" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1">Message (Texte ou HTML)</label>
+          <textarea name="message_body" rows="10" required class="w-full rounded-2xl border border-white/10 bg-white/40 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-gaboom-orange/40 dark:bg-white/5 dark:text-white" placeholder="Rédigez votre message ici..."></textarea>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <input id="is_html" name="is_html" type="checkbox" class="h-4 w-4" />
+          <label for="is_html" class="text-sm font-semibold text-slate-900 dark:text-white">Ce message contient du code HTML</label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <a href="{% url 'superadmin_dashboard' %}" class="gaboom-btn-ghost border-white/15 bg-white/5 text-slate-950 dark:text-white hover:bg-white/10 px-6 py-2 rounded-2xl text-sm font-semibold transition">
+          Annuler
+        </a>
+        <button type="submit" class="gaboom-btn-primary px-6 py-2">
+          🚀 Envoyer la Campagne
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
