@@ -322,7 +322,7 @@ def api_login(request: HttpRequest) -> JsonResponse:
             "telephone": agent.borlette.telephone,
             "slogan": agent.borlette.slogan or "",
             "adresse": agent.borlette.adresse or "",
-            "logo_url": request.build_absolute_uri(agent.borlette.logo_borlette.url) if agent.borlette.logo_borlette else "",
+            "logo_url": (agent.borlette.logo_url if agent.borlette.logo_url.startswith("data:") else request.build_absolute_uri(agent.borlette.logo_url)) if agent.borlette.logo_url else "",
             "ticket_footer_text": agent.borlette.ticket_footer_text or "La fiche est payable une seule fois au porteur. Le montant gagné devra être réclamé avant 90 jours",
             "mariage_gratuit_actif": _get_mariage_actif(agent.borlette),
             "mariage_gratuit_montant": str(_get_mariage_montant(agent.borlette)),
@@ -844,12 +844,12 @@ def api_ticket_print(request: HttpRequest, ticket_id: str) -> JsonResponse:
     # Generate QR code URL
     qr_code_url = f"https://www.gaboombos.com/ticket/{ticket.numero_ticket}"
 
-    logo_url = ""
-    if borlette.logo_borlette:
+    logo_url = borlette.logo_url if borlette.logo_url else ""
+    if logo_url and not logo_url.startswith("data:"):
         try:
-            logo_url = request.build_absolute_uri(borlette.logo_borlette.url)
+            logo_url = request.build_absolute_uri(logo_url)
         except Exception:
-            logo_url = ""
+            pass
 
     return _json_success({
         "print_data": {
@@ -2035,7 +2035,7 @@ def api_agent_config(request: HttpRequest) -> JsonResponse:
             "telephone": borlette.telephone,
             "slogan": borlette.slogan or "",
             "adresse": borlette.adresse or "",
-            "logo_url": request.build_absolute_uri(borlette.logo_borlette.url) if borlette.logo_borlette else "",
+            "logo_url": (borlette.logo_url if borlette.logo_url.startswith("data:") else request.build_absolute_uri(borlette.logo_url)) if borlette.logo_url else "",
             "ticket_footer_text": borlette.ticket_footer_text or "La fiche est payable une seule fois au porteur. Le montant gagné devra être réclamé avant 90 jours",
             "mariage_gratuit_actif": _get_mariage_actif(borlette),
             "mariage_gratuit_montant": str(_get_mariage_montant(borlette)),

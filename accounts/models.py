@@ -77,8 +77,49 @@ class Borlette(models.Model):
     adresse = models.TextField()
     telephone = models.CharField(max_length=50)
     logo_borlette = models.ImageField(upload_to="borlettes/logos/", blank=True, null=True)
+    logo_base64 = models.TextField(blank=True, null=True, help_text="Version base64 persistante du logo")
     slogan = models.CharField(max_length=255)
     site_web = models.URLField(blank=True, null=True)
+
+    @property
+    def logo_url(self):
+        if self.logo_base64:
+            return self.logo_base64
+        if self.logo_borlette:
+            try:
+                return self.logo_borlette.url
+            except ValueError:
+                pass
+        return "/static/logo.png"
+
+    def save(self, *args, **kwargs):
+        if self.logo_borlette:
+            try:
+                import base64
+                file_obj = getattr(self.logo_borlette, 'file', None)
+                if file_obj is not None:
+                    from django.core.files.uploadedfile import UploadedFile
+                    if isinstance(file_obj, UploadedFile) or not self.logo_base64:
+                        filename = self.logo_borlette.name.lower()
+                        mime_type = "image/png"
+                        if filename.endswith(".jpg") or filename.endswith(".jpeg"):
+                            mime_type = "image/jpeg"
+                        elif filename.endswith(".gif"):
+                            mime_type = "image/gif"
+                        elif filename.endswith(".webp"):
+                            mime_type = "image/webp"
+                        
+                        file_obj.seek(0)
+                        image_data = file_obj.read()
+                        encoded = base64.b64encode(image_data).decode("utf-8")
+                        self.logo_base64 = f"data:{mime_type};base64,{encoded}"
+                        file_obj.seek(0)
+            except Exception:
+                pass
+        else:
+            self.logo_base64 = None
+            
+        super().save(*args, **kwargs)
 
     agents_eligible_share = models.PositiveIntegerField(
         default=0,

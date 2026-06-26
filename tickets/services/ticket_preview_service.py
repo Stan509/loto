@@ -69,9 +69,7 @@ def build_ticket_preview(*, admin, agent, ticket_lines: list[dict], draw_ids: li
     qr_code_url = f"https://www.gaboombos.com/ticket/{ticket_number}"
     
     # Get borlette logo URL if available
-    borlette_logo_url = ""
-    if borlette.logo_borlette:
-        borlette_logo_url = borlette.logo_borlette.url
+    borlette_logo_url = borlette.logo_url
     
     return TicketPreview(
         is_valid=bool(validation.get("is_valid")),

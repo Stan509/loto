@@ -12,8 +12,8 @@
           <div class="ro-item">
             <div class="ro-label">Logo</div>
             <div class="ro-value">
-              {% if portal_borlette.logo_borlette %}
-                <img class="ro-logo" src="{{ portal_borlette.logo_borlette.url }}" alt="Logo {{ portal_borlette.nom_borlette }}" />
+              {% if portal_borlette.logo_base64 or portal_borlette.logo_borlette %}
+                <img class="ro-logo" src="{{ portal_borlette.logo_url }}" alt="Logo {{ portal_borlette.nom_borlette }}" />
               {% else %}
                 —
               {% endif %}

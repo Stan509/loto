@@ -353,9 +353,9 @@
         <div class="tiles--branding">
           <div class="tile tile-logo">
             <div class="tile__label">Logo</div>
-            <div class="logo-box {% if not portal_borlette.logo_borlette %}logo-box--empty{% endif %}">
-              {% if portal_borlette.logo_borlette %}
-                <img src="{{ portal_borlette.logo_borlette.url }}" alt="Logo {{ portal_borlette.nom_borlette }}" />
+            <div class="logo-box {% if not portal_borlette.logo_base64 and not portal_borlette.logo_borlette %}logo-box--empty{% endif %}">
+              {% if portal_borlette.logo_base64 or portal_borlette.logo_borlette %}
+                <img src="{{ portal_borlette.logo_url }}" alt="Logo {{ portal_borlette.nom_borlette }}" />
               {% else %}
                 Aucun logo
               {% endif %}
