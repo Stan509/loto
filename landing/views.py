@@ -12,8 +12,7 @@ def index(request: HttpRequest):
     draw_results = []
     for tirage in active_tirages:
         results = Resultat.objects.filter(
-            tirage=tirage,
-            statut="validated"
+            tirage=tirage
         ).order_by("-date", "-created_at")[:10]
         
         draw_results.append({
