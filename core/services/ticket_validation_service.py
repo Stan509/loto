@@ -403,53 +403,5 @@ class TicketValidationService:
 
     @staticmethod
     def _generate_free_marriages(*, settings, draws: list[Tirage] | None, total_stake: Decimal, existing_marriage_keys: set[str]) -> list[dict]:
-        # Check global setting first
-        if not settings.mariage_gratuit_actif:
-            return []
-        
-        # Check per-tirage mariage_automatique setting
-        # At least one tirage must have mariage_automatique enabled
-        if draws is None or not any(d.mariage_automatique for d in draws):
-            return []
-
-        qty = 0
-        if total_stake >= Decimal("300"):
-            qty = 3
-        elif total_stake >= Decimal("100"):
-            qty = 1
-
-        if qty <= 0:
-            return []
-
-        results: list[dict] = []
-        used = set(existing_marriage_keys)
-
-        attempts = 0
-        draw_ids = [d.id for d in draws] if draws else []
-        
-        while len(results) < qty and attempts < 1000:
-            attempts += 1
-
-            a, b = random.sample(range(100), 2)
-            v1 = f"{a:02d}"
-            v2 = f"{b:02d}"
-            key = "x".join(sorted([v1, v2]))
-            if key in used:
-                continue
-            
-            # Phase J: Verify generated mariage is not blocked
-            is_blocked, _ = TicketValidationService._is_mariage_blocked(draw_ids, key)
-            if is_blocked:
-                continue
-
-            used.add(key)
-            results.append(
-                {
-                    "jeu": "mariage",
-                    "valeur": key,
-                    "mise": Decimal("0"),
-                    "paiement_fixe": settings.mariage_gratuit_montant_fixe,
-                }
-            )
-
-        return results
+        # Automatic generation is disabled. Free marriages are now generated client-side on the APK.
+        return []

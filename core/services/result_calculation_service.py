@@ -55,6 +55,7 @@ class ResultCalculationService:
         coeff_loto4 = Decimal(str(getattr(settings, "loto4_coeff", 0) or 0))
         coeff_loto5 = Decimal(str(getattr(settings, "loto5_coeff", 0) or 0))
         coeff_mariage = Decimal(str(getattr(settings, "mariage_normal_coeff", 0) or 0))
+        payout_mariage_gratuit = Decimal(str(getattr(settings, "mariage_gratuit_montant_fixe", 0) or 0))
 
         # Extraire les numéros gagnants du résultat
         lot1 = resultat.lot1
@@ -103,6 +104,7 @@ class ResultCalculationService:
                     coeff_loto4=coeff_loto4,
                     coeff_loto5=coeff_loto5,
                     coeff_mariage=coeff_mariage,
+                    payout_mariage_gratuit=payout_mariage_gratuit,
                 )
 
                 # Mise à jour de la ligne (idempotent)
@@ -149,6 +151,7 @@ class ResultCalculationService:
         coeff_loto4: Decimal,
         coeff_loto5: Decimal,
         coeff_mariage: Decimal,
+        payout_mariage_gratuit: Decimal,
     ) -> tuple[Decimal, bool, str]:
         """
         Calcule le gain pour une ligne de ticket.
@@ -185,6 +188,7 @@ class ResultCalculationService:
                 lots_set=lots_set,
                 coeff_mariage=coeff_mariage,
                 is_gratuit=line.gratuit,
+                payout_mariage_gratuit=payout_mariage_gratuit,
             )
 
         elif jeu == "loto3":
@@ -242,6 +246,7 @@ class ResultCalculationService:
         lots_set: set,
         coeff_mariage: Decimal,
         is_gratuit: bool,
+        payout_mariage_gratuit: Decimal,
     ) -> tuple[Decimal, bool, str]:
         """Mariage gagne si les deux numéros sont dans les lots (ordre indifférent)."""
         # Format: "44x30" ou "44-30"
@@ -251,7 +256,7 @@ class ResultCalculationService:
         
         n1, n2 = parts[0].strip(), parts[1].strip()
         if n1 in lots_set and n2 in lots_set:
-            gain = mise * coeff_mariage if not is_gratuit else coeff_mariage
+            gain = mise * coeff_mariage if not is_gratuit else payout_mariage_gratuit
             return gain, True, "Mariage gagnant"
         return Decimal("0"), False, ""
 

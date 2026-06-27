@@ -517,6 +517,44 @@ class VenteViewModel @Inject constructor(
         }
     }
 
+    fun generateFreeMariages() {
+        val existingLines = _uiState.value.lines.filter { it.jeu.lowercase() == "mariage" }.map { it.valeur }.toSet()
+        val generated = mutableSetOf<String>()
+        val random = java.util.Random()
+        
+        var attempts = 0
+        while (generated.size < 3 && attempts < 100) {
+            attempts++
+            val num1 = random.nextInt(100)
+            val num2 = random.nextInt(100)
+            if (num1 == num2) continue
+            val val1 = String.format("%02d", num1)
+            val val2 = String.format("%02d", num2)
+            val format1 = "$val1-$val2"
+            val format2 = "$val2-$val1"
+            
+            if (format1 !in existingLines && format2 !in existingLines && 
+                format1 !in generated && format2 !in generated) {
+                generated.add(format1)
+            }
+        }
+        
+        val newLines = generated.map { valeur ->
+            TicketLineWithOptions(
+                jeu = "mariage",
+                valeur = valeur,
+                miseBase = 0.0,
+                options = emptySet(),
+                useGlobalOptions = false,
+                gratuit = true
+            )
+        }
+        
+        if (newLines.isNotEmpty()) {
+            _uiState.value = _uiState.value.copy(lines = _uiState.value.lines + newLines)
+        }
+    }
+
     fun toggleAutoMariage(enabled: Boolean, defaultMise: Double) {
         _uiState.value = _uiState.value.copy(autoMariageEnabled = enabled)
         if (enabled) {

@@ -230,9 +230,10 @@ class TicketBatchService:
                     lines = []
                     for e in tirage_entries:
                         lines.append({
-                            "jeu": e.get("game", ""),
-                            "valeur": e.get("number", ""),
-                            "mise": e.get("stake", 0),
+                            "jeu": e.get("game", "") or e.get("jeu", ""),
+                            "valeur": e.get("number", "") or e.get("valeur", ""),
+                            "mise": e.get("stake", 0) or e.get("mise", 0),
+                            "gratuit": bool(e.get("gratuit", False)) or bool(e.get("free", False)),
                         })
 
                     validation = TicketValidationService.validate_ticket(

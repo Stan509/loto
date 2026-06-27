@@ -553,7 +553,8 @@ def borlette_logo_view(request, borlette_id):
     from django.http import HttpResponse, Http404
     import base64
     import re
-    from django.shortcuts import redirect
+    import os
+    from django.conf import settings as django_settings
     
     try:
         borlette = Borlette.objects.get(id=borlette_id)
@@ -561,17 +562,35 @@ def borlette_logo_view(request, borlette_id):
         raise Http404("Borlette non trouvée")
         
     if borlette.logo_base64:
-        match = re.match(r"^data:([^;]+);base64,(.*)$", borlette.logo_base64)
-        if match:
-            mime_type = match.group(1)
-            base64_data = match.group(2)
-            try:
-                binary_data = base64.b64decode(base64_data)
-                return HttpResponse(binary_data, content_type=mime_type)
-            except Exception:
-                pass
-                
-    return redirect("/static/logo.png")
+        base64_str = borlette.logo_base64.strip()
+        if "," in base64_str:
+            match = re.match(r"^data:([^;]+);base64,(.*)$", base64_str)
+            if match:
+                mime_type = match.group(1)
+                base64_data = match.group(2)
+            else:
+                mime_type = "image/png"
+                base64_data = base64_str.split(",")[-1]
+        else:
+            mime_type = "image/png"
+            base64_data = base64_str
+            
+        try:
+            binary_data = base64.b64decode(base64_data.strip())
+            return HttpResponse(binary_data, content_type=mime_type)
+        except Exception:
+            pass
+            
+    # Serve fallback logo.png directly as binary response instead of redirecting
+    fallback_path = os.path.join(django_settings.BASE_DIR, "static", "logo.png")
+    if os.path.exists(fallback_path):
+        try:
+            with open(fallback_path, "rb") as f:
+                return HttpResponse(f.read(), content_type="image/png")
+        except Exception:
+            pass
+            
+    raise Http404("Logo non trouvé")
 
 
 

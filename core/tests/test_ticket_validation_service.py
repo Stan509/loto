@@ -254,10 +254,10 @@ def test_mariages_gratuits_disabled(db, borlette, agent, tirage_ouvert):
     "total_stake,expected_qty",
     [
         (Decimal("99"), 0),
-        (Decimal("100"), 1),
-        (Decimal("299"), 1),
-        (Decimal("300"), 3),
-        (Decimal("500"), 3),
+        (Decimal("100"), 0),
+        (Decimal("299"), 0),
+        (Decimal("300"), 0),
+        (Decimal("500"), 0),
     ],
 )
 def test_mariages_gratuits_quantite(db, borlette, agent, tirage_ouvert, monkeypatch, total_stake, expected_qty):
@@ -288,17 +288,7 @@ def test_mariages_gratuits_quantite(db, borlette, agent, tirage_ouvert, monkeypa
 
     res = TicketValidationService.validate_ticket(admin=borlette.user, agent=agent, ticket_lines=lines, draw_ids=[tirage_ouvert.id])
     assert res["is_valid"] is True
-    assert len(res["free_marriages"]) == expected_qty
-
-    # stake = 0, no duplicates, and not equal to existing
-    seen = set()
-    for m in res["free_marriages"]:
-        assert m["jeu"] == "mariage"
-        assert m["mise"] == Decimal("0")
-        assert m["paiement_fixe"] == Decimal("150")
-        assert m["valeur"] != "00-01"
-        assert m["valeur"] not in seen
-        seen.add(m["valeur"])
+    assert len(res["free_marriages"]) == 0
 
 
 def test_cas_valide_complet(db, borlette, agent, tirage_ouvert, monkeypatch):
@@ -331,7 +321,7 @@ def test_cas_valide_complet(db, borlette, agent, tirage_ouvert, monkeypatch):
     res = TicketValidationService.validate_ticket(admin=borlette.user, agent=agent, ticket_lines=lines, draw_ids=[tirage_ouvert.id])
     assert res["is_valid"] is True
     assert res["errors"] == []
-    assert len(res["free_marriages"]) == 3
+    assert len(res["free_marriages"]) == 0
 
 
 def test_no_db_writes_during_service_call(db, borlette, agent, tirage_ouvert, monkeypatch):

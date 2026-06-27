@@ -589,20 +589,15 @@ fun VenteScreen(
                             Divider()
                             DropdownMenuItem(
                                 text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Checkbox(
-                                            checked = uiState.freeMariageChecked,
-                                            onCheckedChange = null,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Column {
-                                            Text("Mariage Gratuit", color = Color(0xFF10B981))
-                                            Text("Mise = 0", fontSize = 10.sp, color = Color.Gray)
-                                        }
+                                    Column {
+                                        Text("Mariage Gratuit (x3)", color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
+                                        Text("3 mariages aléatoires (Mise = 0)", fontSize = 10.sp, color = Color.Gray)
                                     }
                                 },
-                                onClick = { viewModel.toggleFreeMariage(!uiState.freeMariageChecked) }
+                                onClick = {
+                                    showAutomationsMenu = false
+                                    viewModel.generateFreeMariages()
+                                }
                             )
                         }
                     }
