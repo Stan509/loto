@@ -51,6 +51,7 @@ urlpatterns = [
     path('api/', include('tickets.api_urls')),
     path('api/', include('accounts.api_urls')),
     path('api/agent/', include('agent_portal.api_urls')),
+    path('api/borlette/<int:borlette_id>/logo/', accounts_views.borlette_logo_view, name='borlette_logo'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

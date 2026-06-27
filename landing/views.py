@@ -5,7 +5,26 @@ from accounts.models import DocumentationVideo
 
 
 def index(request: HttpRequest):
-    return render(request, "landing/index.html")
+    from accounts.models import Tirage, Resultat, TirageStatus
+    
+    active_tirages = Tirage.objects.filter(statut=TirageStatus.ACTIF).order_by('ordre_affichage', 'nom')
+    
+    draw_results = []
+    for tirage in active_tirages:
+        results = Resultat.objects.filter(
+            tirage=tirage,
+            statut="validated"
+        ).order_by("-date", "-created_at")[:10]
+        
+        draw_results.append({
+            "tirage": tirage,
+            "results": results,
+            "has_results": results.exists()
+        })
+        
+    return render(request, "landing/index.html", {
+        "draw_results": draw_results
+    })
 
 
 def documentation(request: HttpRequest):

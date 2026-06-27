@@ -251,15 +251,16 @@ def test_mariages_gratuits_disabled(db, borlette, agent, tirage_ouvert):
 
 
 @pytest.mark.parametrize(
-    "numeric_count,expected_qty",
+    "total_stake,expected_qty",
     [
-        (3, 0),
-        (4, 3),
-        (9, 3),
-        (10, 6),
+        (Decimal("99"), 0),
+        (Decimal("100"), 1),
+        (Decimal("299"), 1),
+        (Decimal("300"), 3),
+        (Decimal("500"), 3),
     ],
 )
-def test_mariages_gratuits_quantite(db, borlette, agent, tirage_ouvert, monkeypatch, numeric_count, expected_qty):
+def test_mariages_gratuits_quantite(db, borlette, agent, tirage_ouvert, monkeypatch, total_stake, expected_qty):
     AdminPaymentSettings.objects.create(
         borlette=borlette,
         max_boule=Decimal("999"),
@@ -281,9 +282,9 @@ def test_mariages_gratuits_quantite(db, borlette, agent, tirage_ouvert, monkeypa
 
     monkeypatch.setattr("core.services.ticket_validation_service.random.sample", fake_sample)
 
-    lines = [{"jeu": "loto3", "valeur": f"{i:03d}", "mise": "1"} for i in range(numeric_count)]
+    lines = [{"jeu": "boule", "valeur": "12", "mise": str(total_stake)}]
     # include an existing marriage to ensure no duplicate
-    lines.append({"jeu": "mariage", "valeur": "00-01", "mise": "1"})
+    lines.append({"jeu": "mariage", "valeur": "00-01", "mise": "0"})
 
     res = TicketValidationService.validate_ticket(admin=borlette.user, agent=agent, ticket_lines=lines, draw_ids=[tirage_ouvert.id])
     assert res["is_valid"] is True
@@ -323,14 +324,14 @@ def test_cas_valide_complet(db, borlette, agent, tirage_ouvert, monkeypatch):
     monkeypatch.setattr("core.services.ticket_validation_service.random.sample", fake_sample)
 
     lines = [
-        {"jeu": "boule", "valeur": "12", "mise": "1"},
+        {"jeu": "boule", "valeur": "12", "mise": "300"},
         *[{"jeu": "loto3", "valeur": f"{i:03d}", "mise": "1"} for i in range(9)],
     ]
 
     res = TicketValidationService.validate_ticket(admin=borlette.user, agent=agent, ticket_lines=lines, draw_ids=[tirage_ouvert.id])
     assert res["is_valid"] is True
     assert res["errors"] == []
-    assert len(res["free_marriages"]) == 6
+    assert len(res["free_marriages"]) == 3
 
 
 def test_no_db_writes_during_service_call(db, borlette, agent, tirage_ouvert, monkeypatch):

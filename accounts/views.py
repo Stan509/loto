@@ -549,4 +549,29 @@ def superadmin_reset_user_password(request: HttpRequest, user_id: int):
     return redirect("superadmin_dashboard")
 
 
+def borlette_logo_view(request, borlette_id):
+    from django.http import HttpResponse, Http404
+    import base64
+    import re
+    from django.shortcuts import redirect
+    
+    try:
+        borlette = Borlette.objects.get(id=borlette_id)
+    except Borlette.DoesNotExist:
+        raise Http404("Borlette non trouvée")
+        
+    if borlette.logo_base64:
+        match = re.match(r"^data:([^;]+);base64,(.*)$", borlette.logo_base64)
+        if match:
+            mime_type = match.group(1)
+            base64_data = match.group(2)
+            try:
+                binary_data = base64.b64decode(base64_data)
+                return HttpResponse(binary_data, content_type=mime_type)
+            except Exception:
+                pass
+                
+    return redirect("/static/logo.png")
+
+
 

@@ -258,6 +258,15 @@ class TestDoublePayout:
     
     def test_double_payout_refused(self, ticket_winner, agent):
         """Second payout attempt should fail."""
+        # Setup agent cashbox balance so they can pay
+        AgentCashboxEntry.objects.create(
+            agent=agent,
+            borlette=agent.borlette,
+            entry_type=CashboxEntryType.REPLENISH,
+            amount=Decimal("10000.00"),
+            description="Setup balance",
+        )
+
         # First payout - should succeed
         result1 = TicketPayoutService.pay_ticket(
             ticket=ticket_winner,
@@ -282,6 +291,15 @@ class TestDoublePayout:
     
     def test_payout_non_winner_refused(self, ticket_valid, agent):
         """Payout on non-winning ticket should fail."""
+        # Setup agent cashbox balance so they can pay
+        AgentCashboxEntry.objects.create(
+            agent=agent,
+            borlette=agent.borlette,
+            entry_type=CashboxEntryType.REPLENISH,
+            amount=Decimal("10000.00"),
+            description="Setup balance",
+        )
+
         assert ticket_valid.is_winner is False
         
         result = TicketPayoutService.pay_ticket(
@@ -307,8 +325,8 @@ class TestVoidRules:
         result = void_ticket_with_cashbox_reversal(ticket_valid)
         assert result["success"] is True
         
-        ticket_valid.refresh_from_db()
-        assert ticket_valid.statut == TicketStatus.ANNULE
+        with pytest.raises(Ticket.DoesNotExist):
+            ticket_valid.refresh_from_db()
     
     def test_void_after_7min_refused(self, ticket_valid):
         """Void after 7 minutes should be refused (tested at service level)."""
@@ -323,6 +341,15 @@ class TestVoidRules:
     
     def test_void_after_payout_refused(self, ticket_winner, agent):
         """Void after payout should be refused."""
+        # Setup agent cashbox balance so they can pay
+        AgentCashboxEntry.objects.create(
+            agent=agent,
+            borlette=agent.borlette,
+            entry_type=CashboxEntryType.REPLENISH,
+            amount=Decimal("10000.00"),
+            description="Setup balance",
+        )
+
         # Pay the ticket first
         result = TicketPayoutService.pay_ticket(
             ticket=ticket_winner,
@@ -341,16 +368,12 @@ class TestVoidRules:
     
     def test_void_already_voided_refused(self, ticket_valid):
         """Void on already voided ticket should fail."""
-        # First void - should succeed
+        # First void - should succeed (deletes ticket)
         result1 = void_ticket_with_cashbox_reversal(ticket_valid)
         assert result1["success"] is True
         
-        ticket_valid.refresh_from_db()
-        
-        # Second void - should fail
-        result2 = void_ticket_with_cashbox_reversal(ticket_valid)
-        assert result2["success"] is False
-        assert "annulé" in result2["error"].lower()
+        with pytest.raises(Ticket.DoesNotExist):
+            ticket_valid.refresh_from_db()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -527,30 +550,39 @@ class TestCashboxConsistency:
     """Cashbox entries should be consistent after operations."""
     
     def test_void_creates_reversal_entry(self, ticket_valid, agent):
-        """Void should create a reversal cashbox entry if sale was recorded."""
+        """Void should delete all associated cashbox entries."""
         from agent_portal.services import create_cashbox_entry_for_sale
         
         # Create sale entry
         create_cashbox_entry_for_sale(ticket_valid)
         
+        ticket_id = ticket_valid.id
         initial_entries = AgentCashboxEntry.objects.filter(
-            related_ticket=ticket_valid
+            related_ticket_id=ticket_id
         ).count()
         assert initial_entries == 1
         
-        # Void ticket
+        # Void ticket (deletes ticket and cashbox entries)
         result = void_ticket_with_cashbox_reversal(ticket_valid)
         assert result["success"] is True
-        assert result["cashbox_reversed"] is True
         
-        # Should have 2 entries now (sale + reversal)
+        # Should have 0 entries now
         final_entries = AgentCashboxEntry.objects.filter(
-            related_ticket=ticket_valid
+            related_ticket_id=ticket_id
         ).count()
-        assert final_entries == 2
+        assert final_entries == 0
     
     def test_payout_creates_cashout_entry(self, ticket_winner, agent):
         """Payout should create a cashout entry."""
+        # Setup agent cashbox balance so they can pay
+        AgentCashboxEntry.objects.create(
+            agent=agent,
+            borlette=agent.borlette,
+            entry_type=CashboxEntryType.REPLENISH,
+            amount=Decimal("10000.00"),
+            description="Setup balance",
+        )
+
         initial_count = AgentCashboxEntry.objects.filter(
             agent=agent,
             entry_type=CashboxEntryType.WIN_PAYOUT_CASH_OUT,

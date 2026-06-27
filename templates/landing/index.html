@@ -181,6 +181,7 @@
 
         <nav class="hidden md:flex items-center gap-8">
             <a href="#features" class="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Fonctionnalités</a>
+            <a href="#results" class="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Résultats</a>
             <a href="#pricing" class="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Tarifs</a>
             <a href="#affiliate" class="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Affiliation</a>
             <a href="/documentation/" class="text-xs font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-widest">Documentation</a>
@@ -293,6 +294,123 @@
         </div>
     </div>
 </section>
+
+<!-- DRAW RESULTS SECTION -->
+<section id="results" class="py-12 px-6 bg-gradient-to-b from-transparent via-orange-500/5 to-transparent relative z-10">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-6">
+            <span class="inline-block px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-widest mb-4">
+                Résultats
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Derniers Résultats des Tirages
+            </h2>
+            <p class="text-zinc-400 max-w-2xl mx-auto">
+                Consultez en temps réel les derniers résultats officiels enregistrés dans le système.
+            </p>
+        </div>
+
+        {% if draw_results %}
+            <!-- Tabs Navigation -->
+            <div class="flex flex-wrap justify-center gap-2 mb-8 border-b border-white/10 pb-4">
+                {% for item in draw_results %}
+                    {% if item.has_results %}
+                        <button onclick="switchDrawTab('draw-{{ item.tirage.id }}')" id="tab-btn-draw-{{ item.tirage.id }}" class="draw-tab-btn px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all border border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white {% if forloop.first %}border-orange-500/50 bg-orange-500/10 text-orange-400{% endif %}">
+                            {{ item.tirage.nom }}
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Tabs Content -->
+            <div class="max-w-4xl mx-auto">
+                {% for item in draw_results %}
+                    {% if item.has_results %}
+                        <div id="draw-{{ item.tirage.id }}" class="draw-tab-content space-y-6 {% if not forloop.first %}hidden{% endif %}">
+                            <!-- Most Recent Result Card -->
+                            {% with latest=item.results.0 %}
+                            <div class="card border-orange-500/30 bg-gradient-to-r from-orange-500/10 to-transparent">
+                                <div class="text-center md:text-left md:flex justify-between items-center">
+                                    <div>
+                                        <span class="text-[10px] text-orange-400 uppercase tracking-widest font-black">Dernier Résultat • {{ latest.date|date:"d/m/Y" }}</span>
+                                        <h3 class="text-2xl font-black text-white mt-1">{{ item.tirage.nom }}</h3>
+                                    </div>
+                                    <div class="flex flex-wrap justify-center gap-4 mt-4 md:mt-0">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-12 h-12 bg-white/10 border border-white/10 rounded-full flex items-center justify-center text-xl font-black text-white shadow-lg shadow-black/20">{{ latest.lot1 }}</div>
+                                            <div class="w-12 h-12 bg-white/10 border border-white/10 rounded-full flex items-center justify-center text-xl font-black text-white shadow-lg shadow-black/20">{{ latest.lot2 }}</div>
+                                            <div class="w-12 h-12 bg-white/10 border border-white/10 rounded-full flex items-center justify-center text-xl font-black text-white shadow-lg shadow-black/20">{{ latest.lot3 }}</div>
+                                        </div>
+                                        <div class="flex items-center gap-2 border-l border-white/10 pl-4">
+                                            <div>
+                                                <div class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Loto 3</div>
+                                                <div class="text-lg font-black text-orange-400">{{ latest.loto3 }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endwith %}
+
+                            <!-- History Table -->
+                            <div class="card overflow-x-auto p-0 border-white/5 bg-black/20">
+                                <table class="w-full border-collapse text-left">
+                                    <thead>
+                                        <tr class="border-b border-white/10 bg-white/5">
+                                            <th class="p-4 text-xs font-bold text-zinc-400 uppercase tracking-wider">Date</th>
+                                            <th class="p-4 text-xs font-bold text-zinc-400 uppercase tracking-wider">1er Lot</th>
+                                            <th class="p-4 text-xs font-bold text-zinc-400 uppercase tracking-wider">2ème Lot</th>
+                                            <th class="p-4 text-xs font-bold text-zinc-400 uppercase tracking-wider">3ème Lot</th>
+                                            <th class="p-4 text-xs font-bold text-zinc-400 uppercase tracking-wider">Loto 3</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-white/5">
+                                        {% for res in item.results %}
+                                            <tr class="hover:bg-white/5 transition-colors">
+                                                <td class="p-4 text-sm font-medium text-white">{{ res.date|date:"d/m/Y" }}</td>
+                                                <td class="p-4 text-sm font-bold text-emerald-400">{{ res.lot1 }}</td>
+                                                <td class="p-4 text-sm font-bold text-zinc-300">{{ res.lot2 }}</td>
+                                                <td class="p-4 text-sm font-bold text-zinc-300">{{ res.lot3 }}</td>
+                                                <td class="p-4 text-sm font-bold text-orange-400">{{ res.loto3 }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12 text-zinc-500">
+                Aucun résultat validé pour le moment.
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+    function switchDrawTab(tabId) {
+        // Hide all tab contents
+        document.querySelectorAll('.draw-tab-content').forEach(function(content) {
+            content.classList.add('hidden');
+        });
+        
+        // Remove active class from all tab buttons
+        document.querySelectorAll('.draw-tab-btn').forEach(function(btn) {
+            btn.classList.remove('border-orange-500/50', 'bg-orange-500/10', 'text-orange-400');
+            btn.classList.add('border-white/10', 'bg-white/5', 'text-zinc-400');
+        });
+        
+        // Show current tab content
+        document.getElementById(tabId).classList.remove('hidden');
+        
+        // Add active class to clicked tab button
+        var activeBtn = document.getElementById('tab-btn-' + tabId);
+        activeBtn.classList.remove('border-white/10', 'bg-white/5', 'text-zinc-400');
+        activeBtn.classList.add('border-orange-500/50', 'bg-orange-500/10', 'text-orange-400');
+    }
+</script>
 
 <!-- STATS -->
 <section class="py-12 px-6">

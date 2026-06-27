@@ -80,10 +80,11 @@ class TicketValidationService:
         if errors:
             return {"is_valid": False, "errors": errors, "free_marriages": []}
 
+        total_stake = sum(l.stake for l in parsed_lines)
         free_marriages = TicketValidationService._generate_free_marriages(
             settings=settings,
             draws=draws,
-            numeric_bets_count=TicketValidationService._count_numeric_bets(parsed_lines),
+            total_stake=total_stake,
             existing_marriage_keys=existing_marriage_keys,
         )
 
@@ -401,7 +402,7 @@ class TicketValidationService:
         return f"{x}x{y}"
 
     @staticmethod
-    def _generate_free_marriages(*, settings, draws: list[Tirage] | None, numeric_bets_count: int, existing_marriage_keys: set[str]) -> list[dict]:
+    def _generate_free_marriages(*, settings, draws: list[Tirage] | None, total_stake: Decimal, existing_marriage_keys: set[str]) -> list[dict]:
         # Check global setting first
         if not settings.mariage_gratuit_actif:
             return []
@@ -411,12 +412,11 @@ class TicketValidationService:
         if draws is None or not any(d.mariage_automatique for d in draws):
             return []
 
-        n = int(numeric_bets_count or 0)
         qty = 0
-        if settings.mariage_gratuit_seuil2 and n >= settings.mariage_gratuit_seuil2:
-            qty = settings.mariage_gratuit_qty2
-        elif settings.mariage_gratuit_seuil1 and n >= settings.mariage_gratuit_seuil1:
-            qty = settings.mariage_gratuit_qty1
+        if total_stake >= Decimal("300"):
+            qty = 3
+        elif total_stake >= Decimal("100"):
+            qty = 1
 
         if qty <= 0:
             return []
