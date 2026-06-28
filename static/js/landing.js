@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // --- Signup Logic (Multi-step) ---
+    let registeredUsername = "";
     const signupModal = $("signupModal");
     const signupModalContent = $("signupModalContent");
     const signupModalBackdrop = $("signupModalBackdrop");
@@ -142,31 +143,83 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(data?.message || "Erreur d'inscription.");
             }
 
-            // Succès - gérer la réponse avec redirect_url
+            registeredUsername = payload.username;
+
+            // Show Step 4 (verification code input)
             setDisplay("signupStepLoading", "none");
-            setDisplay("signupStepForm", "none");
-            
-            // Afficher un message de succès
-            const errText = $("signupErrorText");
-            const errTitle = $("signupStepError").querySelector("h3");
-            
-            if (errTitle) errTitle.textContent = "✅ Inscription réussie !";
-            if (errText) {
-                errText.textContent = "Inscription réussie !\n\nVous allez être connecté automatiquement...";
-                errText.style.color = "#10b981"; // Green color
-            }
-            setDisplay("signupStepError", "block");
-            
-            // Rediriger vers l'URL de connexion automatique ou la page de login
-            const redirectUrl = data?.redirect_url || "/portal/login/";
-            setTimeout(() => {
-                window.location.href = redirectUrl;
-            }, 2000);
+            setDisplay("signupStepForm", "block");
+            if (signupStep1) signupStep1.style.display = "none";
+            if (signupStep2) signupStep2.style.display = "none";
+            if (signupStep3) signupStep3.style.display = "none";
+            if (signupStep4) signupStep4.style.display = "block";
+            const codeInput = $("verificationCodeInput");
+            if (codeInput) codeInput.value = "";
+            const errorEl = $("verificationCodeError");
+            if (errorEl) errorEl.classList.add("hidden");
+
         } catch (err) {
             setDisplay("signupStepLoading", "none");
             setDisplay("signupStepError", "block");
             const errText = $("signupErrorText");
             if (errText) errText.textContent = err.message;
+        }
+    });
+
+    // Verification step action for Admin signup
+    $("submitVerificationBtn")?.addEventListener("click", async () => {
+        const codeInput = $("verificationCodeInput");
+        const code = codeInput?.value?.trim();
+        const errorEl = $("verificationCodeError");
+
+        if (!code || code.length < 6) {
+            if (errorEl) {
+                errorEl.textContent = "Veuillez saisir un code valide à 6 chiffres.";
+                errorEl.classList.remove("hidden");
+            }
+            return;
+        }
+
+        if (errorEl) errorEl.classList.add("hidden");
+        setDisplay("signupStepForm", "none");
+        setDisplay("signupStepLoading", "flex");
+
+        try {
+            const res = await fetch("/api/signup/verify-code/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: registeredUsername,
+                    code: code
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                throw new Error(data?.message || "Code de validation incorrect.");
+            }
+
+            setDisplay("signupStepLoading", "none");
+            setDisplay("signupStepError", "block");
+            const errText = $("signupErrorText");
+            const errTitle = $("signupStepError").querySelector("h3");
+            if (errTitle) errTitle.textContent = "✅ Compte activé !";
+            if (errText) {
+                errText.textContent = "Votre compte a été activé avec succès ! Connexion en cours...";
+                errText.style.color = "#10b981";
+            }
+
+            setTimeout(() => {
+                window.location.href = data.data?.redirect_url || "/portal/dashboard/";
+            }, 1500);
+
+        } catch (err) {
+            setDisplay("signupStepLoading", "none");
+            setDisplay("signupStepForm", "block");
+            if (errorEl) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove("hidden");
+            }
         }
     });
 
@@ -221,22 +274,20 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const data = await res.json().catch(() => ({}));
-            setDisplay("affiliateStepLoading", "none");
-            setDisplay("affiliateStepResult", "block");
 
-            if (res.ok && data.success) {
-                $("affiliateSuccessIcon").classList.remove("hidden");
-                $("affiliateErrorIcon").classList.add("hidden");
-                // Forcer la redirection vers le dashboard affilié
-                const redirectUrl = "/affiliate/dashboard/";
-                console.log("[AFFILIATE] Success! Redirecting to:", redirectUrl, "API response:", data);
-                setTimeout(() => { 
-                    console.log("[AFFILIATE] Navigating now to:", redirectUrl);
-                    window.location.replace(redirectUrl);  // replace() au lieu de href pour éviter l'historique
-                }, 2000);
-            } else {
+            if (!res.ok) {
                 throw new Error(data.error || "Échec de l'enregistrement.");
             }
+
+            registeredUsername = fd.get("username");
+            
+            setDisplay("affiliateStepLoading", "none");
+            setDisplay("affiliateStepVerification", "block");
+            const codeInput = $("affiliateVerificationCodeInput");
+            if (codeInput) codeInput.value = "";
+            const errorEl = $("affiliateVerificationCodeError");
+            if (errorEl) errorEl.classList.add("hidden");
+
         } catch (err) {
             setDisplay("affiliateStepLoading", "none");
             setDisplay("affiliateStepResult", "block");
@@ -244,6 +295,63 @@ document.addEventListener("DOMContentLoaded", () => {
             $("affiliateErrorIcon").classList.remove("hidden");
             const errText = $("affiliateErrorText");
             if (errText) errText.textContent = err.message;
+        }
+    });
+
+    $("submitAffiliateVerificationBtn")?.addEventListener("click", async () => {
+        const codeInput = $("affiliateVerificationCodeInput");
+        const code = codeInput?.value?.trim();
+        const errorEl = $("affiliateVerificationCodeError");
+
+        if (!code || code.length < 6) {
+            if (errorEl) {
+                errorEl.textContent = "Veuillez saisir un code valide à 6 chiffres.";
+                errorEl.classList.remove("hidden");
+            }
+            return;
+        }
+
+        if (errorEl) errorEl.classList.add("hidden");
+        setDisplay("affiliateStepVerification", "none");
+        setDisplay("affiliateStepLoading", "flex");
+
+        try {
+            const res = await fetch("/api/signup/verify-code/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: registeredUsername,
+                    code: code
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                throw new Error(data?.message || "Code de validation incorrect.");
+            }
+
+            setDisplay("affiliateStepLoading", "none");
+            setDisplay("affiliateStepResult", "block");
+            $("affiliateSuccessIcon").classList.remove("hidden");
+            $("affiliateErrorIcon").classList.add("hidden");
+            
+            const successTitle = $("affiliateSuccessIcon").querySelector("h3");
+            const successText = $("affiliateSuccessIcon").querySelector("p");
+            if (successTitle) successTitle.textContent = "✅ Compte activé !";
+            if (successText) successText.textContent = "Votre compte a été activé avec succès ! Connexion en cours...";
+
+            setTimeout(() => {
+                window.location.href = data.data?.redirect_url || "/affiliate/dashboard/";
+            }, 1500);
+
+        } catch (err) {
+            setDisplay("affiliateStepLoading", "none");
+            setDisplay("affiliateStepVerification", "block");
+            if (errorEl) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove("hidden");
+            }
         }
     });
 

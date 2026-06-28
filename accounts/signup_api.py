@@ -83,7 +83,8 @@ def api_signup(request) -> JsonResponse:
         except PromoCode.DoesNotExist:
             return _json_error("Code promo invalide", 400)
 
-    token = uuid.uuid4().hex
+    import random
+    token = f"{random.randint(100000, 999999)}"
 
     with transaction.atomic():
         # Créer l'utilisateur (commence inactif pour confirmation par mail)
@@ -153,12 +154,13 @@ def api_signup(request) -> JsonResponse:
     verify_url = f"{protocol}://{domain}/accounts/verify-email/{token}/"
     
     subject = "Confirmez votre compte Gaboom Central"
-    message_text = f"Bonjour {username},\n\nMerci de vous être inscrit sur Gaboom Central. Veuillez confirmer votre adresse email en cliquant sur le lien suivant :\n{verify_url}\n\nL'équipe Gaboom"
+    message_text = f"Bonjour {username},\n\nMerci de vous être inscrit sur Gaboom Central. Votre code de validation est : {token}\n\nVous pouvez également confirmer votre adresse email en cliquant sur le lien suivant :\n{verify_url}\n\nL'équipe Gaboom"
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <h2 style="color: #ea580c; text-align: center;">Bienvenue chez Gaboom Central</h2>
         <p>Bonjour <strong>{username}</strong>,</p>
-        <p>Merci de vous être inscrit sur Gaboom Central. Pour confirmer votre adresse email et activer votre compte, veuillez cliquer sur le bouton ci-dessous :</p>
+        <p>Merci de vous être inscrit sur Gaboom Central. Votre code de validation est : <strong style="font-size: 20px; color: #ea580c; font-family: monospace;">{token}</strong></p>
+        <p>Pour confirmer votre adresse email et activer votre compte, veuillez saisir ce code de validation sur la page d'inscription, ou cliquer sur le bouton ci-dessous :</p>
         <div style="text-align: center; margin: 30px 0;">
             <a href="{verify_url}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Confirmer mon compte</a>
         </div>
@@ -171,8 +173,53 @@ def api_signup(request) -> JsonResponse:
 
     return _json_success({
         "user_id": user.id,
+        "username": username,
         "borlette_id": borlette.id,
         "activation_amount": str(price_calc['total']),
         "promo_applied": bool(promo_code),
-        "message": "Inscription réussie ! Un email de confirmation a été envoyé à votre adresse. Veuillez confirmer votre compte avant de vous connecter.",
+        "message": "Inscription réussie ! Un email de validation a été envoyé à votre adresse. Veuillez entrer le code reçu pour activer votre compte.",
+    })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_verify_code(request) -> JsonResponse:
+    """
+    POST /api/signup/verify-code/
+    Valide le code de confirmation envoyé par e-mail et active le compte.
+    """
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return _json_error("JSON invalide")
+
+    username = data.get("username", "").strip()
+    code = data.get("code", "").strip()
+
+    if not username or not code:
+        return _json_error("Nom d'utilisateur et code requis.")
+
+    user = User.objects.filter(username=username, email_verification_token=code).first()
+    if not user:
+        return _json_error("Code de validation ou nom d'utilisateur incorrect.")
+
+    with transaction.atomic():
+        user.is_active = True
+        user.is_email_verified = True
+        user.email_verification_token = None
+        user.save(update_fields=["is_active", "is_email_verified", "email_verification_token"])
+
+    # Se connecter automatiquement
+    from django.contrib.auth import login
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+    redirect_url = "/portal/dashboard/"
+    if user.role == UserRole.AFFILIATE:
+        redirect_url = "/affiliate/dashboard/"
+    elif user.role == UserRole.PARTNER:
+        redirect_url = "/partner/dashboard/"
+
+    return _json_success({
+        "message": "Votre compte a été activé avec succès !",
+        "redirect_url": redirect_url
     })

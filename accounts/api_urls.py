@@ -8,6 +8,7 @@ app_name = "accounts_api"
 
 urlpatterns = [
     path("signup/", signup_api.api_signup, name="signup"),
+    path("signup/verify-code/", signup_api.api_verify_code, name="signup_verify_code"),
     path("affiliate/register/", api_views.api_affiliate_register, name="affiliate_register"),
     path("affiliate/update-code/", api_views.api_affiliate_update_code, name="affiliate_update_code"),
     path("affiliate/withdraw/", api_views.api_affiliate_withdraw, name="affiliate_withdraw"),

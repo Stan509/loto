@@ -163,7 +163,8 @@ def api_affiliate_register(request: HttpRequest) -> JsonResponse:
     if User.objects.filter(email=email).exists():
         return _cors_json(request, {"success": False, "error": "email_already_used"}, status=409)
 
-    token = uuid.uuid4().hex
+    import random
+    token = f"{random.randint(100000, 999999)}"
 
     try:
         with transaction.atomic():
@@ -207,12 +208,13 @@ def api_affiliate_register(request: HttpRequest) -> JsonResponse:
     verify_url = f"{protocol}://{domain}/accounts/verify-email/{token}/"
     
     subject = "Confirmez votre compte Partenaire Gaboom"
-    message_text = f"Bonjour {username},\n\nMerci de rejoindre le programme d'affiliation Gaboom. Veuillez confirmer votre adresse email en cliquant sur le lien suivant :\n{verify_url}\n\nL'équipe Gaboom"
+    message_text = f"Bonjour {username},\n\nMerci de rejoindre le programme d'affiliation Gaboom. Votre code de validation est : {token}\n\nVous pouvez également confirmer votre adresse email en cliquant sur le lien suivant :\n{verify_url}\n\nL'équipe Gaboom"
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <h2 style="color: #ea580c; text-align: center;">Bienvenue chez Gaboom Affiliation</h2>
         <p>Bonjour <strong>{username}</strong>,</p>
-        <p>Merci de rejoindre le programme d'affiliation Gaboom. Pour confirmer votre adresse email et activer votre compte, veuillez cliquer sur le bouton ci-dessous :</p>
+        <p>Merci de rejoindre le programme d'affiliation Gaboom. Votre code de validation est : <strong style="font-size: 20px; color: #ea580c; font-family: monospace;">{token}</strong></p>
+        <p>Pour confirmer votre adresse email et activer votre compte, veuillez saisir ce code de validation sur la page d'inscription, ou cliquer sur le bouton ci-dessous :</p>
         <div style="text-align: center; margin: 30px 0;">
             <a href="{verify_url}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Confirmer mon compte</a>
         </div>
@@ -228,7 +230,8 @@ def api_affiliate_register(request: HttpRequest) -> JsonResponse:
         {
             "success": True,
             "promo_code": code,
-            "message": "Inscription réussie ! Un email de confirmation a été envoyé. Veuillez confirmer votre compte avant de vous connecter."
+            "username": username,
+            "message": "Inscription réussie ! Un email de validation a été envoyé. Veuillez entrer le code reçu pour activer votre compte."
         },
         status=201
     )
