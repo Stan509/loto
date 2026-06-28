@@ -9,6 +9,7 @@
     <script src="{% static 'js/gaboom-hero.js' %}" defer></script>
     <link rel="stylesheet" href="{% static 'css/gaboom.css' %}">
     <script src="https://unpkg.com/lucide@latest"></script>
+    {% block extra_head %}{% endblock %}
 </head>
   <body>
     <input class="portal-nav-toggle" type="checkbox" id="portal_nav_toggle" />
