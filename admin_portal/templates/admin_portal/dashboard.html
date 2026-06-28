@@ -524,14 +524,6 @@
     if (!mapEl) return;
 
     const agentsWithCoords = agentsData.all_agents_map || [];
-    
-    if (agentsWithCoords.length === 0) {
-      mapEl.innerHTML = `
-        <div class="map-placeholder" style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,0.4);font-size:14px;">
-          Aucune coordonnée GPS d'agent reçue pour le moment.
-        </div>`;
-      return;
-    }
 
     if (mapEl.querySelector('.map-placeholder')) {
       mapEl.innerHTML = '';
@@ -554,6 +546,29 @@
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
       }).addTo(dashboardMap);
+
+      setTimeout(() => {
+        dashboardMap.invalidateSize();
+      }, 400);
+    }
+
+    // Show/hide no-location overlay message
+    let overlay = document.getElementById('map-no-coords-overlay');
+    if (agentsWithCoords.length === 0) {
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'map-no-coords-overlay';
+        overlay.style.cssText = 'position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.9); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 500; z-index: 1000; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events: none; transition: opacity 0.3s;';
+        overlay.innerHTML = 'ℹ️ Aucun agent n\'a partagé sa position GPS pour le moment.';
+        mapEl.style.position = 'relative';
+        mapEl.appendChild(overlay);
+      }
+      overlay.style.opacity = '1';
+    } else {
+      if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => { if (overlay) overlay.remove(); }, 300);
+      }
     }
 
     const currentAgentIds = new Set();
