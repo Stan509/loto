@@ -1291,18 +1291,24 @@ class VenteViewModel @Inject constructor(
                             createdOffline.add(offlineInfo)
                         }
                         
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            createdTickets = createdOffline,
-                            currentPrintIndex = 0,
-                            ticketCreated = true,
-                            error = "Tickets créés hors ligne (${createdOffline.size})"
-                        )
-                        
-                        // Start printing if allowed
                         val allowOfflinePrint = agentConfigDataStore.getAllowOfflinePrint()
                         if (allowOfflinePrint) {
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                createdTickets = createdOffline,
+                                currentPrintIndex = 0,
+                                ticketCreated = false, // Keep false while printing!
+                                error = "Tickets créés hors ligne (${createdOffline.size})"
+                            )
                             printCurrentTicketMulti()
+                        } else {
+                            _uiState.value = _uiState.value.copy(
+                                isLoading = false,
+                                createdTickets = createdOffline,
+                                currentPrintIndex = 0,
+                                ticketCreated = true,
+                                error = "Tickets créés hors ligne (${createdOffline.size})"
+                            )
                         }
                     } catch (e: Exception) {
                         _uiState.value = _uiState.value.copy(isLoading = false, error = "Erreur hors-ligne multiple: ${e.message}")
@@ -1386,9 +1392,9 @@ class VenteViewModel @Inject constructor(
             isLoading = false,
             createdTickets = createdTickets,
             currentPrintIndex = 0,
-            ticketCreated = true,
+            ticketCreated = false, // Keep false while printing!
             error = errorMsg,
-            creationProgress = null
+            creationProgress = "Impression 1/${createdTickets.size}..."
         )
 
         // Start chained printing
@@ -1434,6 +1440,7 @@ class VenteViewModel @Inject constructor(
                     val result = printer.printTicket(printData)
                     if (result.isSuccess) {
                         markTicketPrinted(index)
+                        printNextTicketMulti() // Advance to next ticket
                     } else {
                         _uiState.value = _uiState.value.copy(
                             printError = "Impression échouée: ${result.exceptionOrNull()?.message ?: "Erreur"}",
@@ -1469,7 +1476,8 @@ class VenteViewModel @Inject constructor(
             // All done
             _uiState.value = _uiState.value.copy(
                 creationProgress = null,
-                printError = null
+                printError = null,
+                ticketCreated = true // All tickets successfully printed or skipped, safe to navigate back!
             )
         } else {
             _uiState.value = _uiState.value.copy(currentPrintIndex = nextIndex)
