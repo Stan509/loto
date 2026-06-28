@@ -145,7 +145,7 @@ class DashboardService:
     
     def get_agents_online(self, limit: int = 10) -> dict[str, Any]:
         """
-        Retourne les agents en ligne (heartbeat < 2 min).
+        Retourne les agents en ligne (heartbeat < 2 min) et tous les agents avec coordonnées pour la map.
         """
         cutoff = timezone.now() - timedelta(minutes=2)
         
@@ -165,6 +165,9 @@ class DashboardService:
         eligible_agents = min(eligible_setting, total_agents)
         non_eligible_agents = max(0, total_agents - eligible_agents)
         
+        # Récupérer tous les agents avec coordonnées
+        all_agents = Agent.objects.filter(borlette=self.borlette)
+        
         return {
             "total_online": total_online,
             "total_agents": total_agents,
@@ -179,6 +182,18 @@ class DashboardService:
                     "last_seen": a.last_seen_at.isoformat() if a.last_seen_at else None,
                 }
                 for a in agents_online
+            ],
+            "all_agents_map": [
+                {
+                    "id": a.id,
+                    "nom": a.nom,
+                    "zone": a.zone,
+                    "latitude": float(a.latitude) if a.latitude is not None else None,
+                    "longitude": float(a.longitude) if a.longitude is not None else None,
+                    "last_location_updated_at": a.last_location_updated_at.isoformat() if a.last_location_updated_at else None,
+                    "is_online": a.is_online,
+                }
+                for a in all_agents if a.latitude is not None and a.longitude is not None
             ]
         }
     
