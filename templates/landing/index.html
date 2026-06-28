@@ -206,7 +206,7 @@
             <div class="space-y-3">
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm">
                     <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                    <span class="text-xs font-bold text-orange-400 uppercase tracking-widest">Platform v2.0.9</span>
+                    <span class="text-xs font-bold text-orange-400 uppercase tracking-widest">Platform v2.1.0</span>
                     <span class="text-xs text-zinc-500">Enterprise Ready</span>
                 </div>
                 
@@ -232,9 +232,9 @@
                         <i data-lucide="play-circle" class="mr-2 h-4 w-4"></i>
                         Démo Live
                     </a>
-                    <a href="{% static 'app-debug.apk' %}?v=2.0.9" class="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:scale-105 transition-all flex items-center justify-center">
+                    <a href="{% static 'app-debug.apk' %}?v=2.1.0" class="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:scale-105 transition-all flex items-center justify-center">
                         <i data-lucide="download" class="mr-2 h-4 w-4"></i>
-                        Télécharger APK (v2.0.9)
+                        Télécharger APK (v2.1.0)
                     </a>
                 </div>
                 
@@ -318,7 +318,7 @@
                     <select id="draw-selector" onchange="switchDrawTab(this.value)" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none cursor-pointer pr-10">
                         {% for item in draw_results %}
                             {% if item.has_results %}
-                                <option value="draw-{{ item.tirage.id }}">{{ item.tirage.nom }}</option>
+                                <option value="draw-{{ item.tirage.id }}" class="text-black bg-white" style="color: black;">{{ item.tirage.nom }}</option>
                             {% endif %}
                         {% endfor %}
                     </select>
@@ -437,6 +437,58 @@
             <div class="text-center">
                 <h3 class="text-4xl md:text-5xl font-black text-white">-40%</h3>
                 <p class="text-sm text-zinc-500 mt-2 uppercase tracking-wider">Pertes Évitées</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECURITY & TECHNOLOGY SECTION -->
+<section id="security-tech" class="py-16 px-6 bg-gradient-to-b from-transparent via-[#10B981]/5 to-transparent relative z-10">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-12">
+            <span class="inline-block px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">
+                Sécurité & Technologie de Pointe
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black mb-4">
+                Sécurité de Niveau Bancaire & Infrastructure Scalable
+            </h2>
+            <p class="text-zinc-400 max-w-2xl mx-auto">
+                Conçu selon les normes internationales les plus rigoureuses et propulsé par les dernières technologies de 2026.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Card 1: Sécurité Robuste -->
+            <div class="card border-white/5 bg-black/40 backdrop-blur-md p-8 hover:border-emerald-500/30 transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
+                    <i data-lucide="shield-check" class="h-6 w-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">Sécurité de Grade Bancaire</h3>
+                <p class="text-sm text-zinc-400 leading-relaxed">
+                    Vos données et transactions financières sont protégées par des clés cryptographiques AES-256 et des signatures HMAC par appareil. Nous respectons scrupuleusement les exigences de conformité des banques mondiales pour une sécurité absolue.
+                </p>
+            </div>
+
+            <!-- Card 2: Stack Multilangage -->
+            <div class="card border-white/5 bg-black/40 backdrop-blur-md p-8 hover:border-emerald-500/30 transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
+                    <i data-lucide="cpu" class="h-6 w-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">Stack Technologique Hybride</h3>
+                <p class="text-sm text-zinc-400 leading-relaxed">
+                    Nous utilisons la puissance de <strong>Rust</strong> et <strong>Go</strong> pour les services de transaction temps réel à haute concurrence, <strong>Python (Django)</strong> pour la robustesse des validations métier, <strong>Javascript</strong> pour une interface réactive et <strong>Kotlin</strong> pour une résilience native hors-ligne complète.
+                </p>
+            </div>
+
+            <!-- Card 3: Haute Disponibilité -->
+            <div class="card border-white/5 bg-black/40 backdrop-blur-md p-8 hover:border-emerald-500/30 transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
+                    <i data-lucide="server" class="h-6 w-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-3">Scalabilité & Haute Disponibilité</h3>
+                <p class="text-sm text-zinc-400 leading-relaxed">
+                    Hébergé sur une infrastructure cloud distribuée géographiquement avec réplication temps réel et basculement automatique. Capable d'absorber des millions de requêtes par seconde sans aucun ralentissement.
+                </p>
             </div>
         </div>
     </div>

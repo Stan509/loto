@@ -258,15 +258,68 @@ object EscPosBuilder {
         buffer.addAll("--------------------------------".toByteArray(Charsets.UTF_8).toList())
         buffer.add(LF)
 
-        // ─── Lignes de mise ────────────────────────────────────────────────
-        buffer.addAll(BOLD_ON.toList())
-        buffer.addAll("JEU     NUMERO    MISE".toByteArray(Charsets.UTF_8).toList())
-        buffer.add(LF)
-        buffer.addAll(BOLD_OFF.toList())
+        val generalLines = mutableListOf<String>()
+        val mariageLines = mutableListOf<String>()
+        val freeMariageLines = mutableListOf<String>()
 
         for (line in data.lines) {
-            buffer.addAll(line.stripAccents().toByteArray(Charsets.UTF_8).toList())
+            val lower = line.lowercase()
+            if (lower.contains("mariage")) {
+                if (lower.contains("gratuit")) {
+                    freeMariageLines.add(line)
+                } else {
+                    mariageLines.add(line)
+                }
+            } else {
+                generalLines.add(line)
+            }
+        }
+
+        if (generalLines.isNotEmpty()) {
+            buffer.addAll(BOLD_ON.toList())
+            buffer.addAll("--- PARIS ORDINAIRES ---".toByteArray(Charsets.UTF_8).toList())
             buffer.add(LF)
+            buffer.addAll("JEU     NUMERO    MISE".toByteArray(Charsets.UTF_8).toList())
+            buffer.add(LF)
+            buffer.addAll(BOLD_OFF.toList())
+            for (line in generalLines) {
+                buffer.addAll(line.stripAccents().toByteArray(Charsets.UTF_8).toList())
+                buffer.add(LF)
+            }
+            if (mariageLines.isNotEmpty() || freeMariageLines.isNotEmpty()) {
+                buffer.addAll("--------------------------------".toByteArray(Charsets.UTF_8).toList())
+                buffer.add(LF)
+            }
+        }
+
+        if (mariageLines.isNotEmpty()) {
+            buffer.addAll(BOLD_ON.toList())
+            buffer.addAll("--- MARIAGES ---".toByteArray(Charsets.UTF_8).toList())
+            buffer.add(LF)
+            buffer.addAll("JEU     NUMERO    MISE".toByteArray(Charsets.UTF_8).toList())
+            buffer.add(LF)
+            buffer.addAll(BOLD_OFF.toList())
+            for (line in mariageLines) {
+                buffer.addAll(line.stripAccents().toByteArray(Charsets.UTF_8).toList())
+                buffer.add(LF)
+            }
+            if (freeMariageLines.isNotEmpty()) {
+                buffer.addAll("--------------------------------".toByteArray(Charsets.UTF_8).toList())
+                buffer.add(LF)
+            }
+        }
+
+        if (freeMariageLines.isNotEmpty()) {
+            buffer.addAll(BOLD_ON.toList())
+            buffer.addAll("--- MARIAGES GRATUITS ---".toByteArray(Charsets.UTF_8).toList())
+            buffer.add(LF)
+            buffer.addAll("JEU     NUMERO    MISE".toByteArray(Charsets.UTF_8).toList())
+            buffer.add(LF)
+            buffer.addAll(BOLD_OFF.toList())
+            for (line in freeMariageLines) {
+                buffer.addAll(line.stripAccents().toByteArray(Charsets.UTF_8).toList())
+                buffer.add(LF)
+            }
         }
 
         buffer.addAll("--------------------------------".toByteArray(Charsets.UTF_8).toList())

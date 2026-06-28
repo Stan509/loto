@@ -552,8 +552,8 @@ class Tirage(models.Model):
         
         from datetime import timedelta, datetime, time
         
-        # Calculer l'heure de fermeture (tirage - 5 minutes)
-        fermeture_time = (datetime.combine(datetime.min, self.heure_tirage) - timedelta(minutes=5)).time()
+        # Calculer l'heure de fermeture (tirage - 3 minutes)
+        fermeture_time = (datetime.combine(datetime.min, self.heure_tirage) - timedelta(minutes=3)).time()
         
         t_10_00 = time(10, 0)
         t_14_30 = time(14, 30)
@@ -620,15 +620,15 @@ class Tirage(models.Model):
 class AdminPaymentSettings(models.Model):
     borlette = models.OneToOneField(Borlette, on_delete=models.CASCADE, related_name="payment_settings")
 
-    boule_1er_lot_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    boule_2eme_lot_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    boule_3eme_lot_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    boule_1er_lot_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("60"))
+    boule_2eme_lot_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("20"))
+    boule_3eme_lot_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("10"))
 
-    loto3_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    loto4_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    loto5_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    loto3_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("100"))
+    loto4_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("5000"))
+    loto5_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("25000"))
 
-    mariage_normal_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    mariage_normal_coeff = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("1000"))
 
     mariage_gratuit_actif = models.BooleanField(default=False)
 
@@ -638,7 +638,7 @@ class AdminPaymentSettings(models.Model):
     mariage_gratuit_seuil2 = models.PositiveIntegerField(default=10)
     mariage_gratuit_qty2 = models.PositiveIntegerField(default=6)
 
-    mariage_gratuit_montant_fixe = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    mariage_gratuit_montant_fixe = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("500"))
 
     max_boule = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("50000"), validators=[MinValueValidator(0)])
     max_loto3 = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("50000"), validators=[MinValueValidator(0)])

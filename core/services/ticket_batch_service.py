@@ -314,7 +314,8 @@ class TicketBatchService:
                         })
                         total_mise += mise
 
-                        RiskManagementService.apply_bet(tirage=draw, game=jeu, value=valeur, stake=mise)
+                        if mise > 0:
+                            RiskManagementService.apply_bet(tirage=draw, game=jeu, value=valeur, stake=mise)
 
                     for fm in free_marriages:
                         valeur = str(fm.get("valeur", "")).strip()

@@ -13,28 +13,28 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 // ═══════════════════════════════════════════════════════════════════════════
-// THEME MODE: DEFAULT (Violet sombre premium)
+// THEME MODE: DEFAULT (Clair bleuté premium)
 // ═══════════════════════════════════════════════════════════════════════════
-private val DefaultPrimary = Color(0xFF7C4DFF)  // Violet
-private val DefaultSecondary = Color(0xFF10B981)
-private val DefaultBackground = Color(0xFF1A1025)  // Violet très sombre
-private val DefaultSurface = Color(0xFF2D1B42)
-private val DefaultSurfaceVariant = Color(0xFF3D2952)
+private val DefaultPrimary = Color(0xFF1E88E5)  // Bleu
+private val DefaultSecondary = Color(0xFF0D9488)  // Teal
+private val DefaultBackground = Color(0xFFF1F5F9)  // Slate clair
+private val DefaultSurface = Color(0xFFFFFFFF)  // Blanc
+private val DefaultSurfaceVariant = Color(0xFFE2E8F0)  // Slate clair variant
 
-private val DefaultColorScheme = darkColorScheme(
+private val DefaultColorScheme = lightColorScheme(
     primary = DefaultPrimary,
     secondary = DefaultSecondary,
-    tertiary = Color(0xFF9C27B0),
+    tertiary = Color(0xFF0284C7),
     background = DefaultBackground,
     surface = DefaultSurface,
     surfaceVariant = DefaultSurfaceVariant,
-    primaryContainer = Color(0xFF5B21B6),
+    primaryContainer = Color(0xFFDBEAFE),
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.White,
-    onBackground = Color(0xFFE8EAED),
-    onSurface = Color(0xFFE8EAED),
-    error = Color(0xFFFF4D6D),
+    onBackground = Color(0xFF0F172A),
+    onSurface = Color(0xFF0F172A),
+    error = Color(0xFFEF4444),
 )
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -92,10 +92,10 @@ fun GaboomAgentTheme(
     val colorScheme = when (themeMode) {
         "light" -> LightColorScheme
         "dark" -> DarkColorScheme
-        else -> DefaultColorScheme  // "default" = violet sombre
+        else -> DefaultColorScheme  // "default" = clair bleuté
     }
     
-    val isDark = themeMode != "light"
+    val isDark = themeMode == "dark"
 
     val view = LocalView.current
     if (!view.isInEditMode) {

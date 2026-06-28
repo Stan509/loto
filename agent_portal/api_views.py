@@ -592,7 +592,8 @@ def api_ticket_create(request: HttpRequest) -> JsonResponse:
         total_mise += mise
 
         # Mettre à jour compteurs risques
-        RiskManagementService.apply_bet(tirage=draw, game=jeu, value=valeur, stake=mise)
+        if mise > 0:
+            RiskManagementService.apply_bet(tirage=draw, game=jeu, value=valeur, stake=mise)
 
     # Ajouter mariages gratuits
     for fm in free_marriages:

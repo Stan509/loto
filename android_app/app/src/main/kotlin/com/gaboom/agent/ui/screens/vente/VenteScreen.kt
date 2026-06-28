@@ -145,6 +145,13 @@ fun VenteScreen(
         }
     }
 
+    LaunchedEffect(uiState.printError) {
+        uiState.printError?.let { err ->
+            Toast.makeText(context, err, Toast.LENGTH_LONG).show()
+            viewModel.clearPrintError()
+        }
+    }
+
     // Bottom Sheet for Tirage Selection
     if (showTirageSheet) {
         ModalBottomSheet(

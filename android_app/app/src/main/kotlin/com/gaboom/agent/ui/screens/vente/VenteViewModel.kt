@@ -1083,15 +1083,30 @@ class VenteViewModel @Inject constructor(
             if (printResponse.isSuccessful) {
                 val printData = printResponse.body()?.printData
                 if (printData != null) {
-                    printer.printTicket(printData)
+                    val result = printer.printTicket(printData)
+                    if (result.isFailure) {
+                        val errMsg = result.exceptionOrNull()?.message ?: "Erreur inconnue"
+                        android.util.Log.e("VenteViewModel", "Impression echouee: $errMsg")
+                        _uiState.value = _uiState.value.copy(
+                            printError = "Impression echouee: $errMsg"
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(printError = null)
+                    }
                     printData
                 } else {
+                    _uiState.value = _uiState.value.copy(printError = "Donnees d'impression vides")
                     null
                 }
             } else {
+                _uiState.value = _uiState.value.copy(printError = "Erreur de recuperation du ticket code: ${printResponse.code()}")
                 null
             }
         } catch (e: Exception) {
+            android.util.Log.e("VenteViewModel", "Erreur printTicket", e)
+            _uiState.value = _uiState.value.copy(
+                printError = "Erreur: ${e.message}"
+            )
             null
         }
     }
@@ -1530,5 +1545,9 @@ class VenteViewModel @Inject constructor(
                 )
             }
         }
+    }
+    
+    fun clearPrintError() {
+        _uiState.value = _uiState.value.copy(printError = null)
     }
 }

@@ -52,7 +52,8 @@ object TicketShareUtil {
         val mise: Double,
         val option: String? = null,
         val isWinner: Boolean = false,
-        val gainDu: Double = 0.0
+        val gainDu: Double = 0.0,
+        val gratuit: Boolean = false
     )
 
     /**
@@ -88,21 +89,52 @@ object TicketShareUtil {
             sb.appendLine("A valider en ligne")
         }
         sb.appendLine()
-        sb.appendLine("--------------------------------")
-        sb.appendLine("JEU      NUMERO    MISE")
-        sb.appendLine("--------------------------------")
-        
-        // Lines - format tableau
-        data.lines.forEach { line ->
-            val jeuDisplay = if (line.option != null) "${line.jeu.uppercase()}-${line.option}" else line.jeu.uppercase()
-            val winMark = if (line.isWinner) " *" else ""
-            sb.appendLine(String.format("%-8s %-9s %5d$winMark", jeuDisplay, line.valeur, line.mise.toInt()))
-            if (line.isWinner && line.gainDu > 0) {
-                sb.appendLine("         Gain: ${line.gainDu.toInt()} HTG")
+        val generalLines = data.lines.filter { it.jeu.lowercase() != "mariage" }
+        val mariageLines = data.lines.filter { it.jeu.lowercase() == "mariage" && !it.gratuit }
+        val freeMariageLines = data.lines.filter { it.jeu.lowercase() == "mariage" && it.gratuit }
+
+        if (generalLines.isNotEmpty()) {
+            sb.appendLine("--------------------------------")
+            sb.appendLine("--- PARIS ORDINAIRES ---")
+            sb.appendLine("JEU      NUMERO    MISE")
+            sb.appendLine("--------------------------------")
+            generalLines.forEach { line ->
+                val jeuDisplay = if (line.option != null) "${line.jeu.uppercase()}-${line.option}" else line.jeu.uppercase()
+                val winMark = if (line.isWinner) " *" else ""
+                sb.appendLine(String.format("%-8s %-9s %5d$winMark", jeuDisplay, line.valeur, line.mise.toInt()))
+                if (line.isWinner && line.gainDu > 0) {
+                    sb.appendLine("         Gain: ${line.gainDu.toInt()} HTG")
+                }
             }
         }
-        
-        sb.appendLine("--------------------------------")
+
+        if (mariageLines.isNotEmpty()) {
+            sb.appendLine("--------------------------------")
+            sb.appendLine("--- MARIAGES ---")
+            sb.appendLine("JEU      NUMERO    MISE")
+            sb.appendLine("--------------------------------")
+            mariageLines.forEach { line ->
+                val winMark = if (line.isWinner) " *" else ""
+                sb.appendLine(String.format("%-8s %-9s %5d$winMark", "MARIAGE", line.valeur, line.mise.toInt()))
+                if (line.isWinner && line.gainDu > 0) {
+                    sb.appendLine("         Gain: ${line.gainDu.toInt()} HTG")
+                }
+            }
+        }
+
+        if (freeMariageLines.isNotEmpty()) {
+            sb.appendLine("--------------------------------")
+            sb.appendLine("--- MARIAGES GRATUITS ---")
+            sb.appendLine("JEU      NUMERO    MISE")
+            sb.appendLine("--------------------------------")
+            freeMariageLines.forEach { line ->
+                val winMark = if (line.isWinner) " *" else ""
+                sb.appendLine(String.format("%-8s %-9s %5s$winMark", "MARIAGE", line.valeur, "GRATUIT"))
+                if (line.isWinner && line.gainDu > 0) {
+                    sb.appendLine("         Gain: ${line.gainDu.toInt()} HTG")
+                }
+            }
+        }
         sb.appendLine("TOTAL: ${data.totalMise.toInt()} HTG")
         
         if (data.isWinner && data.totalGainDu > 0) {
@@ -222,13 +254,29 @@ object TicketShareUtil {
         calcHeight += 25 * 4 // ticket info (4 lines)
         if (data.isOffline) calcHeight += 45 // offline watermark
         calcHeight += 25 // separator
-        calcHeight += 22 // header ligne
-        calcHeight += 22 * data.lines.size // lines
-        calcHeight += 22 * data.lines.count { it.isWinner && it.gainDu > 0 } // gains
-        calcHeight += 25 // separator
-        calcHeight += 25 // total
-        if (data.isWinner && data.totalGainDu > 0) calcHeight += 25
-        calcHeight += 25 // separator
+        
+        val generalLines = data.lines.filter { it.jeu.lowercase() != "mariage" }
+        val mariageLines = data.lines.filter { it.jeu.lowercase() == "mariage" && !it.gratuit }
+        val freeMariageLines = data.lines.filter { it.jeu.lowercase() == "mariage" && it.gratuit }
+        
+        if (generalLines.isNotEmpty()) {
+            calcHeight += 22 * 2 // section title + header
+            calcHeight += 22 * generalLines.size
+            calcHeight += 22 * generalLines.count { it.isWinner && it.gainDu > 0 }
+            calcHeight += 22 // separator
+        }
+        if (mariageLines.isNotEmpty()) {
+            calcHeight += 22 * 2 // section title + header
+            calcHeight += 22 * mariageLines.size
+            calcHeight += 22 * mariageLines.count { it.isWinner && it.gainDu > 0 }
+            calcHeight += 22 // separator
+        }
+        if (freeMariageLines.isNotEmpty()) {
+            calcHeight += 22 * 2 // section title + header
+            calcHeight += 22 * freeMariageLines.size
+            calcHeight += 22 * freeMariageLines.count { it.isWinner && it.gainDu > 0 }
+            calcHeight += 22 // separator
+        }
         if (data.mariageGratuitActif) calcHeight += 44 // mariage gratuit + separator
         // Footer text (estimate word-wrapped lines)
         if (!data.ticketFooterText.isNullOrBlank()) {
@@ -370,27 +418,65 @@ object TicketShareUtil {
         // LINES
         // ═══════════════════════════════════════════════════════════
         
-        // Header
-        canvas.drawText("JEU      NUMERO    MISE", padding.toFloat(), y + 15, paintMonoBold)
-        y += 22
-        
-        // Lines
-        data.lines.forEach { line ->
-            val jeuDisplay = if (line.option != null) "${line.jeu.uppercase()}-${line.option}" else line.jeu.uppercase()
-            val lineText = String.format("%-8s %-9s %6.0f", jeuDisplay, line.valeur, line.mise)
-            val paint = if (line.isWinner) paintWinner else paintMono
-            canvas.drawText(lineText, padding.toFloat(), y + 15, paint)
+
+
+        if (generalLines.isNotEmpty()) {
+            canvas.drawText("--- PARIS ORDINAIRES ---", centerX, y + 15, paintBold)
             y += 22
-            
-            if (line.isWinner && line.gainDu > 0) {
-                canvas.drawText("         Gain: ${line.gainDu.toInt()} HTG", padding.toFloat(), y + 15, paintWinner)
+            canvas.drawText("JEU      NUMERO    MISE", padding.toFloat(), y + 15, paintMonoBold)
+            y += 22
+            generalLines.forEach { line ->
+                val jeuDisplay = if (line.option != null) "${line.jeu.uppercase()}-${line.option}" else line.jeu.uppercase()
+                val lineText = String.format("%-8s %-9s %6.0f", jeuDisplay, line.valeur, line.mise)
+                val paint = if (line.isWinner) paintWinner else paintMono
+                canvas.drawText(lineText, padding.toFloat(), y + 15, paint)
                 y += 22
+                if (line.isWinner && line.gainDu > 0) {
+                    canvas.drawText("         Gain: ${line.gainDu.toInt()} HTG", padding.toFloat(), y + 15, paintWinner)
+                    y += 22
+                }
             }
+            canvas.drawText("--------------------------------", centerX, y + 12, paintSeparator)
+            y += 22
         }
-        
-        // Separator
-        canvas.drawText("--------------------------------", centerX, y + 12, paintSeparator)
-        y += 22
+
+        if (mariageLines.isNotEmpty()) {
+            canvas.drawText("--- MARIAGES ---", centerX, y + 15, paintBold)
+            y += 22
+            canvas.drawText("JEU      NUMERO    MISE", padding.toFloat(), y + 15, paintMonoBold)
+            y += 22
+            mariageLines.forEach { line ->
+                val lineText = String.format("%-8s %-9s %6.0f", "MARIAGE", line.valeur, line.mise)
+                val paint = if (line.isWinner) paintWinner else paintMono
+                canvas.drawText(lineText, padding.toFloat(), y + 15, paint)
+                y += 22
+                if (line.isWinner && line.gainDu > 0) {
+                    canvas.drawText("         Gain: ${line.gainDu.toInt()} HTG", padding.toFloat(), y + 15, paintWinner)
+                    y += 22
+                }
+            }
+            canvas.drawText("--------------------------------", centerX, y + 12, paintSeparator)
+            y += 22
+        }
+
+        if (freeMariageLines.isNotEmpty()) {
+            canvas.drawText("--- MARIAGES GRATUITS ---", centerX, y + 15, paintBold)
+            y += 22
+            canvas.drawText("JEU      NUMERO    MISE", padding.toFloat(), y + 15, paintMonoBold)
+            y += 22
+            freeMariageLines.forEach { line ->
+                val lineText = String.format("%-8s %-9s %6s", "MARIAGE", line.valeur, "GRATUIT")
+                val paint = if (line.isWinner) paintWinner else paintMono
+                canvas.drawText(lineText, padding.toFloat(), y + 15, paint)
+                y += 22
+                if (line.isWinner && line.gainDu > 0) {
+                    canvas.drawText("         Gain: ${line.gainDu.toInt()} HTG", padding.toFloat(), y + 15, paintWinner)
+                    y += 22
+                }
+            }
+            canvas.drawText("--------------------------------", centerX, y + 12, paintSeparator)
+            y += 22
+        }
         
         // ═══════════════════════════════════════════════════════════
         // TOTAL
@@ -501,7 +587,8 @@ object TicketShareUtil {
                 jeu = baseJeu,
                 valeur = valeur,
                 mise = mise,
-                option = opt
+                option = opt,
+                gratuit = lineStr.contains("GRATUIT", ignoreCase = true)
             )
         }
         return TicketShareData(
