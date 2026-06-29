@@ -4,10 +4,25 @@ from accounts.models import SMTPSettings
 
 logger = logging.getLogger(__name__)
 
+def _get_smtp_connection_from_settings():
+    """Create an SMTP connection using Django settings (environment variables)."""
+    from django.conf import settings as django_settings
+    return get_connection(
+        backend='django.core.mail.backends.smtp.EmailBackend',
+        host=getattr(django_settings, 'EMAIL_HOST', 'mail.privateemail.com'),
+        port=int(getattr(django_settings, 'EMAIL_PORT', 587)),
+        username=getattr(django_settings, 'EMAIL_HOST_USER', ''),
+        password=getattr(django_settings, 'EMAIL_HOST_PASSWORD', ''),
+        use_tls=getattr(django_settings, 'EMAIL_USE_TLS', True),
+        use_ssl=getattr(django_settings, 'EMAIL_USE_SSL', False),
+        timeout=10,
+    )
+
 def send_custom_email(subject, body, to_emails, html_message=None):
     """
     Sends an email using database-configured SMTP settings (Namecheap, etc.)
-    Falls back to settings.py backend if no active SMTPSettings are found.
+    Falls back to environment-configured SMTP settings if no active SMTPSettings are found.
+    NEVER uses the console backend even if DEBUG=True.
     """
     if isinstance(to_emails, str):
         to_emails = [to_emails]
@@ -15,22 +30,26 @@ def send_custom_email(subject, body, to_emails, html_message=None):
     smtp = SMTPSettings.objects.filter(is_active=True).first()
     
     if not smtp or not smtp.smtp_host:
-        # Fallback to default Django connection
-        logger.info("Using default Django email backend fallback.")
-        from django.conf import settings
-        connection = get_connection()
+        # Fallback to SMTP from environment variables (never console)
+        logger.info("Using environment SMTP settings (fallback).")
+        from django.conf import settings as django_settings
+        connection = _get_smtp_connection_from_settings()
         email = EmailMessage(
             subject=subject,
             body=body,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@gaboom509.com'),
+            from_email=getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'no-reply@gaboom509.com'),
             to=to_emails,
             connection=connection,
         )
         if html_message:
             email.content_subtype = "html"
             email.body = html_message
-        email.send()
-        return True
+        try:
+            email.send()
+            return True
+        except Exception as e:
+            logger.error(f"Fallback SMTP send failed: {str(e)}", exc_info=True)
+            return False
 
     # Use database-configured SMTP settings
     try:
