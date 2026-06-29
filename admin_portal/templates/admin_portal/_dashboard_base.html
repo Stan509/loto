@@ -31,14 +31,20 @@
       <header class="portal-banner" role="banner">
         <div class="portal-banner__inner">
           <div class="portal-banner__identity">
-            {% if portal_borlette and portal_borlette.logo_base64 or portal_borlette.logo_borlette %}
+            {% if portal_borlette %}
+              {% if portal_borlette.logo_base64 or portal_borlette.logo_borlette %}
               <img class="portal-banner__logo rounded-full" src="{{ portal_borlette.logo_url }}" alt="Logo {{ portal_borlette.nom_borlette }}" />
+              {% else %}
+              <img class="portal-banner__logo rounded-full" src="{% static 'logo.png' %}" alt="Gaboom Logo" />
+              {% endif %}
             {% else %}
               <img class="portal-banner__logo rounded-full" src="{% static 'logo.png' %}" alt="Gaboom Logo" />
             {% endif %}
 
-            <div class="portal-banner__text">
-              <div class="portal-banner__name">{% if portal_borlette %}{{ portal_borlette.nom_borlette }}{% endif %}</div>
+              <div class="portal-banner__text">
+                {% if portal_borlette %}
+                <div class="portal-banner__name">{{ portal_borlette.nom_borlette }}</div>
+                {% endif %}
             </div>
           </div>
 

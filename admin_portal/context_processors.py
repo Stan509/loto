@@ -1,8 +1,3 @@
-from accounts.models import Borlette
-
-from django.db.utils import OperationalError, ProgrammingError
-
-
 def portal_context(request):
     borlette = None
 
@@ -10,9 +5,9 @@ def portal_context(request):
     if user and getattr(user, "is_authenticated", False):
         try:
             borlette = user.borlette
-        except Borlette.DoesNotExist:
-            borlette = None
-        except (OperationalError, ProgrammingError):
+        except Exception:
+            # Catches: RelatedObjectDoesNotExist, Borlette.DoesNotExist,
+            #          OperationalError, ProgrammingError, AttributeError, etc.
             borlette = None
 
     return {
