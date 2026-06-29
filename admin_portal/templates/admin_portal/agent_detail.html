@@ -4,6 +4,12 @@
 {% block page_title %}Agent{% endblock %}
 {% block page_meta %}{{ agent.nom }}{% endblock %}
 
+{% block extra_head %}
+  <!-- Leaflet Map library stylesheet and script in Head -->
+  <link rel="stylesheet" href="{% static 'css/leaflet.css' %}" />
+  <script src="{% static 'js/leaflet.js' %}"></script>
+{% endblock %}
+
 {% block page_body %}
 <style>
   .agent-page { padding: 24px 32px; }
@@ -159,9 +165,7 @@
     </div>
   </div>
 
-  <!-- Leaflet Map library -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 
   <!-- Infos agent -->
   <div class="info-grid">
@@ -241,18 +245,22 @@
       document.getElementById('lastLocationTime').textContent = `Mise à jour: ${formattedTime}`;
     }
 
-    if (!map) {
-      map = L.map('map').setView([lat, lng], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-      }).addTo(map);
-      marker = L.marker([lat, lng]).addTo(map)
-        .bindPopup("{{ agent.nom }} est ici")
-        .openPopup();
-    } else {
-      const newLatLng = new L.LatLng(lat, lng);
-      marker.setLatLng(newLatLng);
-      map.panTo(newLatLng);
+    try {
+      if (!map) {
+        map = L.map('map').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap'
+        }).addTo(map);
+        marker = L.marker([lat, lng]).addTo(map)
+          .bindPopup("{{ agent.nom }} est ici")
+          .openPopup();
+      } else {
+        const newLatLng = new L.LatLng(lat, lng);
+        marker.setLatLng(newLatLng);
+        map.panTo(newLatLng);
+      }
+    } catch (err) {
+      console.error("Leaflet map update failed:", err);
     }
   }
 
