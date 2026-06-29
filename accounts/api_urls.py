@@ -3,6 +3,7 @@ from django.urls import path
 from . import api_views
 from . import pricing_api
 from . import signup_api
+from . import password_reset_api
 
 app_name = "accounts_api"
 
@@ -17,6 +18,10 @@ urlpatterns = [
     path("superadmin/withdraw/<int:withdrawal_id>/approve/", api_views.api_superadmin_withdraw_approve, name="superadmin_withdraw_approve"),
     path("superadmin/withdraw/<int:withdrawal_id>/reject/", api_views.api_superadmin_withdraw_reject, name="superadmin_withdraw_reject"),
     path("superadmin/withdraw/<int:withdrawal_id>/mark-paid/", api_views.api_superadmin_withdraw_mark_paid, name="superadmin_withdraw_mark_paid"),
+    # Password Reset / Account Recovery
+    path("request-password-reset/", password_reset_api.api_request_password_reset, name="request_password_reset"),
+    path("reset-password/", password_reset_api.api_reset_password, name="reset_password"),
+
     # Pricing API endpoints
     path("pricing/summary/", pricing_api.pricing_summary_api, name="pricing_summary"),
     path("pricing/calculate/", pricing_api.calculate_price_api, name="pricing_calculate"),

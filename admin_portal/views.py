@@ -894,7 +894,11 @@ def agent_detail(request, agent_id: int):
     if guard2:
         return guard2
 
-    agent = Agent.objects.select_related("user", "borlette").get(id=agent_id, borlette=request.user.borlette)
+    borlette = get_user_borlette(request.user)
+    if not borlette:
+        return redirect("/portal/dashboard/")
+    
+    agent = Agent.objects.select_related("user", "borlette").get(id=agent_id, borlette=borlette)
     return render(request, "admin_portal/agent_detail.html", {"agent": agent})
 
 

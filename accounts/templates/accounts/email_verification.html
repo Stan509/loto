@@ -1,0 +1,18 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://gaboom509.com/static/logo.png" alt="Gaboom" style="height: 60px;">
+    </div>
+    <h2 style="color: #ea580c; text-align: center;">Bienvenue chez Gaboom Central</h2>
+    <p>Bonjour <strong>{{ username }}</strong>,</p>
+    <p>Merci de vous être inscrit sur Gaboom Central. Votre code de validation est :</p>
+    <div style="text-align: center; margin: 25px 0;">
+        <span style="font-size: 32px; font-weight: 700; color: #ea580c; font-family: monospace; letter-spacing: 6px; background: #fef2e8; padding: 12px 24px; border-radius: 8px; display: inline-block;">{{ token }}</span>
+    </div>
+    <p>Pour confirmer votre adresse email et activer votre compte, veuillez saisir ce code de validation sur la page d'inscription, ou cliquer sur le bouton ci-dessous :</p>
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ verify_url }}" style="background-color: #ea580c; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px;">Confirmer mon compte</a>
+    </div>
+    <p style="font-size: 12px; color: #666;">Si le bouton ne fonctionne pas, copiez-collez le lien suivant dans votre navigateur :<br><a href="{{ verify_url }}" style="color: #ea580c;">{{ verify_url }}</a></p>
+    <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+    <p style="font-size: 12px; color: #999; text-align: center;">&copy; Gaboom Central · Tous droits réservés</p>
+</div>
