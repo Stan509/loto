@@ -233,14 +233,29 @@
   let map;
   let marker;
 
-  function updateMap(lat, lng, lastTime) {
-    if (!lat || !lng) return;
-    
+  function initMap() {
     const mapEl = document.getElementById('map');
+    if (!mapEl) return;
+    
     if (mapEl.querySelector('.map-placeholder')) {
       mapEl.innerHTML = '';
     }
     
+    try {
+      map = L.map('map').setView([18.9712, -72.2852], 8);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+      
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 400);
+    } catch (err) {
+      console.error("Leaflet map initialization failed:", err);
+    }
+  }
+
+  function updateMap(lat, lng, lastTime) {
     if (lastTime) {
       const formattedTime = new Date(lastTime).toLocaleString('fr-FR');
       document.getElementById('lastLocationTime').textContent = `Mise à jour: ${formattedTime}`;
@@ -248,18 +263,20 @@
 
     try {
       if (!map) {
-        map = L.map('map').setView([lat, lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap'
-        }).addTo(map);
-        marker = L.marker([lat, lng]).addTo(map)
+        initMap();
+      }
+      
+      if (!lat || !lng) return;
+      
+      const newLatLng = new L.LatLng(lat, lng);
+      if (!marker) {
+        marker = L.marker(newLatLng).addTo(map)
           .bindPopup("{{ agent.nom }} est ici")
           .openPopup();
       } else {
-        const newLatLng = new L.LatLng(lat, lng);
         marker.setLatLng(newLatLng);
-        map.panTo(newLatLng);
       }
+      map.setView(newLatLng, 15);
     } catch (err) {
       console.error("Leaflet map update failed:", err);
     }
@@ -282,6 +299,8 @@
         // Update map coordinates
         if (data.agent && data.agent.latitude !== null && data.agent.longitude !== null) {
           updateMap(data.agent.latitude, data.agent.longitude, data.agent.last_location_updated_at);
+        } else {
+          updateMap(null, null, data.agent ? data.agent.last_location_updated_at : null);
         }
       });
   }
@@ -344,6 +363,7 @@
   }
 
   // Init
+  initMap();
   loadStats();
   loadLedger();
   loadPerformance('7d');
