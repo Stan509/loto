@@ -1,383 +1,459 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentation | Central Borlette</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #171026 100%);
             min-height: 100vh;
+            color: #f1f5f9;
         }
         
-        .documentation-page {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            min-height: 100vh;
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-        
-        .documentation-header {
-            text-align: center;
-            margin-bottom: 40px;
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
         }
-        
-        .documentation-header h1 {
-            font-size: 36px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 12px;
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 999px;
         }
-        
-        .documentation-header p {
-            font-size: 16px;
-            color: #9ca3af;
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
         }
-        
-        .category-section {
-            background: rgba(17, 24, 39, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 30px;
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        
-        .category-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.3);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        
-        .category-header h2 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #fff;
+
+        .glass-card:hover {
+            background: rgba(30, 41, 59, 0.55);
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px -10px rgba(99, 102, 241, 0.25);
         }
-        
-        .category-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .category-icon.intro {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
-        }
-        
-        .category-icon.agents {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-        
-        .category-icon.admin {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-        
-        .category-icon.affiliate {
-            background: rgba(139, 92, 246, 0.2);
-            color: #8b5cf6;
-        }
-        
-        .video-item {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .video-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(59, 130, 246, 0.5);
-            transform: translateY(-2px);
-        }
-        
-        .video-item img {
-            width: 160px;
-            height: 90px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        
-        .video-item-content {
-            flex: 1;
-        }
-        
-        .video-item-content h4 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-        
-        .video-item-content p {
-            font-size: 14px;
-            color: #9ca3af;
-        }
-        
-        .video-player-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .video-player-modal.active {
-            display: flex;
-        }
-        
-        .video-player-container {
-            max-width: 900px;
-            width: 100%;
-        }
-        
-        .video-player-wrapper {
-            position: relative;
-            padding-bottom: 56.25%;
-            height: 0;
-            background: #000;
-            border-radius: 16px;
-            overflow: hidden;
-        }
-        
-        .video-player-wrapper iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        
-        .close-modal {
-            position: absolute;
-            top: -50px;
-            right: 0;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .close-modal:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .no-videos {
-            text-align: center;
-            padding: 40px 20px;
-            color: #9ca3af;
-        }
-        
-        .no-videos svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 16px;
-            color: #6b7280;
-        }
-        
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: #9ca3af;
-            text-decoration: none;
-            margin-bottom: 20px;
-            transition: color 0.2s;
-        }
-        
-        .back-link:hover {
-            color: #fff;
+
+        .sidebar-link.active {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.02) 100%);
+            border-left-color: #6366f1;
+            color: #a5b4fc;
         }
     </style>
 </head>
-<body>
-    <div class="documentation-page">
-        <a href="/" class="back-link">
-            <i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i>
-            Retour à l'accueil
-        </a>
-        
-        <div class="documentation-header">
-            <h1>📚 Documentation</h1>
-            <p>Apprenez à utiliser Central Borlette avec nos vidéos tutoriels</p>
-        </div>
-        
-        <!-- Introduction Section -->
-        <div class="category-section">
-            <div class="category-header">
-                <div class="category-icon intro">
-                    <i data-lucide="play-circle" style="width: 24px; height: 24px;"></i>
+<body class="font-sans antialiased">
+    <!-- Background elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/10 blur-[120px]"></div>
+    </div>
+
+    <div class="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 min-height-screen">
+        <!-- Back Link & Header -->
+        <div class="mb-10">
+            <a href="/" class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors duration-200 group">
+                <i data-lucide="arrow-left" class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1"></i>
+                <span>Retour à l'accueil</span>
+            </a>
+            
+            <div class="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold font-outfit tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400">
+                        📚 Centre d'Aide &amp; Documentation
+                    </h1>
+                    <p class="mt-2 text-slate-400 text-base sm:text-lg">
+                        Apprenez à configurer et utiliser Central Borlette avec nos tutoriels vidéo détaillés.
+                    </p>
                 </div>
-                <h2>Introduction</h2>
-            </div>
-            {% if intro_videos %}
-                {% for video in intro_videos %}
-                <div class="video-item" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
-                    <img 
-                        src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
-                        alt="{{ video.title }}"
-                        loading="lazy">
-                    <div class="video-item-content">
-                        <h4>{{ video.title }}</h4>
-                        {% if video.description %}
-                        <p>{{ video.description|truncatewords:20 }}</p>
-                        {% endif %}
+
+                <!-- Live Search -->
+                <div class="w-full md:max-w-xs relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
                     </div>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Rechercher un tutoriel..."
+                        class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/60 focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/80 text-sm text-slate-200 placeholder-slate-500 focus:outline-none transition-all duration-300"
+                    >
                 </div>
-                {% endfor %}
-            {% else %}
-            <div class="no-videos">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <p>Aucune vidéo d'introduction disponible pour le moment.</p>
             </div>
-            {% endif %}
         </div>
-        
-        <!-- Agents Section -->
-        <div class="category-section">
-            <div class="category-header">
-                <div class="category-icon agents">
-                    <i data-lucide="users" style="width: 24px; height: 24px;"></i>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Sidebar Navigation -->
+            <aside class="w-full lg:w-64 shrink-0 lg:sticky lg:top-8 h-fit z-20">
+                <div class="glass-panel rounded-2xl p-4 space-y-1.5">
+                    <p class="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Catégories</p>
+                    <nav class="space-y-1" id="sidebarNav">
+                        <a href="#introduction" class="sidebar-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl border-l-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all duration-200 active">
+                            <i data-lucide="play-circle" class="w-4 h-4 text-blue-400"></i>
+                            <span>1. Introduction</span>
+                        </a>
+                        <a href="#configuration" class="sidebar-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl border-l-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all duration-200">
+                            <i data-lucide="settings" class="w-4 h-4 text-teal-400"></i>
+                            <span>2. Configuration</span>
+                        </a>
+                        <a href="#admin-borlette" class="sidebar-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl border-l-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all duration-200">
+                            <i data-lucide="shield" class="w-4 h-4 text-amber-400"></i>
+                            <span>3. Admin Borlette</span>
+                        </a>
+                        <a href="#agents" class="sidebar-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl border-l-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all duration-200">
+                            <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
+                            <span>4. Agents</span>
+                        </a>
+                        <a href="#affiliation" class="sidebar-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl border-l-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all duration-200">
+                            <i data-lucide="link" class="w-4 h-4 text-indigo-400"></i>
+                            <span>5. Affiliation</span>
+                        </a>
+                        <a href="#resume" class="sidebar-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl border-l-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-all duration-200">
+                            <i data-lucide="help-circle" class="w-4 h-4 text-pink-400"></i>
+                            <span>6. Résumé</span>
+                        </a>
+                    </nav>
                 </div>
-                <h2>Agents</h2>
-            </div>
-            {% if agents_videos %}
-                {% for video in agents_videos %}
-                <div class="video-item" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
-                    <img 
-                        src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
-                        alt="{{ video.title }}"
-                        loading="lazy">
-                    <div class="video-item-content">
-                        <h4>{{ video.title }}</h4>
-                        {% if video.description %}
-                        <p>{{ video.description|truncatewords:20 }}</p>
-                        {% endif %}
+            </aside>
+
+            <!-- Main Content Area -->
+            <div class="flex-1 space-y-12">
+                
+                <!-- Zero results state -->
+                <div id="noResults" class="hidden text-center py-16 glass-panel rounded-2xl">
+                    <i data-lucide="alert-circle" class="w-12 h-12 text-slate-500 mx-auto mb-4"></i>
+                    <h3 class="text-lg font-bold text-slate-300">Aucun résultat trouvé</h3>
+                    <p class="text-slate-500 mt-1">Essayez d'ajuster vos termes de recherche.</p>
+                </div>
+
+                <!-- Section 1: Introduction -->
+                <section id="introduction" class="category-section scroll-mt-8">
+                    <div class="flex items-center gap-3 mb-6 border-b border-slate-800/80 pb-4">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="play-circle" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold font-outfit text-white">1. Introduction</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Premières étapes pour démarrer sur Central Borlette.</p>
+                        </div>
                     </div>
-                </div>
-                {% endfor %}
-            {% else %}
-            <div class="no-videos">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <p>Aucune vidéo pour les agents disponible pour le moment.</p>
-            </div>
-            {% endif %}
-        </div>
-        
-        <!-- Admin Borlettes Section -->
-        <div class="category-section">
-            <div class="category-header">
-                <div class="category-icon admin">
-                    <i data-lucide="shield" style="width: 24px; height: 24px;"></i>
-                </div>
-                <h2>Admin Borlettes</h2>
-            </div>
-            {% if admin_videos %}
-                {% for video in admin_videos %}
-                <div class="video-item" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
-                    <img 
-                        src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
-                        alt="{{ video.title }}"
-                        loading="lazy">
-                    <div class="video-item-content">
-                        <h4>{{ video.title }}</h4>
-                        {% if video.description %}
-                        <p>{{ video.description|truncatewords:20 }}</p>
-                        {% endif %}
+
+                    {% if intro_videos %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for video in intro_videos %}
+                        <div class="video-card glass-card rounded-2xl overflow-hidden group cursor-pointer flex flex-col" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                            <!-- Thumbnail with Play Hover Effect -->
+                            <div class="relative aspect-video w-full overflow-hidden bg-slate-950 shrink-0">
+                                <img 
+                                    src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                                    alt="{{ video.title }}"
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    loading="lazy">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                                        <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                                    </div>
+                                </div>
+                                <span class="absolute bottom-2 right-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-slate-900/80 text-blue-400 border border-blue-500/20">Tutoriel</span>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="p-5 flex-1 flex flex-col">
+                                <h4 class="text-sm font-bold text-white group-hover:text-blue-400 transition-colors duration-200 line-clamp-2 leading-snug">{{ video.title }}</h4>
+                                {% if video.description %}
+                                <p class="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed flex-1">{{ video.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                </div>
-                {% endfor %}
-            {% else %}
-            <div class="no-videos">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <p>Aucune vidéo pour les admin borlettes disponible pour le moment.</p>
-            </div>
-            {% endif %}
-        </div>
-        
-        <!-- Affiliés Section -->
-        <div class="category-section">
-            <div class="category-header">
-                <div class="category-icon affiliate">
-                    <i data-lucide="user-check" style="width: 24px; height: 24px;"></i>
-                </div>
-                <h2>Affiliés</h2>
-            </div>
-            {% if affiliate_videos %}
-                {% for video in affiliate_videos %}
-                <div class="video-item" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
-                    <img 
-                        src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
-                        alt="{{ video.title }}"
-                        loading="lazy">
-                    <div class="video-item-content">
-                        <h4>{{ video.title }}</h4>
-                        {% if video.description %}
-                        <p>{{ video.description|truncatewords:20 }}</p>
-                        {% endif %}
+                    {% else %}
+                    <div class="py-8 text-center text-slate-500 text-sm">Aucun tutoriel disponible dans cette section.</div>
+                    {% endif %}
+                </section>
+
+                <!-- Section 2: Configuration -->
+                <section id="configuration" class="category-section scroll-mt-8">
+                    <div class="flex items-center gap-3 mb-6 border-b border-slate-800/80 pb-4">
+                        <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="settings" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold font-outfit text-white">2. Configuration</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Paramétrage complet de votre plateforme de loterie.</p>
+                        </div>
                     </div>
-                </div>
-                {% endfor %}
-            {% else %}
-            <div class="no-videos">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <p>Aucune vidéo pour les affiliés disponible pour le moment.</p>
+
+                    {% if config_videos %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for video in config_videos %}
+                        <div class="video-card glass-card rounded-2xl overflow-hidden group cursor-pointer flex flex-col" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                            <!-- Thumbnail -->
+                            <div class="relative aspect-video w-full overflow-hidden bg-slate-950 shrink-0">
+                                <img 
+                                    src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                                    alt="{{ video.title }}"
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    loading="lazy">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-600/30 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                                        <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                                    </div>
+                                </div>
+                                <span class="absolute bottom-2 right-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-slate-900/80 text-teal-400 border border-teal-500/20">Tutoriel</span>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="p-5 flex-1 flex flex-col">
+                                <h4 class="text-sm font-bold text-white group-hover:text-teal-400 transition-colors duration-200 line-clamp-2 leading-snug">{{ video.title }}</h4>
+                                {% if video.description %}
+                                <p class="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed flex-1">{{ video.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="py-8 text-center text-slate-500 text-sm">Aucun tutoriel disponible dans cette section.</div>
+                    {% endif %}
+                </section>
+
+                <!-- Section 3: Admin Borlette -->
+                <section id="admin-borlette" class="category-section scroll-mt-8">
+                    <div class="flex items-center gap-3 mb-6 border-b border-slate-800/80 pb-4">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="shield" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold font-outfit text-white">3. Admin Borlette</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Outils de gestion d'administration, limites stratégiques et de risques.</p>
+                        </div>
+                    </div>
+
+                    {% if admin_videos %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for video in admin_videos %}
+                        <div class="video-card glass-card rounded-2xl overflow-hidden group cursor-pointer flex flex-col" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                            <!-- Thumbnail -->
+                            <div class="relative aspect-video w-full overflow-hidden bg-slate-950 shrink-0">
+                                <img 
+                                    src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                                    alt="{{ video.title }}"
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    loading="lazy">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-amber-600 text-white flex items-center justify-center shadow-lg shadow-amber-600/30 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                                        <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                                    </div>
+                                </div>
+                                <span class="absolute bottom-2 right-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-slate-900/80 text-amber-400 border border-amber-500/20">Tutoriel</span>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="p-5 flex-1 flex flex-col">
+                                <h4 class="text-sm font-bold text-white group-hover:text-amber-400 transition-colors duration-200 line-clamp-2 leading-snug">{{ video.title }}</h4>
+                                {% if video.description %}
+                                <p class="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed flex-1">{{ video.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="py-8 text-center text-slate-500 text-sm">Aucun tutoriel disponible dans cette section.</div>
+                    {% endif %}
+                </section>
+
+                <!-- Section 4: Agents -->
+                <section id="agents" class="category-section scroll-mt-8">
+                    <div class="flex items-center gap-3 mb-6 border-b border-slate-800/80 pb-4">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold font-outfit text-white">4. Agents</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Création, gestion, configuration POS et matériel de vente.</p>
+                        </div>
+                    </div>
+
+                    {% if agents_videos %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for video in agents_videos %}
+                        <div class="video-card glass-card rounded-2xl overflow-hidden group cursor-pointer flex flex-col" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                            <!-- Thumbnail -->
+                            <div class="relative aspect-video w-full overflow-hidden bg-slate-950 shrink-0">
+                                <img 
+                                    src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                                    alt="{{ video.title }}"
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    loading="lazy">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/30 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                                        <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                                    </div>
+                                </div>
+                                <span class="absolute bottom-2 right-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-slate-900/80 text-emerald-400 border border-emerald-500/20">Tutoriel</span>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="p-5 flex-1 flex flex-col">
+                                <h4 class="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors duration-200 line-clamp-2 leading-snug">{{ video.title }}</h4>
+                                {% if video.description %}
+                                <p class="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed flex-1">{{ video.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="py-8 text-center text-slate-500 text-sm">Aucun tutoriel disponible dans cette section.</div>
+                    {% endif %}
+                </section>
+
+                <!-- Section 5: Affiliation -->
+                <section id="affiliation" class="category-section scroll-mt-8">
+                    <div class="flex items-center gap-3 mb-6 border-b border-slate-800/80 pb-4">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="link" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold font-outfit text-white">5. Affiliation</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Programme de parrainage d'affiliés et commissionnement passif.</p>
+                        </div>
+                    </div>
+
+                    {% if affiliate_videos %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for video in affiliate_videos %}
+                        <div class="video-card glass-card rounded-2xl overflow-hidden group cursor-pointer flex flex-col" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                            <!-- Thumbnail -->
+                            <div class="relative aspect-video w-full overflow-hidden bg-slate-950 shrink-0">
+                                <img 
+                                    src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                                    alt="{{ video.title }}"
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    loading="lazy">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                                        <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                                    </div>
+                                </div>
+                                <span class="absolute bottom-2 right-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-slate-900/80 text-indigo-400 border border-indigo-500/20">Tutoriel</span>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="p-5 flex-1 flex flex-col">
+                                <h4 class="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors duration-200 line-clamp-2 leading-snug">{{ video.title }}</h4>
+                                {% if video.description %}
+                                <p class="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed flex-1">{{ video.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="py-8 text-center text-slate-500 text-sm">Aucun tutoriel disponible dans cette section.</div>
+                    {% endif %}
+                </section>
+
+                <!-- Section 6: Résumé -->
+                <section id="resume" class="category-section scroll-mt-8">
+                    <div class="flex items-center gap-3 mb-6 border-b border-slate-800/80 pb-4">
+                        <div class="w-10 h-10 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="help-circle" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold font-outfit text-white">6. Résumé</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Résumé général et vue d'ensemble rapide de la plateforme.</p>
+                        </div>
+                    </div>
+
+                    {% if resume_videos %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for video in resume_videos %}
+                        <div class="video-card glass-card rounded-2xl overflow-hidden group cursor-pointer flex flex-col" onclick="playVideo('{{ video.youtube_video_id }}', '{{ video.title }}')">
+                            <!-- Thumbnail -->
+                            <div class="relative aspect-video w-full overflow-hidden bg-slate-950 shrink-0">
+                                <img 
+                                    src="https://img.youtube.com/vi/{{ video.youtube_video_id }}/mqdefault.jpg" 
+                                    alt="{{ video.title }}"
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    loading="lazy">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-pink-600 text-white flex items-center justify-center shadow-lg shadow-pink-600/30 transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                                        <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                                    </div>
+                                </div>
+                                <span class="absolute bottom-2 right-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-slate-900/80 text-pink-400 border border-pink-500/20">Tutoriel</span>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="p-5 flex-1 flex flex-col">
+                                <h4 class="text-sm font-bold text-white group-hover:text-pink-400 transition-colors duration-200 line-clamp-2 leading-snug">{{ video.title }}</h4>
+                                {% if video.description %}
+                                <p class="text-xs text-slate-400 mt-2 line-clamp-3 leading-relaxed flex-1">{{ video.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="py-8 text-center text-slate-500 text-sm">Aucun tutoriel disponible dans cette section.</div>
+                    {% endif %}
+                </section>
+
             </div>
-            {% endif %}
         </div>
     </div>
     
-    <!-- Video Player Modal -->
-    <div class="video-player-modal" id="videoModal">
-        <div class="video-player-container">
-            <button class="close-modal" onclick="closeVideo()">
-                <i data-lucide="x" style="width: 24px; height: 24px;"></i>
-            </button>
-            <div class="video-player-wrapper">
+    <!-- Video Player Modal (Premium Blurred Background overlay) -->
+    <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center z-50 p-4 transition-all duration-300" id="videoModal">
+        <div class="relative w-full max-w-4xl glass-panel rounded-2xl overflow-hidden shadow-2xl shadow-black/80 flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 flex items-center justify-between border-b border-slate-800/80">
+                <h3 id="modalVideoTitle" class="font-bold text-white text-base truncate pr-8">Lecteur Vidéo</h3>
+                <button class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800/80 transition-all duration-200" onclick="closeVideo()">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <!-- Video Container -->
+            <div class="relative aspect-video w-full bg-black">
                 <iframe 
                     id="videoFrame"
                     src="" 
                     title="Video Player"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
+                    allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    class="absolute inset-0 w-full h-full border-none">
                 </iframe>
             </div>
         </div>
@@ -390,16 +466,23 @@
         function playVideo(videoId, title) {
             const modal = document.getElementById('videoModal');
             const iframe = document.getElementById('videoFrame');
-            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
-            modal.classList.add('active');
+            const modalTitle = document.getElementById('modalVideoTitle');
+            
+            modalTitle.textContent = title;
+            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
         }
         
         function closeVideo() {
             const modal = document.getElementById('videoModal');
             const iframe = document.getElementById('videoFrame');
+            
             iframe.src = '';
-            modal.classList.remove('active');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
             document.body.style.overflow = '';
         }
         
@@ -410,11 +493,81 @@
             }
         });
         
-        // Close modal when clicking outside
+        // Close modal when clicking on backdrop
         document.getElementById('videoModal').addEventListener('click', (e) => {
             if (e.target.id === 'videoModal') {
                 closeVideo();
             }
+        });
+
+        // Search feature
+        const searchInput = document.getElementById('searchInput');
+        const noResults = document.getElementById('noResults');
+        const categories = document.querySelectorAll('.category-section');
+        const videoCards = document.querySelectorAll('.video-card');
+
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            let totalVisible = 0;
+
+            categories.forEach(cat => {
+                let catVisibleCount = 0;
+                const cards = cat.querySelectorAll('.video-card');
+                
+                cards.forEach(card => {
+                    const title = card.querySelector('h4').textContent.toLowerCase();
+                    const desc = card.querySelector('p') ? card.querySelector('p').textContent.toLowerCase() : '';
+                    
+                    if (title.includes(term) || desc.includes(term)) {
+                        card.style.display = 'flex';
+                        catVisibleCount++;
+                        totalVisible++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Show/hide category section based on matches
+                if (catVisibleCount > 0) {
+                    cat.style.display = 'block';
+                } else {
+                    cat.style.display = 'none';
+                }
+            });
+
+            // Show/hide no results overlay
+            if (totalVisible === 0 && term !== '') {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        });
+
+        // Sidebar active link highlighting on scroll
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+        
+        window.addEventListener('scroll', () => {
+            let currentActiveId = '';
+            
+            categories.forEach(cat => {
+                const rect = cat.getBoundingClientRect();
+                // If the top of the category section is above the middle of screen
+                if (rect.top <= 120) {
+                    currentActiveId = '#' + cat.id;
+                }
+            });
+
+            if (currentActiveId === '' && categories.length > 0) {
+                currentActiveId = '#' + categories[0].id;
+            }
+
+            sidebarLinks.forEach(link => {
+                if (link.getAttribute('href') === currentActiveId) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
         });
     </script>
 </body>

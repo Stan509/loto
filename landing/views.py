@@ -32,13 +32,17 @@ def documentation(request: HttpRequest):
     
     # Organiser les vidéos par catégorie
     intro_videos = videos.filter(category__iexact='Introduction')
+    config_videos = videos.filter(category__iexact='Configuration')
+    admin_videos = videos.filter(category__iexact='Admin Borlette') | videos.filter(category__iexact='Admin Borlettes')
     agents_videos = videos.filter(category__iexact='Agents')
-    admin_videos = videos.filter(category__iexact='Admin Borlettes')
-    affiliate_videos = videos.filter(category__iexact='Affiliés')
+    affiliate_videos = videos.filter(category__iexact='Affiliation') | videos.filter(category__iexact='Affiliés')
+    resume_videos = videos.filter(category__iexact='Résumé') | videos.filter(category__iexact='Resume')
     
     return render(request, "landing/documentation.html", {
-        'intro_videos': intro_videos,
-        'agents_videos': agents_videos,
-        'admin_videos': admin_videos,
-        'affiliate_videos': affiliate_videos,
+        'intro_videos': intro_videos.order_by('order', 'created_at'),
+        'config_videos': config_videos.order_by('order', 'created_at'),
+        'admin_videos': admin_videos.order_by('order', 'created_at'),
+        'agents_videos': agents_videos.order_by('order', 'created_at'),
+        'affiliate_videos': affiliate_videos.order_by('order', 'created_at'),
+        'resume_videos': resume_videos.order_by('order', 'created_at'),
     })
