@@ -38,8 +38,65 @@ enum class SyncStatus {
     PENDING,    // Waiting to sync
     SYNCING,    // Currently being synced
     SYNCED,     // Successfully synced
-    FAILED      // Sync failed (conflict or error)
+    FAILED,     // Sync failed (conflict or error)
+    VALIDATION_PENDING // Sent to gateway/server, awaiting final validation
 }
+
+@Entity(tableName = "offline_sessions")
+data class OfflineSession(
+    @PrimaryKey val uuid: String,
+    @ColumnInfo(name = "start_time") val startTime: Long,
+    @ColumnInfo(name = "last_sync") val lastSync: Long,
+    @ColumnInfo(name = "device_state") val deviceState: String,
+    @ColumnInfo(name = "clock_confidence") val clockConfidence: String,
+    @ColumnInfo(name = "timestamp") val timestamp: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "version") val version: Int = 1,
+    @ColumnInfo(name = "hash") val hash: String = ""
+)
+
+@Entity(tableName = "transaction_local")
+data class TransactionLocal(
+    @PrimaryKey val uuid: String,
+    @ColumnInfo(name = "recovery_id") val recoveryId: String?, // UUID for crash recovery
+    @ColumnInfo(name = "ticket_uuid") val ticketUuid: String,
+    @ColumnInfo(name = "amount") val amount: Double,
+    @ColumnInfo(name = "sync_status") val syncStatus: String,
+    @ColumnInfo(name = "timestamp") val timestamp: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "version") val version: Int = 1,
+    @ColumnInfo(name = "hash") val hash: String = ""
+)
+
+@Entity(tableName = "config_local")
+data class ConfigLocal(
+    @PrimaryKey val uuid: String,
+    @ColumnInfo(name = "key") val key: String,
+    @ColumnInfo(name = "value") val value: String,
+    @ColumnInfo(name = "timestamp") val timestamp: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "version") val version: Int = 1,
+    @ColumnInfo(name = "hash") val hash: String = ""
+)
+
+@Entity(tableName = "clock_snapshots")
+data class ClockSnapshot(
+    @PrimaryKey val uuid: String,
+    @ColumnInfo(name = "server_time") val serverTime: Long,
+    @ColumnInfo(name = "offset") val offset: Long,
+    @ColumnInfo(name = "confidence") val confidence: String,
+    @ColumnInfo(name = "timestamp") val timestamp: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "version") val version: Int = 1,
+    @ColumnInfo(name = "hash") val hash: String = ""
+)
+
+@Entity(tableName = "security_metadata")
+data class SecurityMetadata(
+    @PrimaryKey val uuid: String,
+    @ColumnInfo(name = "key_id") val keyId: String,
+    @ColumnInfo(name = "public_key") val publicKey: String,
+    @ColumnInfo(name = "timestamp") val timestamp: Long = System.currentTimeMillis(),
+    @ColumnInfo(name = "version") val version: Int = 1,
+    @ColumnInfo(name = "hash") val hash: String = ""
+)
+
 
 /**
  * Pending ticket for offline mode.
@@ -200,8 +257,17 @@ interface PendingTicketDao {
 // ═══════════════════════════════════════════════════════════════════════════
 
 @Database(
-    entities = [LocalTicketCache::class, TirageSessionCache::class, PendingTicketEntity::class],
-    version = 3,  // Bumped for Phase I-A: batch support + HMAC
+    entities = [
+        LocalTicketCache::class, 
+        TirageSessionCache::class, 
+        PendingTicketEntity::class,
+        OfflineSession::class,
+        TransactionLocal::class,
+        ConfigLocal::class,
+        ClockSnapshot::class,
+        SecurityMetadata::class
+    ],
+    version = 4,  // Bumped for Phase 2 entities
     exportSchema = false
 )
 @TypeConverters(Converters::class)

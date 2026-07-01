@@ -233,6 +233,7 @@ fun PendingTicketCard(
         SyncStatus.SYNCING -> Color(0xFFF59E0B)
         SyncStatus.SYNCED -> Color(0xFF10B981)
         SyncStatus.FAILED -> Color(0xFFEF4444)
+        SyncStatus.VALIDATION_PENDING -> Color(0xFFF59E0B)
     }
     
     val statusText = when (ticket.syncStatus) {
@@ -240,6 +241,7 @@ fun PendingTicketCard(
         SyncStatus.SYNCING -> "Synchronisation..."
         SyncStatus.SYNCED -> "Synchronisé"
         SyncStatus.FAILED -> "Échec"
+        SyncStatus.VALIDATION_PENDING -> "En attente validation"
     }
 
     Card(
@@ -594,6 +596,7 @@ fun MiniTicketItem(
         SyncStatus.SYNCING -> Color(0xFFF59E0B)
         SyncStatus.SYNCED -> Color(0xFF10B981)
         SyncStatus.FAILED -> Color(0xFFEF4444)
+        SyncStatus.VALIDATION_PENDING -> Color(0xFFF59E0B)
     }
     
     Card(

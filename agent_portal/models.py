@@ -366,3 +366,144 @@ class AgentCashboxEntry(models.Model):
             "adjustments": adjustments,
             "balance": balance,
         }
+
+
+class TicketIdentity(models.Model):
+    """
+    Identité unique et permanente d'un ticket (Phase 1).
+    Gère le cycle de vie, la traçabilité et l'intégrité cryptographique des fiches.
+    """
+    global_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    device_id = models.CharField(max_length=128, db_index=True)
+    server_id = models.UUIDField(null=True, blank=True, db_index=True)
+    
+    # State Machine states
+    class SyncStatus(models.TextChoices):
+        DRAFT = "DRAFT", "Draft"
+        LOCAL_SIGNED = "LOCAL_SIGNED", "Local Signed"
+        LOCAL_PRINTED = "LOCAL_PRINTED", "Local Printed"
+        SYNC_PENDING = "SYNC_PENDING", "Sync Pending"
+        QUEUED_GATEWAY = "QUEUED_GATEWAY", "Queued Gateway"
+        PROCESSING = "PROCESSING", "Processing"
+        SYNCED_VALID = "SYNCED_VALID", "Synced Valid"
+        CONFLICT = "CONFLICT", "Conflict"
+        SETTLED_LOST = "SETTLED_LOST", "Settled / Lost"
+        SETTLED_WON = "SETTLED_WON", "Settled / Won"
+        PAYE = "PAYE", "Payé"
+        ANNULE = "ANNULE", "Annulé"
+        EXPIRED = "EXPIRED", "Expired"
+        ARCHIVED = "ARCHIVED", "Archived"
+        VALIDATION_PENDING = "VALIDATION_PENDING", "Validation Pending"
+
+    class TicketOrigin(models.TextChoices):
+        ONLINE = "ONLINE", "Online"
+        OFFLINE = "OFFLINE", "Offline"
+        RECOVERY = "RECOVERY", "Recovery"
+        MANUAL_IMPORT = "MANUAL_IMPORT", "Manual Import"
+
+    class ValidationLevel(models.TextChoices):
+        LOCAL = "LOCAL", "Local"
+        SERVER = "SERVER", "Server"
+        CRYPTO = "CRYPTO", "Crypto"
+        FINAL = "FINAL", "Final"
+
+    sync_status = models.CharField(max_length=20, choices=SyncStatus.choices, default=SyncStatus.DRAFT)
+    ticket_origin = models.CharField(max_length=20, choices=TicketOrigin.choices, default=TicketOrigin.ONLINE)
+    validation_level = models.CharField(max_length=20, choices=ValidationLevel.choices, default=ValidationLevel.SERVER)
+    created_at = models.DateTimeField(auto_now_add=True)
+    synced_at = models.DateTimeField(null=True, blank=True)
+    integrity_hash = models.CharField(max_length=64, blank=True, default="")
+    version = models.IntegerField(default=1)
+    origin_station = models.CharField(max_length=128, db_index=True)
+    sequence_number = models.BigIntegerField(default=0)
+    signature_version = models.IntegerField(default=1)
+    game_session = models.CharField(max_length=128, db_index=True)
+
+    class Meta:
+        verbose_name = "Ticket Identity"
+        verbose_name_plural = "Ticket Identities"
+        indexes = [
+            models.Index(fields=["device_id", "sequence_number"], name="idx_tident_dev_seq"),
+            models.Index(fields=["sync_status"], name="idx_tident_status"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.global_uuid} | Seq: {self.sequence_number} | {self.sync_status}"
+
+
+class SyncAttempt(models.Model):
+    """
+    Historique des tentatives de synchronisation par terminal (Phase 3).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    device_id = models.CharField(max_length=128, db_index=True)
+    attempted_at = models.DateTimeField(auto_now_add=True)
+    success = models.BooleanField(default=False)
+    error_message = models.TextField(blank=True, default="")
+
+    class Meta:
+        verbose_name = "Sync Attempt"
+        verbose_name_plural = "Sync Attempts"
+
+
+class SyncBatch(models.Model):
+    """
+    Représente un lot (batch) de tickets synchronisés (Phase 3).
+    """
+    class BatchStatus(models.TextChoices):
+        CREATED = "CREATED", "Created"
+        PROCESSING = "PROCESSING", "Processing"
+        COMPLETED = "COMPLETED", "Completed"
+        PARTIAL = "PARTIAL", "Partial"
+        FAILED = "FAILED", "Failed"
+        ROLLED_BACK = "ROLLED_BACK", "Rolled Back"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    device_id = models.CharField(max_length=128, db_index=True)
+    sequence_range = models.CharField(max_length=64)
+    status = models.CharField(max_length=20, choices=BatchStatus.choices, default=BatchStatus.CREATED)
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Sync Batch"
+        verbose_name_plural = "Sync Batches"
+
+
+class SyncConflict(models.Model):
+    """
+    Quarantaine pour les tickets conflictuels (Phase 3).
+    """
+    class Severity(models.TextChoices):
+        LOW = "LOW", "Low"
+        MEDIUM = "MEDIUM", "Medium"
+        HIGH = "HIGH", "High"
+        CRITICAL = "CRITICAL", "Critical"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ticket_uuid = models.UUIDField(db_index=True)
+    conflict_type = models.CharField(max_length=64)
+    severity = models.CharField(max_length=20, choices=Severity.choices, default=Severity.MEDIUM)
+    resolved = models.BooleanField(default=False)
+    resolution_notes = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Sync Conflict"
+        verbose_name_plural = "Sync Conflicts"
+
+
+class SyncAuditLog(models.Model):
+    """
+    Journal d'audit de toutes les opérations de synchronisation (Phase 3).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    action = models.CharField(max_length=128)
+    details = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Sync Audit Log"
+        verbose_name_plural = "Sync Audit Logs"
+
+

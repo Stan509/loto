@@ -2,6 +2,12 @@ use std::sync::Arc;
 use tonic::{transport::Server, Request, Response, Status};
 use tracing::{info, warn};
 
+pub mod feature_flags;
+pub mod security;
+
+#[cfg(test)]
+pub mod feature_flags_test;
+
 mod proto {
     tonic::include_proto!("validator");
 }

@@ -15,8 +15,8 @@ android {
         applicationId = "com.gaboom.agent"
         minSdk = 24
         targetSdk = 34
-        versionCode = 23
-        versionName = "2.3.0"
+        versionCode = 24
+        versionName = "2.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -126,6 +126,9 @@ dependencies {
 
     // DataStore - Preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // WorkManager - Background Sync
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 from django.contrib.auth import authenticate
 from django.core.cache import cache
+from django.views.decorators.cache import cache_page
 from django.db import models, transaction
 from django.http import HttpRequest, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
@@ -26,7 +27,7 @@ from django.conf import settings
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
+import time
 from reportlab.lib.pagesizes import mm
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -1925,11 +1926,18 @@ def api_health(request: HttpRequest) -> JsonResponse:
             "version": "gaboom-central-1.0"
         }
     """
-    return JsonResponse({
+    cached = cache.get("health_check_v1")
+    if cached is not None:
+        return JsonResponse(cached)
+    payload = {
         "status": "ok",
-        "server_time": timezone.now().isoformat(),
-        "version": "gaboom-central-1.0",
-    })
+        "server_time": int(time.time()),
+        "version": "v2.4.0",
+        "service": "backend",
+        "health": "green",
+    }
+    cache.set("health_check_v1", payload, timeout=1)
+    return JsonResponse(payload)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
